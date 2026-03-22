@@ -23,6 +23,7 @@ class Agent(BaseModel):
     task_knowledge: list[TaskKnowledge] = []  # What this agent knows per task
     relationship_score_baseline: float = 0.5
     escalation_threshold: float = 0.7
+    avatar_url: Optional[str] = None  # DiceBear avatar URL
 
 
 class StressInject(BaseModel):

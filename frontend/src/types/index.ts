@@ -9,6 +9,7 @@ export interface Agent {
   hidden_information: string;
   relationship_score_baseline: number;
   escalation_threshold: number;
+  avatar_url?: string;
 }
 
 export interface StressInject {

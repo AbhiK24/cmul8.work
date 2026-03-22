@@ -19,6 +19,7 @@ interface AgentDebrief {
   perception: string;
   would_work_with_again: boolean;
   key_interaction: string;
+  avatar_url?: string;
 }
 
 interface TimeAnalysis {
@@ -338,9 +339,17 @@ export default function Report() {
                 <div key={idx} className="p-5 bg-surface/50 rounded-xl border border-border/50 hover:border-border transition-colors">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-dark/10 flex items-center justify-center text-dark font-semibold">
-                        {agent.agent_name.charAt(0)}
-                      </div>
+                      {agent.avatar_url ? (
+                        <img
+                          src={agent.avatar_url}
+                          alt={agent.agent_name}
+                          className="w-12 h-12 rounded-full bg-surface"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-dark/10 flex items-center justify-center text-dark font-semibold text-lg">
+                          {agent.agent_name.charAt(0)}
+                        </div>
+                      )}
                       <div>
                         <span className="font-semibold text-dark">{agent.agent_name}</span>
                         <p className="text-muted text-xs">{agent.role}</p>

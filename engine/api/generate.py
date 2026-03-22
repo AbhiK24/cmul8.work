@@ -203,13 +203,19 @@ async def generate_environment(request: GenerateRequest) -> EnvironmentResponse:
         # Force company_name to match the requested org_name if provided
         # Parse agents with task_knowledge
         agents = []
-        for a in env_data.get("agents", []):
+        # DiceBear avatar styles for variety
+        avatar_styles = ["avataaars", "personas", "notionists", "lorelei", "adventurer"]
+        for idx, a in enumerate(env_data.get("agents", [])):
             task_knowledge = [
                 TaskKnowledge(**tk) for tk in a.get("task_knowledge", [])
             ]
+            agent_name = a.get("name", "Unknown")
+            # Generate deterministic avatar URL using agent name as seed
+            style = avatar_styles[idx % len(avatar_styles)]
+            avatar_url = f"https://api.dicebear.com/7.x/{style}/svg?seed={agent_name.replace(' ', '')}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
             agents.append(Agent(
                 agent_id=a.get("agent_id", str(uuid.uuid4())),
-                name=a.get("name", "Unknown"),
+                name=agent_name,
                 role=a.get("role", ""),
                 relationship_to_candidate=a.get("relationship_to_candidate", "peer"),
                 archetype=a.get("archetype", "standard"),
@@ -218,7 +224,8 @@ async def generate_environment(request: GenerateRequest) -> EnvironmentResponse:
                 hidden_information=a.get("hidden_information", ""),
                 task_knowledge=task_knowledge,
                 relationship_score_baseline=a.get("relationship_score_baseline", 0.5),
-                escalation_threshold=a.get("escalation_threshold", 0.7)
+                escalation_threshold=a.get("escalation_threshold", 0.7),
+                avatar_url=avatar_url
             ))
 
         # Parse tasks with required_info
