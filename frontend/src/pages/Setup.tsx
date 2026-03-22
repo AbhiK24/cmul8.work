@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { sessions, profile, ApiError, type OrgProfile } from '../api/client';
 import type { Role, Function } from '../types';
 import Logo from '../components/Logo';
+import ErrorAlert, { parseError, type ParsedError } from '../components/ErrorAlert';
 
 const ROLES: Role[] = ['PM', 'Analyst', 'Ops Lead', 'Sales', 'Eng Manager', 'Custom'];
 const FUNCTIONS: Function[] = ['Product', 'Engineering', 'Revenue', 'Operations', 'Finance', 'Strategy'];
@@ -16,7 +17,7 @@ export default function Setup() {
   const navigate = useNavigate();
   const { token } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<ParsedError | null>(null);
   const [orgProfile, setOrgProfile] = useState<OrgProfile | null>(null);
   const [form, setForm] = useState({
     role: '' as Role | '',
@@ -54,7 +55,7 @@ export default function Setup() {
     if (!isValid || !token) return;
 
     setIsLoading(true);
-    setError('');
+    setError(null);
 
     try {
       const response = await sessions.create(token, {
@@ -80,11 +81,8 @@ export default function Setup() {
         },
       });
     } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message);
-      } else {
-        setError('Failed to create simulation. Please try again.');
-      }
+      const statusCode = err instanceof ApiError ? err.status : undefined;
+      setError(parseError(err, statusCode));
       setIsLoading(false);
     }
   };
@@ -105,9 +103,7 @@ export default function Setup() {
 
         <div className="bg-white border border-border rounded-xl p-8">
           {error && (
-            <div className="mb-6 p-3 bg-surface border border-border rounded-lg text-sm text-dark">
-              {error}
-            </div>
+            <ErrorAlert error={error} onDismiss={() => setError(null)} />
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
