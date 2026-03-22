@@ -4,6 +4,55 @@ import { useAuth } from '../context/AuthContext';
 import { sessions, type SessionResponse, ApiError } from '../api/client';
 import Logo from '../components/Logo';
 
+// Role-based emoji mapping
+function getRoleEmoji(role: string): string {
+  const r = role.toLowerCase();
+  if (r.includes('engineer') || r.includes('developer') || r.includes('software')) return '💻';
+  if (r.includes('product') || r.includes('pm')) return '🎯';
+  if (r.includes('design') || r.includes('ux') || r.includes('ui')) return '🎨';
+  if (r.includes('sales') || r.includes('account')) return '🤝';
+  if (r.includes('marketing')) return '📣';
+  if (r.includes('manager') || r.includes('lead') || r.includes('director')) return '👔';
+  if (r.includes('data') || r.includes('analyst')) return '📊';
+  if (r.includes('hr') || r.includes('people') || r.includes('recruit')) return '👥';
+  if (r.includes('finance') || r.includes('account')) return '💰';
+  if (r.includes('support') || r.includes('customer') || r.includes('success')) return '🎧';
+  if (r.includes('ops') || r.includes('operation')) return '⚙️';
+  if (r.includes('legal') || r.includes('compliance')) return '⚖️';
+  if (r.includes('content') || r.includes('writer') || r.includes('editor')) return '✍️';
+  if (r.includes('research')) return '🔬';
+  return '💼';
+}
+
+// Skills tested based on role
+function getTestedSkills(role: string): string[] {
+  const r = role.toLowerCase();
+  const baseSkills = ['Communication', 'Problem-solving'];
+
+  if (r.includes('engineer') || r.includes('developer')) {
+    return [...baseSkills, 'Technical depth', 'Collaboration'];
+  }
+  if (r.includes('product') || r.includes('pm')) {
+    return [...baseSkills, 'Prioritization', 'Stakeholder mgmt'];
+  }
+  if (r.includes('design')) {
+    return [...baseSkills, 'Design thinking', 'Feedback handling'];
+  }
+  if (r.includes('sales')) {
+    return [...baseSkills, 'Negotiation', 'Relationship building'];
+  }
+  if (r.includes('manager') || r.includes('lead')) {
+    return [...baseSkills, 'Decision making', 'Team leadership'];
+  }
+  if (r.includes('data') || r.includes('analyst')) {
+    return [...baseSkills, 'Analytical thinking', 'Data storytelling'];
+  }
+  if (r.includes('support') || r.includes('customer')) {
+    return [...baseSkills, 'Empathy', 'Conflict resolution'];
+  }
+  return [...baseSkills, 'Critical thinking', 'Adaptability'];
+}
+
 const statusConfig = {
   generating: { label: 'Generating', bg: 'bg-amber-100', text: 'text-amber-700', dot: 'bg-amber-500' },
   pending: { label: 'Ready', bg: 'bg-emerald-100', text: 'text-emerald-700', dot: 'bg-emerald-500' },
@@ -100,6 +149,9 @@ export default function AssessmentDetail() {
 
   const completedCount = workSimSessions.filter(s => s.status === 'complete').length;
   const pendingCount = workSimSessions.filter(s => s.status === 'pending').length;
+  const inProgressCount = workSimSessions.filter(s => s.status === 'in_progress').length;
+  const emoji = getRoleEmoji(workSim.role);
+  const skills = getTestedSkills(workSim.role);
 
   return (
     <div className="min-h-screen bg-surface">
@@ -120,25 +172,50 @@ export default function AssessmentDetail() {
               backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23fff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
             }} />
           </div>
-          <div className="relative">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="px-3 py-1 bg-white/20 rounded-full text-xs font-medium">Assessment</span>
-            </div>
-            <h1 className="text-3xl font-bold mb-2">{workSim.role}</h1>
-            <p className="text-white/70 text-lg">{workSim.org_name || 'Custom Organization'}</p>
+          <div className="relative flex items-start justify-between">
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">
+                  <span className="text-3xl">{emoji}</span>
+                </div>
+                <span className="px-3 py-1 bg-white/20 rounded-full text-xs font-medium">Assessment WorkSim</span>
+              </div>
+              <h1 className="text-3xl font-bold mb-2">{workSim.role}</h1>
+              <p className="text-white/70 text-lg mb-4">{workSim.org_name || 'Custom Organization'}</p>
 
-            <div className="flex items-center gap-6 mt-6">
-              <div>
-                <div className="text-2xl font-bold">{workSimSessions.length}</div>
-                <div className="text-white/60 text-sm">Assigned</div>
+              {/* Duration */}
+              <div className="flex items-center gap-2 text-white/70 text-sm mb-4">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                20-30 min simulation
               </div>
-              <div>
-                <div className="text-2xl font-bold">{completedCount}</div>
-                <div className="text-white/60 text-sm">Completed</div>
+
+              {/* Skills */}
+              <div className="flex flex-wrap gap-2">
+                {skills.map((skill, i) => (
+                  <span key={i} className="px-3 py-1 bg-white/20 rounded-full text-xs font-medium">
+                    {skill}
+                  </span>
+                ))}
               </div>
-              <div>
-                <div className="text-2xl font-bold">{pendingCount}</div>
-                <div className="text-white/60 text-sm">Pending</div>
+            </div>
+
+            {/* Stats */}
+            <div className="text-right">
+              <div className="grid grid-cols-3 gap-6">
+                <div className="text-center">
+                  <div className="text-3xl font-bold">{completedCount}</div>
+                  <div className="text-white/60 text-xs">Completed</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold">{inProgressCount}</div>
+                  <div className="text-white/60 text-xs">In Progress</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold">{pendingCount}</div>
+                  <div className="text-white/60 text-xs">Ready</div>
+                </div>
               </div>
             </div>
           </div>

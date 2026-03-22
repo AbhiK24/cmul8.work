@@ -13,6 +13,55 @@ const statusConfig = {
   expired: { label: 'Expired', bg: 'bg-gray-100', text: 'text-gray-500', dot: 'bg-gray-400' },
 };
 
+// Role-based emoji mapping
+function getRoleEmoji(role: string): string {
+  const r = role.toLowerCase();
+  if (r.includes('engineer') || r.includes('developer') || r.includes('software')) return '💻';
+  if (r.includes('product') || r.includes('pm')) return '🎯';
+  if (r.includes('design') || r.includes('ux') || r.includes('ui')) return '🎨';
+  if (r.includes('sales') || r.includes('account')) return '🤝';
+  if (r.includes('marketing')) return '📣';
+  if (r.includes('manager') || r.includes('lead') || r.includes('director')) return '👔';
+  if (r.includes('data') || r.includes('analyst')) return '📊';
+  if (r.includes('hr') || r.includes('people') || r.includes('recruit')) return '👥';
+  if (r.includes('finance') || r.includes('account')) return '💰';
+  if (r.includes('support') || r.includes('customer') || r.includes('success')) return '🎧';
+  if (r.includes('ops') || r.includes('operation')) return '⚙️';
+  if (r.includes('legal') || r.includes('compliance')) return '⚖️';
+  if (r.includes('content') || r.includes('writer') || r.includes('editor')) return '✍️';
+  if (r.includes('research')) return '🔬';
+  return '💼';
+}
+
+// Skills tested based on role
+function getTestedSkills(role: string): string[] {
+  const r = role.toLowerCase();
+  const baseSkills = ['Communication', 'Problem-solving'];
+
+  if (r.includes('engineer') || r.includes('developer')) {
+    return [...baseSkills, 'Technical depth', 'Collaboration'];
+  }
+  if (r.includes('product') || r.includes('pm')) {
+    return [...baseSkills, 'Prioritization', 'Stakeholder mgmt'];
+  }
+  if (r.includes('design')) {
+    return [...baseSkills, 'Design thinking', 'Feedback handling'];
+  }
+  if (r.includes('sales')) {
+    return [...baseSkills, 'Negotiation', 'Relationship building'];
+  }
+  if (r.includes('manager') || r.includes('lead')) {
+    return [...baseSkills, 'Decision making', 'Team leadership'];
+  }
+  if (r.includes('data') || r.includes('analyst')) {
+    return [...baseSkills, 'Analytical thinking', 'Data storytelling'];
+  }
+  if (r.includes('support') || r.includes('customer')) {
+    return [...baseSkills, 'Empathy', 'Conflict resolution'];
+  }
+  return [...baseSkills, 'Critical thinking', 'Adaptability'];
+}
+
 function formatDate(date: string) {
   return new Date(date).toLocaleDateString('en-US', {
     month: 'short',
@@ -282,8 +331,9 @@ export default function Dashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {workSimGroups.map((group) => {
                   const completedCount = group.sessions.filter(s => s.status === 'complete').length;
-                  const pendingCount = group.sessions.filter(s => s.status === 'pending').length;
-                  const inProgressCount = group.sessions.filter(s => s.status === 'in_progress').length;
+                  const totalCount = group.sessions.length;
+                  const skills = getTestedSkills(group.role);
+                  const emoji = getRoleEmoji(group.role);
 
                   return (
                     <Link
@@ -293,39 +343,54 @@ export default function Dashboard() {
                     >
                       {/* Icon */}
                       <div className="w-12 h-12 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                        <svg className="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                        </svg>
+                        <span className="text-2xl">{emoji}</span>
                       </div>
 
                       {/* Title & Org */}
                       <h3 className="font-semibold text-dark mb-1 group-hover:text-indigo-700 transition-colors">
                         {group.role}
                       </h3>
-                      <p className="text-sm text-muted mb-4">{group.orgName}</p>
+                      <p className="text-sm text-muted mb-3">{group.orgName}</p>
 
-                      {/* Stats */}
-                      <div className="flex items-center gap-3 text-xs mb-4">
-                        <div className="flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-indigo-500" />
-                          <span className="text-muted">{completedCount} done</span>
+                      {/* Meta: Duration & Candidates */}
+                      <div className="flex items-center justify-between text-xs mb-4">
+                        <div className="flex items-center gap-1 text-muted">
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          20-30 min
                         </div>
-                        {inProgressCount > 0 && (
-                          <div className="flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-blue-500" />
-                            <span className="text-muted">{inProgressCount} active</span>
+                        <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1">
+                            <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                            <span className="text-muted">{completedCount}/{totalCount}</span>
                           </div>
-                        )}
-                        {pendingCount > 0 && (
-                          <div className="flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                            <span className="text-muted">{pendingCount} ready</span>
-                          </div>
-                        )}
+                          <span className="text-muted">completed</span>
+                        </div>
                       </div>
 
-                      {/* Candidates preview */}
+                      {/* Skills tested */}
                       <div className="pt-4 border-t border-border">
+                        <p className="text-xs text-muted mb-2">Skills tested:</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {skills.slice(0, 3).map((skill, i) => (
+                            <span
+                              key={i}
+                              className="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[10px] font-medium"
+                            >
+                              {skill}
+                            </span>
+                          ))}
+                          {skills.length > 3 && (
+                            <span className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded text-[10px] font-medium">
+                              +{skills.length - 3}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Candidates preview & View link */}
+                      <div className="mt-4 pt-4 border-t border-border">
                         <div className="flex items-center justify-between">
                           <div className="flex -space-x-2">
                             {group.sessions.slice(0, 4).map((session) => (
