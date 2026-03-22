@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { sessions, type SessionResponse, ApiError } from '../api/client';
+import { sessions, templates, type SessionResponse, ApiError } from '../api/client';
 import Logo from '../components/Logo';
 import TrainingLibrary from './TrainingLibrary';
 
@@ -105,6 +105,7 @@ export default function Dashboard() {
   const [error, setError] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [generatingReportId, setGeneratingReportId] = useState<string | null>(null);
+  const [templateCount, setTemplateCount] = useState(0);
 
   // Filter state for History tab
   const [filters, setFilters] = useState({
@@ -116,24 +117,28 @@ export default function Dashboard() {
   });
 
   useEffect(() => {
-    async function loadSessions() {
+    async function loadData() {
       if (!token) return;
 
       try {
-        const response = await sessions.list(token);
-        setSessionList(response.sessions);
+        const [sessionsRes, templatesRes] = await Promise.all([
+          sessions.list(token),
+          templates.list(token),
+        ]);
+        setSessionList(sessionsRes.sessions);
+        setTemplateCount(templatesRes.length);
       } catch (err) {
         if (err instanceof ApiError) {
           setError(err.message);
         } else {
-          setError('Failed to load sessions');
+          setError('Failed to load data');
         }
       } finally {
         setIsLoading(false);
       }
     }
 
-    loadSessions();
+    loadData();
   }, [token]);
 
   // Separate sessions by mode
@@ -214,11 +219,10 @@ export default function Dashboard() {
 
   // Stats for header
   const stats = useMemo(() => ({
-    totalAssess: assessSessions.length,
-    completedAssess: assessSessions.filter(s => s.status === 'complete').length,
-    totalTrain: sessionList.filter(s => s.mode === 'train').length,
-    completedTrain: sessionList.filter(s => s.mode === 'train' && s.status === 'complete').length,
-  }), [sessionList, assessSessions]);
+    // Count unique WorkSims (grouped by role) for Assess
+    totalWorkSims: workSimGroups.length,
+    totalSessions: sessionList.length,
+  }), [sessionList, workSimGroups]);
 
   return (
     <div className="min-h-screen bg-surface">
@@ -264,7 +268,7 @@ export default function Dashboard() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
               </svg>
               Assess
-              <span className="ml-1 px-1.5 py-0.5 bg-surface rounded text-xs">{stats.totalAssess}</span>
+              <span className="ml-1 px-1.5 py-0.5 bg-surface rounded text-xs">{stats.totalWorkSims}</span>
             </button>
             <button
               onClick={() => setActiveTab('train')}
@@ -278,7 +282,7 @@ export default function Dashboard() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
               </svg>
               Train
-              <span className="ml-1 px-1.5 py-0.5 bg-surface rounded text-xs">{stats.totalTrain}</span>
+              <span className="ml-1 px-1.5 py-0.5 bg-surface rounded text-xs">{templateCount}</span>
             </button>
             <button
               onClick={() => setActiveTab('history')}
@@ -292,7 +296,7 @@ export default function Dashboard() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               History
-              <span className="ml-1 px-1.5 py-0.5 bg-surface rounded text-xs">{sessionList.length}</span>
+              <span className="ml-1 px-1.5 py-0.5 bg-surface rounded text-xs">{stats.totalSessions}</span>
             </button>
           </div>
         </div>
