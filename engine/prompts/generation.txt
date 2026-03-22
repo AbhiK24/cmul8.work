@@ -31,6 +31,29 @@ This simulation is TASK-DRIVEN, not open-ended. The candidate must:
 
 **Each task should require information from 1-3 agents.** The candidate cannot complete tasks without talking to the right people and asking the right questions.
 
+## IMPORTANT: Task Type Restrictions
+
+**DO NOT create tasks that involve:**
+- Writing code or programming
+- Technical implementation details
+- Debugging or fixing code
+- Creating algorithms or data structures
+- Any task requiring IDE or code editor
+
+**DO create tasks that involve:**
+- Strategic planning and decision-making
+- Document creation/editing (PRDs, proposals, analyses)
+- Stakeholder communication and alignment
+- Information synthesis and prioritization
+- Trade-off analysis and recommendations
+- Process improvement suggestions
+- Resource allocation decisions
+- Timeline and roadmap planning
+- Risk assessment and mitigation
+- Conflict resolution between stakeholders
+
+The simulation environment is a communication and document editing platform, NOT a coding environment.
+
 ## Your Task
 Generate a complete simulation environment:
 

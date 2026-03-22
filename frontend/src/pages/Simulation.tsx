@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { candidate, sessions } from '../api/client';
 import type { Agent, Thread, Message, Task, ArtifactSection, ArtifactContent } from '../types';
+import { antiCheat } from '../utils/antiCheat';
 
 interface SimulationEnv {
   company_name: string;
@@ -130,6 +131,11 @@ export default function Simulation() {
         }
 
         startTimeRef.current = Date.now();
+
+        // Initialize anti-cheat detector
+        if (sessionId) {
+          antiCheat.init(sessionId);
+        }
       } catch (err) {
         setError('Failed to load simulation');
       } finally {
@@ -138,6 +144,11 @@ export default function Simulation() {
     }
 
     loadEnv();
+
+    // Cleanup anti-cheat on unmount
+    return () => {
+      antiCheat.destroy();
+    };
   }, [sessionId, token]);
 
   // Timer - uses real time, not interval counter (works in background)
@@ -222,6 +233,12 @@ export default function Simulation() {
 
   const handleSend = async () => {
     if ((!message.trim() && !attachedImage) || !activeThreadId || !activeThread || !sessionId || !token) return;
+
+    // Track anti-cheat signal for message send
+    const cheatCheck = antiCheat.messageSent(message.length);
+    if (cheatCheck.suspicious) {
+      console.log('Anti-cheat signal:', cheatCheck.reason);
+    }
 
     // Build message content (multimodal if image attached)
     const messageContent: string | { type: 'text' | 'image_url'; text?: string; image_url?: string }[] =
@@ -352,6 +369,24 @@ export default function Simulation() {
   };
 
   const handleEndWorkSim = () => {
+    // Log anti-cheat summary before navigating
+    const summary = antiCheat.getSummary();
+    console.log('Anti-cheat summary:', summary);
+
+    // Send integrity data to backend
+    if (sessionId && token) {
+      candidate.trace({
+        session_id: sessionId,
+        token: token,
+        event_type: 'session_end' as 'thread_open',  // Type hack - backend will handle
+        elapsed_seconds: elapsedSeconds,
+        content: {
+          integrity: summary,
+          signals: antiCheat.getSignals().slice(-50)  // Last 50 signals
+        }
+      }).catch(() => {});
+    }
+
     navigate(`/debrief/${sessionId}/${token}`);
   };
 
@@ -881,7 +916,19 @@ export default function Simulation() {
                   </button>
                   <textarea
                     value={message}
-                    onChange={(e) => setMessage(e.target.value)}
+                    onChange={(e) => {
+                      // Track typing start
+                      if (!message && e.target.value) {
+                        antiCheat.startTyping();
+                      }
+                      setMessage(e.target.value);
+                    }}
+                    onPaste={(e) => {
+                      const pastedText = e.clipboardData.getData('text');
+                      if (pastedText) {
+                        antiCheat.detectPaste(pastedText);
+                      }
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();

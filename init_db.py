@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS sessions (
   candidate_name TEXT NOT NULL,
   candidate_email TEXT NOT NULL,
   candidate_link TEXT NOT NULL,
+  candidate_type TEXT DEFAULT 'external',
   org_params JSONB NOT NULL,
   env JSONB,
   artifact_html TEXT,
@@ -44,6 +45,7 @@ CREATE TABLE IF NOT EXISTS sessions (
   status TEXT DEFAULT 'pending',
   trace JSONB DEFAULT '[]'::jsonb,
   artifact_trace JSONB DEFAULT '[]'::jsonb,
+  integrity_data JSONB,  -- Anti-cheat signals summary
   debrief JSONB,
   report JSONB,
   report_html_candidate TEXT,

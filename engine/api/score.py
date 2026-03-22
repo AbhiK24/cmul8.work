@@ -24,7 +24,7 @@ async def score_session(request: ScoreRequest):
     async with pool.acquire() as conn:
         # Get session data
         row = await conn.fetchrow("""
-            SELECT env, trace, artifact_trace, debrief, org_params, relationship_scores, started_at, completed_at
+            SELECT env, trace, artifact_trace, debrief, org_params, relationship_scores, integrity_data, started_at, completed_at
             FROM sessions WHERE session_id = $1
         """, request.session_id)
 
@@ -36,6 +36,7 @@ async def score_session(request: ScoreRequest):
         debrief = json.loads(row["debrief"]) if row["debrief"] else {}
         org_params = json.loads(row["org_params"]) if row["org_params"] else {}
         relationship_scores = json.loads(row["relationship_scores"]) if row["relationship_scores"] else {}
+        integrity_data = json.loads(row["integrity_data"]) if row["integrity_data"] else {}
 
         # Calculate duration
         started_at = row["started_at"]
@@ -75,6 +76,18 @@ async def score_session(request: ScoreRequest):
             )
         relationship_scores_str = "\n".join(scores_lines) or "No interactions."
 
+        # Build integrity data string
+        if integrity_data:
+            integrity_str = (
+                f"- Tab switches: {integrity_data.get('tabSwitches', 0)}\n"
+                f"- Total blur time: {integrity_data.get('totalBlurTimeSeconds', 0)} seconds\n"
+                f"- Paste count: {integrity_data.get('pasteCount', 0)}\n"
+                f"- Rapid responses: {integrity_data.get('rapidResponses', 0)}\n"
+                f"- Overall risk score: {integrity_data.get('riskScore', 0)}/100"
+            )
+        else:
+            integrity_str = "No integrity data collected."
+
         # Build the prompt
         prompt = SCORING_PROMPT.format(
             role=org_params.get("role", "Unknown"),
@@ -86,7 +99,8 @@ async def score_session(request: ScoreRequest):
             agents_info=agents_info,
             relationship_scores=relationship_scores_str,
             trace=trace_str[:15000],  # Truncate if too long
-            debrief=debrief_str or "No debrief provided."
+            debrief=debrief_str or "No debrief provided.",
+            integrity_data=integrity_str
         )
 
         # Call Kimi

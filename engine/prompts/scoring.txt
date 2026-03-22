@@ -34,6 +34,16 @@ From the trace, calculate and consider:
 ## Candidate's Self-Reflection
 {debrief}
 
+## Session Integrity Data
+{integrity_data}
+
+**Integrity Analysis (flag in report if concerning):**
+- Tab switches > 5: May indicate looking up answers externally
+- Paste count > 3: May indicate copying from external sources
+- Rapid responses (>15 chars/sec): Suggests pre-written or AI-generated content
+- High blur time (>5 min total): Extended time away from simulation
+- Risk score > 50: Warrants scrutiny of response authenticity
+
 ## Assessment Framework
 Evaluate the candidate on these 9 behavioral dimensions (score each 1-10):
 

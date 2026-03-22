@@ -57,6 +57,14 @@ async def log_trace_event(request: TraceRequest):
             WHERE session_id = $2
         """, json.dumps([trace_event.model_dump()]), request.session_id)
 
+        # If this is a session_end event, also store integrity data separately
+        if request.event_type == "session_end" and "integrity" in request.content:
+            await conn.execute("""
+                UPDATE sessions
+                SET integrity_data = $1::jsonb
+                WHERE session_id = $2
+            """, json.dumps(request.content.get("integrity")), request.session_id)
+
     return {"status": "logged", "event_id": trace_event.event_id}
 
 
