@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { candidate } from '../api/client';
 
 export default function Debrief() {
-  const { sessionId } = useParams();
+  const { sessionId, token } = useParams();
   const [timeLeft, setTimeLeft] = useState(5 * 60); // 5 minutes
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
+  const [error, setError] = useState('');
   const [form, setForm] = useState({
     q1: '',
     q2: '',
@@ -35,14 +37,18 @@ export default function Debrief() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isValid) return;
+    if (!isValid || !sessionId || !token) return;
 
     setIsSubmitting(true);
+    setError('');
 
-    // Mock API call - scoring takes ~30s
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-
-    setIsComplete(true);
+    try {
+      await candidate.submitDebrief(sessionId, token, form.q1, form.q2, form.q3);
+      setIsComplete(true);
+    } catch (err) {
+      setError('Failed to submit. Please try again.');
+      setIsSubmitting(false);
+    }
   };
 
   if (isComplete) {
@@ -138,10 +144,14 @@ export default function Debrief() {
             </div>
           </div>
 
+          {error && (
+            <p className="text-red-600 text-sm text-center">{error}</p>
+          )}
+
           <button
             type="submit"
             disabled={!isValid || isSubmitting}
-            className="w-full bg-primary text-white py-3 px-4 rounded-md font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors"
+            className="w-full bg-dark text-white py-3 px-4 rounded-lg font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-dark/90 transition-colors"
           >
             {isSubmitting ? (
               <span className="flex items-center justify-center gap-2">
