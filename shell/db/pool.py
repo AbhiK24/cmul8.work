@@ -22,6 +22,21 @@ async def init_pool():
             ALTER TABLE employers ADD COLUMN IF NOT EXISTS custom_roles JSONB DEFAULT '[]'::jsonb
         """)
 
+        # Fix retroactive session statuses based on timestamps
+        # Sessions with completed_at should be 'complete'
+        await conn.execute("""
+            UPDATE sessions
+            SET status = 'complete'
+            WHERE completed_at IS NOT NULL AND status != 'complete'
+        """)
+
+        # Sessions with started_at but no completed_at should be 'in_progress'
+        await conn.execute("""
+            UPDATE sessions
+            SET status = 'in_progress'
+            WHERE started_at IS NOT NULL AND completed_at IS NULL AND status NOT IN ('in_progress', 'complete')
+        """)
+
     return pool
 
 
