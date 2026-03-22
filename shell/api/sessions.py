@@ -66,6 +66,7 @@ class SessionResponse(BaseModel):
     org_name: Optional[str] = None
     role: str
     has_report: bool = False
+    mode: str = "test"  # 'test' or 'train'
 
 
 class SessionListResponse(BaseModel):
@@ -326,7 +327,7 @@ async def list_sessions(current_user: TokenData = Depends(get_current_user)):
     async with pool.acquire() as conn:
         rows = await conn.fetch("""
             SELECT session_id, candidate_name, candidate_email, candidate_link,
-                   candidate_type, status, created_at, org_params,
+                   candidate_type, status, created_at, org_params, mode,
                    report IS NOT NULL as has_report
             FROM sessions
             WHERE employer_id = $1
@@ -346,7 +347,8 @@ async def list_sessions(current_user: TokenData = Depends(get_current_user)):
                 created_at=row["created_at"].isoformat(),
                 org_name=org_params.get("org_name"),
                 role=org_params.get("role", "Unknown"),
-                has_report=row["has_report"] or False
+                has_report=row["has_report"] or False,
+                mode=row["mode"] or "test"
             ))
 
     return SessionListResponse(sessions=sessions)

@@ -14,6 +14,7 @@ import Debrief from './pages/Debrief';
 import Report from './pages/Report';
 import CandidateReport from './pages/CandidateReport';
 import TrainingDetail from './pages/TrainingDetail';
+import TrainingReport from './pages/TrainingReport';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { token, isLoading } = useAuth();
@@ -98,6 +99,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <TrainingDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/training-report/:sessionId"
+            element={
+              <ProtectedRoute>
+                <TrainingReport />
               </ProtectedRoute>
             }
           />

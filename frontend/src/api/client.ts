@@ -98,6 +98,7 @@ export interface SessionResponse {
   role: string;
   score?: number;
   has_report?: boolean;
+  mode?: 'test' | 'train';
 }
 
 export interface SessionDetailResponse extends SessionResponse {
