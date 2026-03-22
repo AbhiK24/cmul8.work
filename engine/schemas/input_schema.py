@@ -23,6 +23,8 @@ class GenerateRequest(BaseModel):
     company_size: Optional[str] = None
     company_description: Optional[str] = None
     hiring_focus: Optional[str] = None
+    # Job description from uploaded PDF
+    job_description: Optional[str] = None
 
 
 class MessageRequest(BaseModel):

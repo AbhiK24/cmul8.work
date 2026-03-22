@@ -2,15 +2,32 @@
 import json
 import secrets
 import os
+import io
 from typing import Optional
 
 import httpx
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, File, UploadFile, Form
 from pydantic import BaseModel, EmailStr
+from PyPDF2 import PdfReader
 
 from ..db.pool import get_pool
 from ..auth.jwt import TokenData
 from .auth import get_current_user
+
+
+def extract_pdf_text(file_content: bytes) -> str:
+    """Extract text from a PDF file."""
+    try:
+        pdf_reader = PdfReader(io.BytesIO(file_content))
+        text_parts = []
+        for page in pdf_reader.pages:
+            text = page.extract_text()
+            if text:
+                text_parts.append(text)
+        return "\n".join(text_parts)
+    except Exception as e:
+        print(f"PDF extraction error: {e}")
+        return ""
 
 router = APIRouter(prefix="/sessions")
 
@@ -63,12 +80,12 @@ class SessionDetailResponse(BaseModel):
     report: Optional[dict] = None
 
 
-@router.post("", response_model=SessionResponse)
-async def create_session(
+async def _create_session_internal(
     request: CreateSessionRequest,
-    current_user: TokenData = Depends(get_current_user)
-):
-    """Create a new simulation session."""
+    current_user: TokenData,
+    job_description: Optional[str] = None
+) -> SessionResponse:
+    """Internal function to create a session with optional JD."""
     pool = await get_pool()
 
     # Generate candidate token
@@ -96,7 +113,8 @@ async def create_session(
                 "industry": request.industry,
                 "stage": request.stage,
                 "function": request.function,
-                "model": request.model
+                "model": request.model,
+                "has_jd": bool(job_description)
             })
         )
 
@@ -144,6 +162,7 @@ async def create_session(
                     "company_size": org_context["company_size"],
                     "company_description": org_context["description"],
                     "hiring_focus": org_context["hiring_focus"],
+                    "job_description": job_description,
                 }
             )
             response.raise_for_status()
@@ -162,6 +181,40 @@ async def create_session(
         org_name=request.org_name,
         role=request.role
     )
+
+
+@router.post("", response_model=SessionResponse)
+async def create_session(
+    request: Optional[CreateSessionRequest] = None,
+    data: Optional[str] = Form(None),
+    jd_file: Optional[UploadFile] = File(None),
+    current_user: TokenData = Depends(get_current_user)
+):
+    """Create a new simulation session with optional JD PDF upload."""
+    job_description = None
+
+    # Handle multipart form data (with file)
+    if data:
+        try:
+            request_data = json.loads(data)
+            request = CreateSessionRequest(**request_data)
+        except (json.JSONDecodeError, Exception) as e:
+            raise HTTPException(status_code=400, detail=f"Invalid request data: {e}")
+
+    if not request:
+        raise HTTPException(status_code=400, detail="Request data required")
+
+    # Extract text from JD PDF if provided
+    if jd_file:
+        try:
+            content = await jd_file.read()
+            job_description = extract_pdf_text(content)
+            if job_description:
+                print(f"Extracted JD text: {len(job_description)} characters")
+        except Exception as e:
+            print(f"Failed to extract JD: {e}")
+
+    return await _create_session_internal(request, current_user, job_description)
 
 
 @router.get("", response_model=SessionListResponse)

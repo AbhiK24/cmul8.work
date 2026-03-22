@@ -166,6 +166,10 @@ async def generate_environment(request: GenerateRequest) -> EnvironmentResponse:
     """Generate a new simulation environment using Kimi 2.5."""
 
     # Build the prompt with full org context
+    jd_text = request.job_description or "No job description provided - generate appropriate tasks based on the role."
+    if request.job_description:
+        jd_text = f"---\n{request.job_description}\n---"
+
     prompt = GENERATION_PROMPT.format(
         role=request.role,
         industry=request.industry,
@@ -176,6 +180,7 @@ async def generate_environment(request: GenerateRequest) -> EnvironmentResponse:
         company_size=request.company_size or "Not specified",
         company_description=request.company_description or "Not specified - create a fitting description",
         hiring_focus=request.hiring_focus or "Not specified",
+        job_description=jd_text,
         schema=json.dumps(ENV_SCHEMA, indent=2)
     )
 

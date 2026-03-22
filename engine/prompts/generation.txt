@@ -13,6 +13,15 @@ You are an expert simulation designer for WorkSim, a hiring assessment platform.
 - What they do: {company_description}
 - Current hiring focus: {hiring_focus}
 
+## Job Description (if provided)
+{job_description}
+
+**IMPORTANT**: If a job description is provided above, use it to:
+1. Design tasks that directly test the responsibilities mentioned in the JD
+2. Create agent interactions that probe the required skills and qualifications
+3. Make the simulation scenario relevant to the day-to-day described in the JD
+4. Include scenarios that test the soft skills and competencies mentioned
+
 ## CRITICAL: Task-Driven Simulation Design
 
 This simulation is TASK-DRIVEN, not open-ended. The candidate must:

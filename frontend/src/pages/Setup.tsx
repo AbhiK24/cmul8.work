@@ -27,6 +27,7 @@ export default function Setup() {
     candidate_email: '',
     candidate_type: 'external' as 'internal' | 'external',
   });
+  const [jdFile, setJdFile] = useState<File | null>(null);
 
   useEffect(() => {
     async function loadProfile() {
@@ -66,7 +67,7 @@ export default function Setup() {
         candidate_name: form.candidate_name,
         candidate_email: form.candidate_email,
         candidate_type: form.candidate_type,
-      });
+      }, jdFile || undefined);
 
       navigate(`/preview/${response.session_id}`, {
         state: {
@@ -135,6 +136,53 @@ export default function Setup() {
                   className="w-full border border-border rounded-lg px-3 py-2.5 text-sm mt-2 focus:outline-none focus:ring-1 focus:ring-dark/20 focus:border-dark/40"
                 />
               )}
+            </div>
+
+            <div>
+              <label className="block text-xs uppercase tracking-widest text-muted mb-1.5 font-medium">
+                Job Description (Optional)
+              </label>
+              <div className="relative">
+                <input
+                  type="file"
+                  accept=".pdf"
+                  onChange={(e) => setJdFile(e.target.files?.[0] || null)}
+                  className="hidden"
+                  id="jd-upload"
+                />
+                <label
+                  htmlFor="jd-upload"
+                  className="flex items-center justify-center gap-2 w-full border border-dashed border-border rounded-lg px-3 py-4 text-sm cursor-pointer hover:border-dark/40 hover:bg-surface/50 transition-colors"
+                >
+                  {jdFile ? (
+                    <span className="flex items-center gap-2 text-dark">
+                      <svg className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      {jdFile.name}
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2 text-muted">
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                      </svg>
+                      Upload JD PDF for more accurate simulation
+                    </span>
+                  )}
+                </label>
+                {jdFile && (
+                  <button
+                    type="button"
+                    onClick={() => setJdFile(null)}
+                    className="absolute top-2 right-2 text-muted hover:text-dark"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-muted mt-1">PDF containing job description to tailor the simulation</p>
             </div>
 
             <div>
