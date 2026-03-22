@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { templates, type TemplateDetail } from '../api/client';
+import { templates, sessions, type TemplateDetail, type SessionResponse } from '../api/client';
 import Logo from '../components/Logo';
 
 const difficultyConfig = {
@@ -32,26 +32,53 @@ const relationshipLabels: Record<string, string> = {
   client: 'Client',
 };
 
+const statusConfig = {
+  generating: { label: 'Generating', bg: 'bg-amber-100', text: 'text-amber-700', dot: 'bg-amber-500' },
+  pending: { label: 'Ready', bg: 'bg-emerald-100', text: 'text-emerald-700', dot: 'bg-emerald-500' },
+  in_progress: { label: 'In Progress', bg: 'bg-blue-100', text: 'text-blue-700', dot: 'bg-blue-500' },
+  complete: { label: 'Complete', bg: 'bg-indigo-100', text: 'text-indigo-700', dot: 'bg-indigo-500' },
+  expired: { label: 'Expired', bg: 'bg-gray-100', text: 'text-gray-500', dot: 'bg-gray-400' },
+};
+
+function formatDate(date: string) {
+  return new Date(date).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 export default function TrainingDetail() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { token } = useAuth();
 
   const [template, setTemplate] = useState<TemplateDetail | null>(null);
+  const [trainingSessions, setTrainingSessions] = useState<SessionResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [assignForm, setAssignForm] = useState({ name: '', email: '' });
   const [isAssigning, setIsAssigning] = useState(false);
   const [assignedLink, setAssignedLink] = useState('');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
-    async function loadTemplate() {
+    async function loadData() {
       if (!token || !slug) return;
 
       try {
-        const data = await templates.get(token, slug);
-        setTemplate(data);
+        const [templateData, sessionsRes] = await Promise.all([
+          templates.get(token, slug),
+          sessions.list(token),
+        ]);
+        setTemplate(templateData);
+        // Filter sessions for this training template (by title match)
+        const filtered = sessionsRes.sessions.filter(
+          s => s.mode === 'train' && s.role === templateData.title
+        );
+        setTrainingSessions(filtered);
       } catch (err) {
         setError('Template not found');
       } finally {
@@ -59,7 +86,7 @@ export default function TrainingDetail() {
       }
     }
 
-    loadTemplate();
+    loadData();
   }, [token, slug]);
 
   const handleAssign = async (e: React.FormEvent) => {
@@ -246,6 +273,107 @@ export default function TrainingDetail() {
                 )}
               </div>
             )}
+
+            {/* Training Stats */}
+            {trainingSessions.length > 0 && (
+              <div className="bg-white border border-border rounded-xl p-6">
+                <h2 className="font-semibold text-dark mb-4 flex items-center gap-2">
+                  <span className="text-lg">📊</span>
+                  Training Stats
+                </h2>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="bg-emerald-50 rounded-lg p-4 text-center">
+                    <div className="text-2xl font-bold text-emerald-700">
+                      {trainingSessions.filter(s => s.status === 'complete').length}
+                    </div>
+                    <div className="text-xs text-emerald-600">Completed</div>
+                  </div>
+                  <div className="bg-blue-50 rounded-lg p-4 text-center">
+                    <div className="text-2xl font-bold text-blue-700">
+                      {trainingSessions.filter(s => s.status === 'in_progress').length}
+                    </div>
+                    <div className="text-xs text-blue-600">In Progress</div>
+                  </div>
+                  <div className="bg-amber-50 rounded-lg p-4 text-center">
+                    <div className="text-2xl font-bold text-amber-700">
+                      {trainingSessions.filter(s => s.status === 'pending').length}
+                    </div>
+                    <div className="text-xs text-amber-600">Ready</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Assigned Team Members Table */}
+            {trainingSessions.length > 0 && (
+              <div className="bg-white border border-border rounded-xl overflow-hidden">
+                <div className="px-6 py-4 border-b border-border">
+                  <h2 className="font-semibold text-dark flex items-center gap-2">
+                    <span className="text-lg">👥</span>
+                    Assigned Team Members
+                  </h2>
+                </div>
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border bg-surface/50">
+                      <th className="text-left px-6 py-3 text-xs uppercase tracking-widest text-muted font-medium">Name</th>
+                      <th className="text-left px-6 py-3 text-xs uppercase tracking-widest text-muted font-medium">Status</th>
+                      <th className="text-left px-6 py-3 text-xs uppercase tracking-widest text-muted font-medium">Date</th>
+                      <th className="text-left px-6 py-3 text-xs uppercase tracking-widest text-muted font-medium">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {trainingSessions.map((session) => {
+                      const status = statusConfig[session.status as keyof typeof statusConfig] || statusConfig.pending;
+                      return (
+                        <tr key={session.session_id} className="border-b border-border last:border-0 hover:bg-surface/30">
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 text-xs font-medium">
+                                {session.candidate_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                              </div>
+                              <div>
+                                <div className="font-medium text-dark text-sm">{session.candidate_name}</div>
+                                <div className="text-xs text-muted">{session.candidate_email}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${status.bg} ${status.text}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`} />
+                              {status.label}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-muted">{formatDate(session.created_at)}</td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(session.candidate_link);
+                                  setCopiedId(session.session_id);
+                                  setTimeout(() => setCopiedId(null), 2000);
+                                }}
+                                className="px-2 py-1 text-xs text-muted hover:text-dark transition-colors"
+                              >
+                                {copiedId === session.session_id ? '✓ Copied' : 'Copy Link'}
+                              </button>
+                              {session.has_report && (
+                                <Link
+                                  to={`/training-report/${session.session_id}`}
+                                  className="px-2 py-1 bg-emerald-50 text-emerald-700 rounded text-xs font-medium hover:bg-emerald-100"
+                                >
+                                  View Report
+                                </Link>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
 
           {/* Right column */}
@@ -278,6 +406,48 @@ export default function TrainingDetail() {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* Quick Info */}
+            <div className="bg-white border border-border rounded-xl p-6">
+              <h2 className="font-semibold text-dark mb-4 flex items-center gap-2">
+                <span className="text-lg">📋</span>
+                Quick Info
+              </h2>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-xs text-muted mb-1">Organization</p>
+                  <p className="text-sm font-medium text-dark">{template.company_context.company_name}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted mb-1">Skill Category</p>
+                  <p className="text-sm font-medium text-dark capitalize">{template.skill_category}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted mb-1">Difficulty</p>
+                  <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-0.5">
+                      {[1, 2, 3].map((i) => (
+                        <div
+                          key={i}
+                          className={`w-1.5 h-3 rounded-sm ${
+                            i <= difficulty.bars ? difficulty.color : 'bg-gray-200'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-sm text-dark">{difficulty.label}</span>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs text-muted mb-1">Duration</p>
+                  <p className="text-sm font-medium text-dark">~{template.duration_minutes} minutes</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted mb-1">Total Assigned</p>
+                  <p className="text-sm font-medium text-dark">{trainingSessions.length}</p>
+                </div>
               </div>
             </div>
 

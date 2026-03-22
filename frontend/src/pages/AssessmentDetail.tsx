@@ -94,6 +94,29 @@ function formatDate(date: string) {
   });
 }
 
+// DiceBear avatar helper
+const avatarStyles = ['avataaars', 'personas', 'notionists', 'lorelei', 'adventurer'];
+function getAvatarUrl(name: string, avatarUrl?: string, index: number = 0): string {
+  if (avatarUrl) return avatarUrl;
+  const style = avatarStyles[index % avatarStyles.length];
+  return `https://api.dicebear.com/7.x/${style}/svg?seed=${name.replace(/\s+/g, '')}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
+}
+
+const relationshipLabels: Record<string, string> = {
+  manager: 'Your Manager',
+  report: 'Reports to You',
+  peer: 'Peer',
+  client: 'Client',
+};
+
+interface Agent {
+  agent_id: string;
+  name: string;
+  role: string;
+  relationship_to_candidate: string;
+  avatar_url?: string;
+}
+
 export default function AssessmentDetail() {
   const { role } = useParams();
   const { token } = useAuth();
@@ -235,6 +258,7 @@ export default function AssessmentDetail() {
   const companyName = env?.company_name as string || workSim.org_name || 'Custom Organization';
   const companyDescription = env?.company_description as string;
   const scenarioTension = env?.scenario_tension as string;
+  const agents = (env?.agents as Agent[]) || [];
 
   return (
     <div className="min-h-screen bg-surface">
@@ -459,6 +483,39 @@ export default function AssessmentDetail() {
 
           {/* Right column */}
           <div className="space-y-6">
+            {/* Who You'll Meet */}
+            {agents.length > 0 && (
+              <div className="bg-white border border-border rounded-xl p-6">
+                <h2 className="font-semibold text-dark mb-4 flex items-center gap-2">
+                  <span className="text-lg">👥</span>
+                  Who You'll Meet
+                </h2>
+                <div className="space-y-4">
+                  {agents.map((agent, i) => (
+                    <div key={agent.agent_id} className="flex items-start gap-3">
+                      <img
+                        src={getAvatarUrl(agent.name, agent.avatar_url, i)}
+                        alt={agent.name}
+                        className="w-10 h-10 rounded-full bg-surface"
+                      />
+                      <div>
+                        <p className="font-medium text-dark text-sm">{agent.name}</p>
+                        <p className="text-xs text-muted">{agent.role}</p>
+                        <span className={`inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium ${
+                          agent.relationship_to_candidate === 'manager' ? 'bg-indigo-100 text-indigo-700' :
+                          agent.relationship_to_candidate === 'report' ? 'bg-emerald-100 text-emerald-700' :
+                          agent.relationship_to_candidate === 'client' ? 'bg-amber-100 text-amber-700' :
+                          'bg-gray-100 text-gray-700'
+                        }`}>
+                          {relationshipLabels[agent.relationship_to_candidate] || 'Colleague'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Quick Info */}
             <div className="bg-white border border-border rounded-xl p-6">
               <h2 className="font-semibold text-dark mb-4 flex items-center gap-2">
@@ -497,34 +554,6 @@ export default function AssessmentDetail() {
                 <div>
                   <p className="text-xs text-muted mb-1">Total Candidates</p>
                   <p className="text-sm font-medium text-dark">{workSimSessions.length}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* How It Works */}
-            <div className="bg-white border border-border rounded-xl p-6">
-              <h2 className="font-semibold text-dark mb-4 flex items-center gap-2">
-                <span className="text-lg">💡</span>
-                How It Works
-              </h2>
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 text-xs font-semibold shrink-0">
-                    1
-                  </div>
-                  <p className="text-sm text-mid">Candidate receives unique link</p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 text-xs font-semibold shrink-0">
-                    2
-                  </div>
-                  <p className="text-sm text-mid">They interact with AI coworkers in realistic scenarios</p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 text-xs font-semibold shrink-0">
-                    3
-                  </div>
-                  <p className="text-sm text-mid">You get detailed report on their soft skills</p>
                 </div>
               </div>
             </div>
