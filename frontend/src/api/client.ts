@@ -97,6 +97,7 @@ export interface SessionResponse {
   org_name?: string;
   role: string;
   score?: number;
+  has_report?: boolean;
 }
 
 export interface SessionDetailResponse extends SessionResponse {
