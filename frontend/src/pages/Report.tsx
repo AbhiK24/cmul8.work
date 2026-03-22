@@ -96,7 +96,52 @@ export default function Report() {
   const { token } = useAuth();
   const [session, setSession] = useState<SessionDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
+  const [generationStatus, setGenerationStatus] = useState('');
+
+  const handleGenerateReport = async () => {
+    if (!token || !sessionId) return;
+
+    setIsGenerating(true);
+    setGenerationStatus('Analyzing session data...');
+    setError('');
+
+    try {
+      // Simulate progress updates
+      const statuses = [
+        'Analyzing session data...',
+        'Evaluating behavioral patterns...',
+        'Scoring communication traits...',
+        'Generating insights...',
+        'Compiling final report...'
+      ];
+
+      let statusIdx = 0;
+      const statusInterval = setInterval(() => {
+        statusIdx = (statusIdx + 1) % statuses.length;
+        setGenerationStatus(statuses[statusIdx]);
+      }, 2000);
+
+      await sessions.generateReport(token, sessionId);
+
+      clearInterval(statusInterval);
+      setGenerationStatus('Report generated! Loading...');
+
+      // Reload session to get the report
+      const data = await sessions.get(token, sessionId);
+      setSession(data as unknown as SessionDetail);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError('Failed to generate report');
+      }
+    } finally {
+      setIsGenerating(false);
+      setGenerationStatus('');
+    }
+  };
 
   useEffect(() => {
     async function loadSession() {
@@ -144,12 +189,62 @@ export default function Report() {
 
   if (!report) {
     return (
-      <div className="min-h-screen bg-surface flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-muted mb-4">Report not yet available</p>
-          <Link to="/" className="text-dark hover:opacity-70">
-            Back to dashboard
-          </Link>
+      <div className="min-h-screen bg-surface flex flex-col">
+        <header className="bg-white border-b border-border">
+          <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+            <Logo size="md" />
+            <Link
+              to="/"
+              className="text-sm text-muted hover:text-dark transition-colors"
+            >
+              Back to Dashboard
+            </Link>
+          </div>
+        </header>
+
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center max-w-md">
+            {isGenerating ? (
+              <>
+                <div className="mb-6">
+                  <div className="animate-spin h-12 w-12 border-3 border-dark border-t-transparent rounded-full mx-auto" />
+                </div>
+                <h2 className="text-xl font-semibold text-dark mb-2">Generating Report</h2>
+                <p className="text-muted mb-4">{generationStatus}</p>
+                <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                  <div className="h-full bg-dark rounded-full animate-pulse" style={{ width: '60%' }} />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="mb-6">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
+                    <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                </div>
+                <h2 className="text-xl font-semibold text-dark mb-2">Report Not Generated</h2>
+                <p className="text-muted mb-6">
+                  {session.status === 'complete'
+                    ? 'This session is complete. Generate a report to see behavioral insights and scores.'
+                    : 'This session is still in progress. The report will be available once the candidate completes the simulation.'}
+                </p>
+                {session.status === 'complete' && (
+                  <button
+                    onClick={handleGenerateReport}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-dark text-white rounded-lg hover:bg-dark/90 transition-colors font-medium"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Generate Report
+                  </button>
+                )}
+                {error && <p className="text-red-600 mt-4 text-sm">{error}</p>}
+              </>
+            )}
+          </div>
         </div>
       </div>
     );

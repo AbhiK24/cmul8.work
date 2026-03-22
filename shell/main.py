@@ -90,6 +90,7 @@ async def debug_sessions():
                    debrief IS NOT NULL as has_debrief,
                    env IS NOT NULL as has_env,
                    trace IS NOT NULL as has_trace,
+                   report IS NOT NULL as has_report,
                    agent_histories
             FROM sessions
             ORDER BY created_at DESC
@@ -104,6 +105,7 @@ async def debug_sessions():
                 "has_debrief": row["has_debrief"],
                 "has_env": row["has_env"],
                 "has_trace": row["has_trace"],
+                "has_report": row["has_report"],
                 "has_agent_history": row["agent_histories"] not in (None, '{}', '[]')
             }
             for row in rows
