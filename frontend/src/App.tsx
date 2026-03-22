@@ -12,6 +12,7 @@ import CandidateLanding from './pages/CandidateLanding';
 import Simulation from './pages/Simulation';
 import Debrief from './pages/Debrief';
 import Report from './pages/Report';
+import CandidateReport from './pages/CandidateReport';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { token, isLoading } = useAuth();
@@ -96,6 +97,7 @@ function App() {
           <Route path="/s/:sessionId/:token" element={<CandidateLanding />} />
           <Route path="/sim/:sessionId/:token" element={<Simulation />} />
           <Route path="/debrief/:sessionId/:token" element={<Debrief />} />
+          <Route path="/report/:sessionId/candidate" element={<CandidateReport />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

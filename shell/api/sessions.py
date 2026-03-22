@@ -315,3 +315,50 @@ async def get_session_context(session_id: str, token: str):
             "status": row["status"],
             "ready": row["status"] == "pending" and env is not None
         }
+
+
+@router.get("/{session_id}/report/candidate")
+async def get_candidate_report(session_id: str):
+    """Get candidate-facing report (public, only available for completed sessions)."""
+    pool = await get_pool()
+
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow("""
+            SELECT candidate_name, org_params, env, report, report_html_candidate, status
+            FROM sessions
+            WHERE session_id = $1
+        """, session_id)
+
+        if not row:
+            raise HTTPException(status_code=404, detail="Session not found")
+
+        if row["status"] != "complete":
+            raise HTTPException(status_code=404, detail="Report not yet available")
+
+        org_params = json.loads(row["org_params"]) if row["org_params"] else {}
+        env = json.loads(row["env"]) if row["env"] else {}
+        report = json.loads(row["report"]) if row["report"] else {}
+
+        # Build candidate-friendly report (less detailed than employer report)
+        trait_scores = report.get("trait_scores", {})
+
+        # Extract strengths (high scores) and growth areas (lower scores)
+        strengths = []
+        growth_areas = []
+        for trait, data in trait_scores.items():
+            if isinstance(data, dict) and "score" in data:
+                if data["score"] >= 7:
+                    strengths.append(f"Strong {trait.replace('_', ' ')}")
+                elif data["score"] < 5:
+                    growth_areas.append(f"Developing {trait.replace('_', ' ')}")
+
+        return {
+            "candidate_name": row["candidate_name"],
+            "role": org_params.get("role", "Role"),
+            "company_name": env.get("company_name") or org_params.get("org_name", "Company"),
+            "overall_band": report.get("overall_band", "Calibrating"),
+            "trait_scores": trait_scores,
+            "strengths": strengths or report.get("key_observations", [])[:3],
+            "growth_areas": growth_areas or [],
+            "session_summary": report.get("session_summary", "Your simulation has been completed and analyzed."),
+        }
