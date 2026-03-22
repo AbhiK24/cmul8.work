@@ -362,3 +362,36 @@ async def get_candidate_report(session_id: str):
             "growth_areas": growth_areas or [],
             "session_summary": report.get("session_summary", "Your simulation has been completed and analyzed."),
         }
+
+
+@router.post("/{session_id}/score")
+async def trigger_scoring(
+    session_id: str,
+    current_user: TokenData = Depends(get_current_user)
+):
+    """Trigger report generation for a completed session (employer only)."""
+    pool = await get_pool()
+
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow("""
+            SELECT status, report FROM sessions
+            WHERE session_id = $1 AND employer_id = $2
+        """, session_id, current_user.employer_id)
+
+        if not row:
+            raise HTTPException(status_code=404, detail="Session not found")
+
+        if row["status"] not in ("complete", "in_progress"):
+            raise HTTPException(status_code=400, detail="Session must be completed to generate report")
+
+    # Call engine to score
+    try:
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            response = await client.post(
+                f"{ENGINE_URL}/score",
+                json={"session_id": session_id}
+            )
+            response.raise_for_status()
+            return {"status": "success", "message": "Report generated successfully"}
+    except httpx.HTTPError as e:
+        raise HTTPException(status_code=502, detail=f"Scoring failed: {e}")

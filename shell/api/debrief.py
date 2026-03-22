@@ -42,7 +42,7 @@ async def submit_debrief(session_id: str, request: DebriefRequest):
         if row["status"] == "complete":
             raise HTTPException(status_code=400, detail="Session already completed")
 
-        # Save debrief
+        # Save debrief and mark as complete
         debrief = {
             "What did you prioritise in the session, and why?": request.q1,
             "What do you think you missed or underweighted?": request.q2,
@@ -51,7 +51,7 @@ async def submit_debrief(session_id: str, request: DebriefRequest):
 
         await conn.execute("""
             UPDATE sessions
-            SET debrief = $1, completed_at = NOW()
+            SET debrief = $1, completed_at = NOW(), status = 'complete'
             WHERE session_id = $2
         """, json.dumps(debrief), session_id)
 

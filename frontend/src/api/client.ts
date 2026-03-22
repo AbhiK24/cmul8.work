@@ -148,6 +148,12 @@ export const sessions = {
       status: string;
       ready: boolean;
     }>(`/sessions/${sessionId}/context?token=${candidateToken}`),
+
+  generateReport: (token: string, sessionId: string) =>
+    apiRequest<{ status: string; message: string }>(`/sessions/${sessionId}/score`, {
+      method: 'POST',
+      token,
+    }),
 };
 
 // Profile endpoints

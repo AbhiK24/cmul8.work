@@ -150,11 +150,19 @@ async def get_environment(session_id: str, token: str):
 
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
-            "SELECT env FROM sessions WHERE session_id = $1",
+            "SELECT env, status FROM sessions WHERE session_id = $1",
             session_id
         )
 
         if not row or not row["env"]:
             raise HTTPException(status_code=404, detail="Environment not ready")
+
+        # Mark session as in_progress if it's pending (candidate started simulation)
+        if row["status"] == "pending":
+            await conn.execute("""
+                UPDATE sessions
+                SET status = 'in_progress', started_at = NOW()
+                WHERE session_id = $1 AND status = 'pending'
+            """, session_id)
 
         return json.loads(row["env"])
