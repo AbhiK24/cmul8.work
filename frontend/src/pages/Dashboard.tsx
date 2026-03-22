@@ -22,13 +22,6 @@ function formatDate(date: string) {
   });
 }
 
-function formatDateShort(date: string) {
-  return new Date(date).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-  });
-}
-
 type TabType = 'assess' | 'train' | 'history';
 
 export default function Dashboard() {
@@ -74,6 +67,28 @@ export default function Dashboard() {
   const assessSessions = useMemo(() => {
     return sessionList.filter(s => s.mode !== 'train');
   }, [sessionList]);
+
+  // Group assess sessions by role (WorkSim)
+  const workSimGroups = useMemo(() => {
+    const groups: Record<string, { role: string; orgName: string; sessions: SessionResponse[] }> = {};
+    assessSessions.forEach(session => {
+      const key = session.role;
+      if (!groups[key]) {
+        groups[key] = {
+          role: session.role,
+          orgName: session.org_name || 'Custom Organization',
+          sessions: [],
+        };
+      }
+      groups[key].sessions.push(session);
+    });
+    return Object.values(groups).sort((a, b) => {
+      // Sort by most recent session
+      const aLatest = Math.max(...a.sessions.map(s => new Date(s.created_at).getTime()));
+      const bLatest = Math.max(...b.sessions.map(s => new Date(s.created_at).getTime()));
+      return bLatest - aLatest;
+    });
+  }, [assessSessions]);
 
   // Get unique roles for filter dropdown
   const uniqueRoles = useMemo(() => {
@@ -244,7 +259,7 @@ export default function Dashboard() {
                   Try again
                 </button>
               </div>
-            ) : assessSessions.length === 0 ? (
+            ) : workSimGroups.length === 0 ? (
               <div className="text-center py-16">
                 <div className="w-16 h-16 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-2xl mx-auto mb-4 flex items-center justify-center">
                   <span className="text-2xl">📋</span>
@@ -265,74 +280,78 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {assessSessions.map((session) => {
-                  const status = statusConfig[session.status as keyof typeof statusConfig] || statusConfig.pending;
+                {workSimGroups.map((group) => {
+                  const completedCount = group.sessions.filter(s => s.status === 'complete').length;
+                  const pendingCount = group.sessions.filter(s => s.status === 'pending').length;
+                  const inProgressCount = group.sessions.filter(s => s.status === 'in_progress').length;
+
                   return (
-                    <div
-                      key={session.session_id}
-                      className="bg-white border border-border rounded-xl p-5 hover:shadow-lg hover:border-indigo-200 transition-all duration-200 group"
+                    <Link
+                      key={group.role}
+                      to={`/assessment/${encodeURIComponent(group.role)}`}
+                      className="group bg-white border border-border rounded-xl p-5 hover:shadow-lg hover:border-indigo-200 transition-all duration-200"
                     >
-                      {/* Header */}
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <span className={`w-2 h-2 rounded-full ${status.dot}`} />
-                          <span className={`text-xs font-medium ${status.text}`}>{status.label}</span>
-                        </div>
-                        <span className="text-xs text-muted">{formatDateShort(session.created_at)}</span>
+                      {/* Icon */}
+                      <div className="w-12 h-12 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <svg className="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                        </svg>
                       </div>
 
-                      {/* Role */}
+                      {/* Title & Org */}
                       <h3 className="font-semibold text-dark mb-1 group-hover:text-indigo-700 transition-colors">
-                        {session.role}
+                        {group.role}
                       </h3>
-                      <p className="text-sm text-muted mb-3">{session.org_name || 'Custom Organization'}</p>
+                      <p className="text-sm text-muted mb-4">{group.orgName}</p>
 
-                      {/* Candidate */}
-                      <div className="flex items-center gap-2 p-2 bg-surface rounded-lg mb-4">
-                        <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-xs font-medium">
-                          {session.candidate_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                      {/* Stats */}
+                      <div className="flex items-center gap-3 text-xs mb-4">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                          <span className="text-muted">{completedCount} done</span>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-dark truncate">{session.candidate_name}</div>
-                          <div className="text-xs text-muted truncate">{session.candidate_email}</div>
-                        </div>
-                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                          session.candidate_type === 'internal' ? 'bg-dark/10 text-dark' : 'bg-gray-100 text-gray-600'
-                        }`}>
-                          {session.candidate_type === 'internal' ? 'Benchmark' : 'External'}
-                        </span>
-                      </div>
-
-                      {/* Actions */}
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => copyLink(session.session_id, session.candidate_link)}
-                          className="flex-1 px-3 py-2 border border-border rounded-lg text-xs font-medium text-muted hover:text-dark hover:border-dark/30 transition-colors"
-                        >
-                          {copiedId === session.session_id ? 'Copied!' : 'Copy Link'}
-                        </button>
-                        {session.has_report ? (
-                          <Link
-                            to={`/report/${session.session_id}`}
-                            className="flex-1 px-3 py-2 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-medium text-center hover:bg-indigo-100 transition-colors"
-                          >
-                            View Report
-                          </Link>
-                        ) : session.status === 'complete' ? (
-                          <button
-                            onClick={() => generateReport(session.session_id)}
-                            disabled={generatingReportId === session.session_id}
-                            className="flex-1 px-3 py-2 bg-dark text-white rounded-lg text-xs font-medium hover:bg-dark/90 transition-colors disabled:opacity-50"
-                          >
-                            {generatingReportId === session.session_id ? 'Generating...' : 'Generate Report'}
-                          </button>
-                        ) : (
-                          <div className="flex-1 px-3 py-2 bg-surface text-muted rounded-lg text-xs font-medium text-center">
-                            Awaiting completion
+                        {inProgressCount > 0 && (
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-blue-500" />
+                            <span className="text-muted">{inProgressCount} active</span>
+                          </div>
+                        )}
+                        {pendingCount > 0 && (
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                            <span className="text-muted">{pendingCount} ready</span>
                           </div>
                         )}
                       </div>
-                    </div>
+
+                      {/* Candidates preview */}
+                      <div className="pt-4 border-t border-border">
+                        <div className="flex items-center justify-between">
+                          <div className="flex -space-x-2">
+                            {group.sessions.slice(0, 4).map((session) => (
+                              <div
+                                key={session.session_id}
+                                className="w-7 h-7 rounded-full bg-indigo-100 border-2 border-white flex items-center justify-center text-indigo-600 text-[10px] font-medium"
+                                title={session.candidate_name}
+                              >
+                                {session.candidate_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                              </div>
+                            ))}
+                            {group.sessions.length > 4 && (
+                              <div className="w-7 h-7 rounded-full bg-gray-100 border-2 border-white flex items-center justify-center text-gray-600 text-[10px] font-medium">
+                                +{group.sessions.length - 4}
+                              </div>
+                            )}
+                          </div>
+                          <span className="text-xs font-medium text-indigo-600 group-hover:text-indigo-700 flex items-center gap-1">
+                            View all
+                            <svg className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
                   );
                 })}
 

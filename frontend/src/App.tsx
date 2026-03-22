@@ -15,6 +15,7 @@ import Report from './pages/Report';
 import CandidateReport from './pages/CandidateReport';
 import TrainingDetail from './pages/TrainingDetail';
 import TrainingReport from './pages/TrainingReport';
+import AssessmentDetail from './pages/AssessmentDetail';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { token, isLoading } = useAuth();
@@ -107,6 +108,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <TrainingReport />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/assessment/:role"
+            element={
+              <ProtectedRoute>
+                <AssessmentDetail />
               </ProtectedRoute>
             }
           />
