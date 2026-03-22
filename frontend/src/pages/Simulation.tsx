@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { candidate, sessions } from '../api/client';
 import type { Agent, Thread, Message, Task, ArtifactSection, ArtifactContent } from '../types';
 import { antiCheat } from '../utils/antiCheat';
+import Onboarding from './Onboarding';
 
 interface SimulationEnv {
   company_name: string;
@@ -85,6 +86,7 @@ export default function Simulation() {
   const [showArtifact, setShowArtifact] = useState(false);
   const [artifactSections, setArtifactSections] = useState<ArtifactSection[]>([]);
   const [editingSection, setEditingSection] = useState<string | null>(null);
+  const [onboardingComplete, setOnboardingComplete] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const startTimeRef = useRef<number>(Date.now());
@@ -172,9 +174,9 @@ export default function Simulation() {
     return () => clearInterval(interval);
   }, [navigate, sessionId, token]);
 
-  // Stress injects
+  // Stress injects - only start after onboarding completes
   useEffect(() => {
-    if (!env?.inject_schedule) return;
+    if (!env?.inject_schedule || !onboardingComplete) return;
 
     const timeouts: ReturnType<typeof setTimeout>[] = [];
 
@@ -211,7 +213,7 @@ export default function Simulation() {
     });
 
     return () => timeouts.forEach(t => clearTimeout(t));
-  }, [env, agents, threads]);
+  }, [env, agents, threads, onboardingComplete]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -460,6 +462,26 @@ export default function Simulation() {
           <p className="text-muted text-sm">{error || 'Failed to load simulation'}</p>
         </div>
       </div>
+    );
+  }
+
+  // Show onboarding before simulation starts
+  if (!onboardingComplete) {
+    return (
+      <Onboarding
+        companyName={env.company_name}
+        companyDescription={env.company_description}
+        scenarioTension={env.scenario_tension}
+        candidateName={candidateInfo?.name || 'Candidate'}
+        role={candidateInfo?.role || 'Team Member'}
+        agents={env.agents}
+        tasks={env.tasks || []}
+        artifact={env.artifact_content}
+        onComplete={() => {
+          setOnboardingComplete(true);
+          startTimeRef.current = Date.now(); // Reset timer when simulation actually starts
+        }}
+      />
     );
   }
 
