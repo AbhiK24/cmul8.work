@@ -351,11 +351,35 @@ export default function Report() {
                         <div className="text-lg font-bold text-dark">{(agent.final_score * 100).toFixed(0)}%</div>
                         <div className="text-xs text-muted">{agent.score_change}</div>
                       </div>
-                      <span className={`px-3 py-1.5 rounded-full text-xs font-semibold ${
-                        agent.would_work_with_again ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
-                      }`}>
-                        {agent.would_work_with_again ? 'Would collaborate again' : 'Hesitant'}
-                      </span>
+                      {(() => {
+                        // Determine sentiment based on score change
+                        const isUnchanged = agent.score_change?.toLowerCase().includes('unchanged') ||
+                                           agent.score_change?.includes('+0') ||
+                                           agent.score_change?.includes('0.00') ||
+                                           agent.final_score === 0.5;
+                        const isPositive = agent.would_work_with_again && !isUnchanged;
+                        const isNegative = !agent.would_work_with_again && !isUnchanged;
+
+                        if (isPositive) {
+                          return (
+                            <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
+                              Would collaborate again
+                            </span>
+                          );
+                        } else if (isNegative) {
+                          return (
+                            <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+                              Hesitant to work with
+                            </span>
+                          );
+                        } else {
+                          return (
+                            <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">
+                              Wasn't impressed
+                            </span>
+                          );
+                        }
+                      })()}
                     </div>
                   </div>
                   <p className="text-sm text-mid leading-relaxed">{agent.perception}</p>
