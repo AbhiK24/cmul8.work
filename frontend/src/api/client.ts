@@ -148,6 +148,11 @@ export const sessions = {
       role: string;
       status: string;
       ready: boolean;
+      mode?: 'test' | 'train';
+      framework_name?: string;
+      framework_reference?: FrameworkReference;
+      coaching_prompts?: Record<string, string[]>;
+      learning_objectives?: string[];
     }>(`/sessions/${sessionId}/context?token=${candidateToken}`),
 
   generateReport: (token: string, sessionId: string) =>

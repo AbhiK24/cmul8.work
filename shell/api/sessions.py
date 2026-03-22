@@ -393,7 +393,7 @@ async def get_session_context(session_id: str, token: str):
 
     async with pool.acquire() as conn:
         row = await conn.fetchrow("""
-            SELECT candidate_name, candidate_token, org_params, env, status
+            SELECT candidate_name, candidate_token, org_params, env, status, mode
             FROM sessions
             WHERE session_id = $1
         """, session_id)
@@ -409,14 +409,25 @@ async def get_session_context(session_id: str, token: str):
 
         org_params = json.loads(row["org_params"]) if row["org_params"] else {}
         env = json.loads(row["env"]) if row["env"] else None
+        mode = row["mode"] or "test"
 
-        return {
+        response = {
             "candidate_name": row["candidate_name"],
             "company_name": env.get("company_name") if env else org_params.get("org_name", "Company"),
             "role": org_params.get("role", "Role"),
             "status": row["status"],
-            "ready": row["status"] == "pending" and env is not None
+            "ready": row["status"] == "pending" and env is not None,
+            "mode": mode,
         }
+
+        # Include training-specific data for train mode
+        if mode == "train" and env:
+            response["framework_name"] = env.get("framework_name")
+            response["framework_reference"] = env.get("framework_reference")
+            response["coaching_prompts"] = env.get("coaching_prompts", {})
+            response["learning_objectives"] = env.get("learning_objectives", [])
+
+        return response
 
 
 @router.get("/{session_id}/report/candidate")
