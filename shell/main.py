@@ -56,3 +56,30 @@ app.include_router(debrief_router)
 async def health_check():
     """Health check endpoint."""
     return {"status": "healthy", "service": "shell"}
+
+
+@app.get("/debug/sessions")
+async def debug_sessions():
+    """Debug endpoint to check session statuses."""
+    from .db.pool import get_pool
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch("""
+            SELECT session_id, status, started_at, completed_at,
+                   debrief IS NOT NULL as has_debrief,
+                   env IS NOT NULL as has_env
+            FROM sessions
+            ORDER BY created_at DESC
+            LIMIT 10
+        """)
+        return [
+            {
+                "session_id": str(row["session_id"])[:8] + "...",
+                "status": row["status"],
+                "started_at": str(row["started_at"]) if row["started_at"] else None,
+                "completed_at": str(row["completed_at"]) if row["completed_at"] else None,
+                "has_debrief": row["has_debrief"],
+                "has_env": row["has_env"]
+            }
+            for row in rows
+        ]
