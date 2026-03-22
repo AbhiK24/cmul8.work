@@ -1,9 +1,24 @@
 """Training templates API endpoints."""
+import json
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
 
 from ..db.pool import get_pool
+
+
+def parse_json_field(value, default=None):
+    """Parse a JSON field that might be a string or already parsed."""
+    if value is None:
+        return default
+    if isinstance(value, (list, dict)):
+        return value
+    if isinstance(value, str):
+        try:
+            return json.loads(value)
+        except json.JSONDecodeError:
+            return default
+    return default
 
 router = APIRouter(prefix="/templates", tags=["templates"])
 
@@ -78,7 +93,7 @@ async def list_templates():
                 description=row["description"] or "",
                 duration_minutes=row["duration_minutes"],
                 difficulty=row["difficulty"],
-                learning_objectives=row["learning_objectives"] or []
+                learning_objectives=parse_json_field(row["learning_objectives"], [])
             )
             for row in rows
         ]
@@ -109,10 +124,10 @@ async def get_template(slug: str):
             description=row["description"] or "",
             duration_minutes=row["duration_minutes"],
             difficulty=row["difficulty"],
-            learning_objectives=row["learning_objectives"] or [],
-            company_context=row["company_context"] or {},
-            agents=row["agents"] or [],
-            tasks=row["tasks"] or [],
+            learning_objectives=parse_json_field(row["learning_objectives"], []),
+            company_context=parse_json_field(row["company_context"], {}),
+            agents=parse_json_field(row["agents"], []),
+            tasks=parse_json_field(row["tasks"], []),
             framework_name=row["framework_name"],
-            framework_reference=row["framework_reference"]
+            framework_reference=parse_json_field(row["framework_reference"])
         )
