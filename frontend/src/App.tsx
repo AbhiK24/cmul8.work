@@ -13,6 +13,7 @@ import Simulation from './pages/Simulation';
 import Debrief from './pages/Debrief';
 import Report from './pages/Report';
 import CandidateReport from './pages/CandidateReport';
+import TrainingDetail from './pages/TrainingDetail';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { token, isLoading } = useAuth();
@@ -89,6 +90,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Report />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/training/:slug"
+            element={
+              <ProtectedRoute>
+                <TrainingDetail />
               </ProtectedRoute>
             }
           />

@@ -47,6 +47,13 @@ class CreateSessionRequest(BaseModel):
     candidate_type: Optional[str] = "external"  # 'internal' or 'external'
 
 
+class CreateTrainingSessionRequest(BaseModel):
+    """Request to create a training session from a template."""
+    template_slug: str
+    candidate_name: str
+    candidate_email: EmailStr
+
+
 class SessionResponse(BaseModel):
     """Session response."""
     session_id: str
@@ -184,13 +191,105 @@ async def _create_session_internal(
     )
 
 
+@router.post("/training", response_model=SessionResponse)
+async def create_training_session(
+    request: CreateTrainingSessionRequest,
+    current_user: TokenData = Depends(get_current_user)
+):
+    """Create a training session from a pre-built template."""
+    pool = await get_pool()
+
+    # Fetch the template
+    async with pool.acquire() as conn:
+        template = await conn.fetchrow("""
+            SELECT template_id, title, skill_category, company_context, agents, tasks,
+                   inbox, inject_schedule, artifact_content, framework_name, framework_reference,
+                   coaching_prompts, learning_objectives
+            FROM training_templates
+            WHERE slug = $1
+        """, request.template_slug)
+
+        if not template:
+            raise HTTPException(status_code=404, detail="Template not found")
+
+        # Generate candidate token
+        candidate_token = secrets.token_urlsafe(32)
+
+        # Get company context from template
+        company_context = template["company_context"] or {}
+
+        # Create session record with template data
+        row = await conn.fetchrow("""
+            INSERT INTO sessions (
+                employer_id, candidate_token, candidate_name, candidate_email,
+                candidate_link, candidate_type, org_params, status, mode, template_id, env
+            )
+            VALUES ($1, $2, $3, $4, $5, 'internal', $6, 'pending', 'train', $7, $8)
+            RETURNING session_id, created_at
+        """,
+            current_user.employer_id,
+            candidate_token,
+            request.candidate_name,
+            request.candidate_email,
+            "",  # Will be updated after we have the session_id
+            json.dumps({
+                "org_name": company_context.get("company_name", "Training Company"),
+                "role": company_context.get("candidate_role", "Team Member"),
+                "industry": company_context.get("industry", "Technology"),
+                "stage": "training",
+                "function": template["skill_category"],
+                "template_title": template["title"],
+                "framework_name": template["framework_name"],
+            }),
+            template["template_id"],
+            json.dumps({
+                "company_name": company_context.get("company_name", "Training Company"),
+                "company_description": company_context.get("company_description", ""),
+                "scenario_tension": company_context.get("scenario_tension", ""),
+                "agents": template["agents"] or [],
+                "inbox": template["inbox"] or [],
+                "tasks": template["tasks"] or [],
+                "inject_schedule": template["inject_schedule"] or [],
+                "artifact_content": template["artifact_content"],
+                "mode": "train",
+                "framework_name": template["framework_name"],
+                "framework_reference": template["framework_reference"],
+                "coaching_prompts": template["coaching_prompts"] or {},
+                "learning_objectives": template["learning_objectives"] or [],
+            })
+        )
+
+        session_id = str(row["session_id"])
+
+        # Generate candidate link
+        base_url = os.environ.get("FRONTEND_URL", "https://www.cmul8.work")
+        candidate_link = f"{base_url}/s/{session_id}/{candidate_token}"
+
+        # Update with candidate link
+        await conn.execute("""
+            UPDATE sessions SET candidate_link = $1 WHERE session_id = $2
+        """, candidate_link, session_id)
+
+    return SessionResponse(
+        session_id=session_id,
+        candidate_name=request.candidate_name,
+        candidate_email=request.candidate_email,
+        candidate_link=candidate_link,
+        candidate_type="internal",
+        status="pending",
+        created_at=row["created_at"].isoformat(),
+        org_name=company_context.get("company_name"),
+        role=company_context.get("candidate_role", "Team Member")
+    )
+
+
 @router.post("", response_model=SessionResponse)
 async def create_session(
     data: str = Form(...),
     jd_file: Optional[UploadFile] = File(None),
     current_user: TokenData = Depends(get_current_user)
 ):
-    """Create a new simulation session with optional JD PDF upload.
+    """Create a new assessment session with optional JD PDF upload.
 
     Always expects multipart form with 'data' as JSON string.
     """

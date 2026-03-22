@@ -273,3 +273,74 @@ export const candidate = {
       body: data,
     }),
 };
+
+// Training templates
+export interface TemplateListItem {
+  template_id: string;
+  slug: string;
+  title: string;
+  skill_category: string;
+  description: string;
+  duration_minutes: number;
+  difficulty: string;
+  learning_objectives: string[];
+}
+
+export interface FrameworkStep {
+  letter: string;
+  name: string;
+  description: string;
+  example: string;
+}
+
+export interface FrameworkReference {
+  title: string;
+  steps: FrameworkStep[];
+  pro_tip?: string;
+}
+
+export interface TemplateDetail extends TemplateListItem {
+  company_context: {
+    company_name: string;
+    company_description: string;
+    scenario_tension: string;
+    candidate_role: string;
+  };
+  agents: {
+    agent_id: string;
+    name: string;
+    role: string;
+    relationship_to_candidate: string;
+    description: string;
+    avatar_url?: string;
+  }[];
+  tasks: {
+    task_id: string;
+    title: string;
+    description: string;
+    urgency: string;
+  }[];
+  framework_name?: string;
+  framework_reference?: FrameworkReference;
+}
+
+export interface CreateTrainingSessionRequest {
+  template_slug: string;
+  candidate_name: string;
+  candidate_email: string;
+}
+
+export const templates = {
+  list: (token: string) =>
+    apiRequest<TemplateListItem[]>('/templates', { token }),
+
+  get: (token: string, slug: string) =>
+    apiRequest<TemplateDetail>(`/templates/${slug}`, { token }),
+
+  createSession: (token: string, data: CreateTrainingSessionRequest) =>
+    apiRequest<SessionResponse>('/sessions/training', {
+      method: 'POST',
+      body: data,
+      token,
+    }),
+};

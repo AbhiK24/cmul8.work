@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { sessions, type SessionResponse, ApiError } from '../api/client';
 import Logo from '../components/Logo';
+import TrainingLibrary from './TrainingLibrary';
 
 const statusConfig = {
   generating: { label: 'Generating', bg: 'bg-surface', text: 'text-muted', border: 'border-border' },
@@ -21,8 +22,11 @@ function formatDate(date: string) {
   });
 }
 
+type TabType = 'assess' | 'train';
+
 export default function Dashboard() {
   const { token, logout } = useAuth();
+  const [activeTab, setActiveTab] = useState<TabType>('assess');
   const [sessionList, setSessionList] = useState<SessionResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -178,8 +182,45 @@ export default function Dashboard() {
         </div>
       </header>
 
+      {/* Tabs */}
+      <div className="border-b border-border bg-white">
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setActiveTab('assess')}
+              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'assess'
+                  ? 'border-dark text-dark'
+                  : 'border-transparent text-muted hover:text-mid'
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+              Assess
+            </button>
+            <button
+              onClick={() => setActiveTab('train')}
+              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'train'
+                  ? 'border-dark text-dark'
+                  : 'border-transparent text-muted hover:text-mid'
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              Train
+            </button>
+          </div>
+        </div>
+      </div>
+
       <main className="max-w-5xl mx-auto px-6 py-8">
-        {isLoading ? (
+        {/* Training Tab */}
+        {activeTab === 'train' ? (
+          <TrainingLibrary />
+        ) : isLoading ? (
           <div className="flex justify-center py-16">
             <div className="animate-spin h-6 w-6 border-2 border-dark border-t-transparent rounded-full" />
           </div>

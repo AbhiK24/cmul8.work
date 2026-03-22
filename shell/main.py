@@ -11,6 +11,7 @@ from .api.sessions import router as sessions_router
 from .api.candidate import router as candidate_router
 from .api.debrief import router as debrief_router
 from .api.profile import router as profile_router
+from .api.templates import router as templates_router
 
 
 @asynccontextmanager
@@ -50,6 +51,7 @@ app.include_router(profile_router)
 app.include_router(sessions_router)
 app.include_router(candidate_router)
 app.include_router(debrief_router)
+app.include_router(templates_router)
 
 
 @app.get("/health")
