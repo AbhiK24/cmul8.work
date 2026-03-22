@@ -67,43 +67,25 @@
 
 ---
 
-## Focus 3: WorkSim Onboarding
+## ~~Focus 3: WorkSim Onboarding~~ ✅ IMPLEMENTED
 
-### Problem
-Candidates drop into simulation without full context of:
-- Their role in the scenario
-- Company/team background
-- What's expected of them
-- How to navigate the interface
+### ~~Problem~~
+~~Candidates drop into simulation without full context of:~~
+- ~~Their role in the scenario~~
+- ~~Company/team background~~
+- ~~What's expected of them~~
+- ~~How to navigate the interface~~
 
-### Solution: Pre-Simulation Onboarding Flow
+### ~~Solution: Pre-Simulation Onboarding Flow~~
 
-- [x] **Context briefing screen** before simulation starts ✓
-  - Your role: "You are a PM at [Company]"
-  - Team overview: Quick intro to key people
-  - Situation: "It's Monday morning, Q4 planning is due Friday"
-  - Your goals: 3-4 key objectives for the session
+- [x] ~~**Context briefing screen** before simulation starts~~
+- [x] ~~**"Day in the life" brief**~~
+- [x] ~~**Character cards** - Meet your team~~
+- [ ] **Interactive tutorial** (first-time users) - *deferred*
 
-- [ ] **Interactive tutorial** (first-time users)
-  - How to read inbox
-  - How to respond to agents
-  - How to use task list
-  - How to edit artifact
-
-- [x] **"Day in the life" brief** ✓
-  - What happened before you arrived
-  - Key context from recent events
-  - Pending items in your inbox
-
-- [x] **Character cards** - Meet your team ✓
-  - Photo (avatar)
-  - Name, role
-  - Personality hint
-  - Your history with them
-
-### UX Flow
+### ~~UX Flow~~
 ```
-Landing → Context Briefing → Team Overview → Tutorial (optional) → Simulation
+Landing → Onboarding (3-5 min) → Simulation → Debrief → Report ✓
 ```
 
 ---
@@ -202,7 +184,7 @@ Allow individuals (not via employers) to:
 
 ## Priority Order (Suggested)
 
-1. **Focus 3: Onboarding** - Quick win, improves conversion
+1. ~~**Focus 3: Onboarding**~~ ✅ Done
 2. **Focus 1: Core Experience** - Foundation for everything else
 3. **Focus 4: Analytics** - Differentiation, employer value
 4. **Focus 5: B2C** - New revenue stream, growth
