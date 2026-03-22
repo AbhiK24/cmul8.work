@@ -433,7 +433,7 @@ export default function Dashboard() {
                             <span>{totalCount} total</span>
                           </div>
                           <span className="text-xs font-medium text-indigo-600 group-hover:text-indigo-700 flex items-center gap-1">
-                            View
+                            View details
                             <svg className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                             </svg>
