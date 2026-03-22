@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { templates, type TemplateListItem } from '../api/client';
+import { templates, type TemplateListItem, type SessionResponse } from '../api/client';
+
+interface TrainingLibraryProps {
+  trainingSessions?: SessionResponse[];
+}
 
 const difficultyConfig = {
   beginner: { label: 'Beginner', bars: 1, color: 'text-emerald-600' },
@@ -33,11 +37,35 @@ function DifficultyBars({ level }: { level: string }) {
   );
 }
 
-export default function TrainingLibrary() {
+const statusConfig = {
+  generating: { label: 'Generating', bg: 'bg-surface', text: 'text-muted' },
+  pending: { label: 'Ready', bg: 'bg-emerald-100', text: 'text-emerald-700' },
+  in_progress: { label: 'In Progress', bg: 'bg-amber-100', text: 'text-amber-700' },
+  complete: { label: 'Complete', bg: 'bg-indigo-100', text: 'text-indigo-700' },
+  expired: { label: 'Expired', bg: 'bg-gray-100', text: 'text-gray-500' },
+};
+
+function formatDate(date: string) {
+  return new Date(date).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+export default function TrainingLibrary({ trainingSessions = [] }: TrainingLibraryProps) {
   const { token } = useAuth();
   const [templateList, setTemplateList] = useState<TemplateListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const copyLink = (sessionId: string, link: string) => {
+    navigator.clipboard.writeText(link);
+    setCopiedId(sessionId);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
   useEffect(() => {
     async function loadTemplates() {
@@ -178,6 +206,95 @@ export default function TrainingLibrary() {
           </p>
         </div>
       </div>
+
+      {/* Training History */}
+      {trainingSessions.length > 0 && (
+        <div className="mt-10">
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold text-dark">Training History</h2>
+            <p className="text-muted text-sm">Assigned training sessions</p>
+          </div>
+
+          <div className="bg-white border border-border rounded-xl overflow-hidden">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border bg-surface/50">
+                  <th className="text-left px-4 py-3 text-xs uppercase tracking-widest text-muted font-medium">
+                    Participant
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs uppercase tracking-widest text-muted font-medium">
+                    Training
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs uppercase tracking-widest text-muted font-medium">
+                    Status
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs uppercase tracking-widest text-muted font-medium">
+                    Assigned
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs uppercase tracking-widest text-muted font-medium">
+                    Link
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs uppercase tracking-widest text-muted font-medium">
+                    Report
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {trainingSessions.map((session) => {
+                  const status = statusConfig[session.status as keyof typeof statusConfig] || statusConfig.pending;
+                  return (
+                    <tr key={session.session_id} className="border-b border-border last:border-0 hover:bg-surface/30">
+                      <td className="px-4 py-3">
+                        <div className="font-medium text-dark text-sm">{session.candidate_name}</div>
+                        <div className="text-xs text-muted">{session.candidate_email}</div>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-mid">{session.role}</td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${status.bg} ${status.text}`}>
+                          {status.label}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-muted">
+                        {formatDate(session.created_at)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => copyLink(session.session_id, session.candidate_link)}
+                          className="text-sm text-muted hover:text-dark transition-colors"
+                        >
+                          {copiedId === session.session_id ? 'Copied!' : 'Copy link'}
+                        </button>
+                      </td>
+                      <td className="px-4 py-3">
+                        {session.has_report ? (
+                          <Link
+                            to={`/training-report/${session.session_id}`}
+                            className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-50 text-emerald-700 rounded text-xs font-medium hover:bg-emerald-100"
+                          >
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            View
+                          </Link>
+                        ) : session.status === 'complete' ? (
+                          <Link
+                            to={`/training-report/${session.session_id}`}
+                            className="text-xs text-indigo-600 hover:text-indigo-700"
+                          >
+                            Generate
+                          </Link>
+                        ) : (
+                          <span className="text-xs text-muted">-</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

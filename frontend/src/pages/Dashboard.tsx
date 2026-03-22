@@ -69,9 +69,18 @@ export default function Dashboard() {
     return Array.from(roles).sort();
   }, [sessionList]);
 
-  // Filter sessions
+  // Separate sessions by mode
+  const assessSessions = useMemo(() => {
+    return sessionList.filter(s => s.mode !== 'train');
+  }, [sessionList]);
+
+  const trainSessions = useMemo(() => {
+    return sessionList.filter(s => s.mode === 'train');
+  }, [sessionList]);
+
+  // Filter sessions (only for assess tab)
   const filteredSessions = useMemo(() => {
-    return sessionList.filter(session => {
+    return assessSessions.filter(session => {
       // Search filter (candidate name or email)
       if (filters.search) {
         const search = filters.search.toLowerCase();
@@ -91,7 +100,7 @@ export default function Dashboard() {
 
       return true;
     });
-  }, [sessionList, filters]);
+  }, [assessSessions, filters]);
 
   // Benchmark stats
   const benchmarkStats = useMemo(() => {
@@ -219,7 +228,7 @@ export default function Dashboard() {
       <main className="max-w-5xl mx-auto px-6 py-8">
         {/* Training Tab */}
         {activeTab === 'train' ? (
-          <TrainingLibrary />
+          <TrainingLibrary trainingSessions={trainSessions} />
         ) : isLoading ? (
           <div className="flex justify-center py-16">
             <div className="animate-spin h-6 w-6 border-2 border-dark border-t-transparent rounded-full" />
