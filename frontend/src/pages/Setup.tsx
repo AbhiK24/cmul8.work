@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { sessions, profile, ApiError, type OrgProfile } from '../api/client';
-import type { Role, Function } from '../types';
+import type { Function } from '../types';
 import Logo from '../components/Logo';
 import ErrorAlert, { parseError, type ParsedError } from '../components/ErrorAlert';
 
-const ROLES: Role[] = ['PM', 'Analyst', 'Ops Lead', 'Sales', 'Eng Manager', 'Custom'];
+const DEFAULT_ROLES: string[] = ['PM', 'Analyst', 'Ops Lead', 'Sales', 'Eng Manager'];
 const FUNCTIONS: Function[] = ['Product', 'Engineering', 'Revenue', 'Operations', 'Finance', 'Strategy'];
 const MODELS = [
   { id: 'cmul8-workenv1', name: 'cmul8-workenv1', description: 'Standard simulation' },
@@ -29,7 +29,7 @@ export default function Setup() {
   const [error, setError] = useState<ParsedError | null>(null);
   const [orgProfile, setOrgProfile] = useState<OrgProfile | null>(null);
   const [form, setForm] = useState({
-    role: '' as Role | '',
+    role: '',
     custom_role: '',
     function: '' as Function | '',
     model: 'cmul8-workenv1',
@@ -52,6 +52,10 @@ export default function Setup() {
     loadProfile();
   }, [token]);
 
+  // Combine default roles with saved custom roles
+  const customRoles = orgProfile?.custom_roles || [];
+  const allRoles = [...DEFAULT_ROLES, ...customRoles, 'Custom'];
+
   const isValid =
     (form.role === 'Custom' ? form.custom_role : form.role) &&
     form.function &&
@@ -73,9 +77,18 @@ export default function Setup() {
     }, 2500);
 
     try {
+      const actualRole = form.role === 'Custom' ? form.custom_role : form.role;
+
+      // Save custom role for future use if it's new
+      if (form.role === 'Custom' && form.custom_role && !customRoles.includes(form.custom_role)) {
+        profile.addCustomRole(token, form.custom_role).catch(() => {
+          // Silently fail - not critical
+        });
+      }
+
       const response = await sessions.create(token, {
         org_name: orgProfile?.company_name || undefined,
-        role: form.role === 'Custom' ? form.custom_role : form.role,
+        role: actualRole,
         industry: orgProfile?.industry || '',
         stage: orgProfile?.stage || '',
         function: form.function,
@@ -130,11 +143,11 @@ export default function Setup() {
               </label>
               <select
                 value={form.role}
-                onChange={(e) => setForm({ ...form, role: e.target.value as Role })}
+                onChange={(e) => setForm({ ...form, role: e.target.value })}
                 className="w-full border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-dark/20 focus:border-dark/40 bg-white"
               >
                 <option value="">Select role...</option>
-                {ROLES.map((role) => (
+                {allRoles.map((role) => (
                   <option key={role} value={role}>
                     {role}
                   </option>

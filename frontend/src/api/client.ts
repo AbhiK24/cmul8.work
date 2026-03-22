@@ -160,6 +160,7 @@ export interface OrgProfile {
   description?: string;
   website?: string;
   hiring_focus?: string;
+  custom_roles?: string[];
   profile_completed: boolean;
 }
 
@@ -181,6 +182,13 @@ export const profile = {
     apiRequest<OrgProfile>('/profile', {
       method: 'PUT',
       body: data,
+      token,
+    }),
+
+  addCustomRole: (token: string, role: string) =>
+    apiRequest<OrgProfile>('/profile/custom-roles', {
+      method: 'POST',
+      body: { role },
       token,
     }),
 };

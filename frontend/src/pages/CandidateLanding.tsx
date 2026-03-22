@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { sessions } from '../api/client';
+import { sessions, ApiError } from '../api/client';
 
 interface SessionContext {
   candidate_name: string;
@@ -27,7 +27,19 @@ export default function CandidateLanding() {
         const data = await sessions.getContext(sessionId, token);
         setContext(data);
       } catch (err) {
-        setError('Session not found or expired');
+        if (err instanceof ApiError) {
+          if (err.status === 403) {
+            setError('Invalid session link. Please check your invitation email for the correct link.');
+          } else if (err.status === 404) {
+            setError('Session not found. It may have been deleted.');
+          } else if (err.status === 410) {
+            setError('This session has expired.');
+          } else {
+            setError(err.message || 'Unable to load session');
+          }
+        } else {
+          setError('Session not found or expired');
+        }
       } finally {
         setIsLoading(false);
       }

@@ -1,5 +1,6 @@
 """Org profile endpoints."""
-from typing import Optional
+import json
+from typing import Optional, List
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
@@ -19,6 +20,7 @@ class OrgProfile(BaseModel):
     description: Optional[str] = None
     website: Optional[str] = None
     hiring_focus: Optional[str] = None
+    custom_roles: List[str] = []
     profile_completed: bool = False
 
 
@@ -38,6 +40,11 @@ class UpdateProfileRequest(BaseModel):
     hiring_focus: Optional[str] = None
 
 
+class AddCustomRoleRequest(BaseModel):
+    """Request to add a custom role."""
+    role: str
+
+
 @router.get("", response_model=OrgProfileResponse)
 async def get_profile(current_user: TokenData = Depends(get_current_user)):
     """Get current org profile."""
@@ -46,10 +53,12 @@ async def get_profile(current_user: TokenData = Depends(get_current_user)):
     async with pool.acquire() as conn:
         row = await conn.fetchrow("""
             SELECT email, company_name, industry, stage, company_size,
-                   description, website, hiring_focus, profile_completed
+                   description, website, hiring_focus, custom_roles, profile_completed
             FROM employers
             WHERE id = $1
         """, current_user.employer_id)
+
+        custom_roles = json.loads(row["custom_roles"]) if row["custom_roles"] else []
 
         return OrgProfileResponse(
             email=row["email"],
@@ -60,6 +69,7 @@ async def get_profile(current_user: TokenData = Depends(get_current_user)):
             description=row["description"],
             website=row["website"],
             hiring_focus=row["hiring_focus"],
+            custom_roles=custom_roles,
             profile_completed=row["profile_completed"] or False
         )
 
@@ -89,7 +99,7 @@ async def update_profile(
                 updated_at = NOW()
             WHERE id = $1
             RETURNING email, company_name, industry, stage, company_size,
-                      description, website, hiring_focus, profile_completed
+                      description, website, hiring_focus, custom_roles, profile_completed
         """,
             current_user.employer_id,
             request.company_name,
@@ -102,6 +112,8 @@ async def update_profile(
             profile_completed
         )
 
+        custom_roles = json.loads(row["custom_roles"]) if row.get("custom_roles") else []
+
         return OrgProfileResponse(
             email=row["email"],
             company_name=row["company_name"],
@@ -111,5 +123,55 @@ async def update_profile(
             description=row["description"],
             website=row["website"],
             hiring_focus=row["hiring_focus"],
+            custom_roles=custom_roles,
+            profile_completed=row["profile_completed"] or False
+        )
+
+
+@router.post("/custom-roles", response_model=OrgProfileResponse)
+async def add_custom_role(
+    request: AddCustomRoleRequest,
+    current_user: TokenData = Depends(get_current_user)
+):
+    """Add a custom role to the profile."""
+    pool = await get_pool()
+
+    async with pool.acquire() as conn:
+        # Get current custom roles
+        row = await conn.fetchrow("""
+            SELECT custom_roles FROM employers WHERE id = $1
+        """, current_user.employer_id)
+
+        current_roles = json.loads(row["custom_roles"]) if row["custom_roles"] else []
+
+        # Add new role if not already present
+        role = request.role.strip()
+        if role and role not in current_roles:
+            current_roles.append(role)
+
+            await conn.execute("""
+                UPDATE employers SET custom_roles = $2 WHERE id = $1
+            """, current_user.employer_id, json.dumps(current_roles))
+
+        # Return updated profile
+        row = await conn.fetchrow("""
+            SELECT email, company_name, industry, stage, company_size,
+                   description, website, hiring_focus, custom_roles, profile_completed
+            FROM employers
+            WHERE id = $1
+        """, current_user.employer_id)
+
+        custom_roles = json.loads(row["custom_roles"]) if row["custom_roles"] else []
+
+        return OrgProfileResponse(
+            email=row["email"],
+            company_name=row["company_name"],
+            industry=row["industry"],
+            stage=row["stage"],
+            company_size=row["company_size"],
+            description=row["description"],
+            website=row["website"],
+            hiring_focus=row["hiring_focus"],
+            custom_roles=custom_roles,
             profile_completed=row["profile_completed"] or False
         )

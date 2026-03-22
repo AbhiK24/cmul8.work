@@ -14,6 +14,14 @@ async def init_pool():
     if not DATABASE_URL:
         raise ValueError("DATABASE_URL environment variable is required")
     pool = await asyncpg.create_pool(DATABASE_URL, min_size=2, max_size=10)
+
+    # Run migrations
+    async with pool.acquire() as conn:
+        # Add custom_roles column if not exists
+        await conn.execute("""
+            ALTER TABLE employers ADD COLUMN IF NOT EXISTS custom_roles JSONB DEFAULT '[]'::jsonb
+        """)
+
     return pool
 
 
