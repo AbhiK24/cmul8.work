@@ -475,9 +475,9 @@ export default function Dashboard() {
             </div>
 
             {/* Filters */}
-            <div className="mb-6 flex flex-wrap items-center gap-3">
-              {/* Search */}
-              <div className="flex-1 min-w-[200px] relative">
+            <div className="mb-6 space-y-4">
+              {/* Search bar */}
+              <div className="relative max-w-md">
                 <svg
                   className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted"
                   fill="none" viewBox="0 0 24 24" stroke="currentColor"
@@ -489,65 +489,139 @@ export default function Dashboard() {
                   placeholder="Search by name or email..."
                   value={filters.search}
                   onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                  className="w-full border border-border rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-dark/20"
+                  className="w-full border border-border rounded-lg pl-10 pr-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300"
                 />
               </div>
 
-              {/* Mode filter */}
-              <select
-                value={filters.mode}
-                onChange={(e) => setFilters({ ...filters, mode: e.target.value })}
-                className="border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-dark/20"
-              >
-                <option value="">All modes</option>
-                <option value="test">Assess</option>
-                <option value="train">Train</option>
-              </select>
+              {/* Filter chips */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs text-muted mr-1">Filter:</span>
 
-              {/* Status filter */}
-              <select
-                value={filters.status}
-                onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                className="border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-dark/20"
-              >
-                <option value="">All statuses</option>
-                <option value="generating">Generating</option>
-                <option value="pending">Ready</option>
-                <option value="in_progress">In Progress</option>
-                <option value="complete">Complete</option>
-              </select>
+                {/* Mode segmented control */}
+                <div className="inline-flex bg-surface rounded-lg p-0.5">
+                  {[
+                    { value: '', label: 'All' },
+                    { value: 'test', label: 'Assess' },
+                    { value: 'train', label: 'Train' },
+                  ].map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => setFilters({ ...filters, mode: opt.value })}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                        filters.mode === opt.value
+                          ? 'bg-white text-dark shadow-sm'
+                          : 'text-muted hover:text-mid'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
 
-              {/* Role filter */}
-              <select
-                value={filters.role}
-                onChange={(e) => setFilters({ ...filters, role: e.target.value })}
-                className="border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-dark/20"
-              >
-                <option value="">All roles</option>
-                {uniqueRoles.map((role) => (
-                  <option key={role} value={role}>{role}</option>
+                <div className="w-px h-5 bg-border mx-1" />
+
+                {/* Status chips */}
+                {[
+                  { value: 'pending', label: 'Ready', color: 'emerald' },
+                  { value: 'in_progress', label: 'In Progress', color: 'blue' },
+                  { value: 'complete', label: 'Complete', color: 'indigo' },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setFilters({ ...filters, status: filters.status === opt.value ? '' : opt.value })}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all ${
+                      filters.status === opt.value
+                        ? opt.color === 'emerald' ? 'bg-emerald-100 text-emerald-700'
+                        : opt.color === 'blue' ? 'bg-blue-100 text-blue-700'
+                        : 'bg-indigo-100 text-indigo-700'
+                        : 'bg-white border border-border text-muted hover:border-gray-300 hover:text-mid'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
                 ))}
-              </select>
 
-              {/* Type filter */}
-              <select
-                value={filters.candidateType}
-                onChange={(e) => setFilters({ ...filters, candidateType: e.target.value })}
-                className="border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-dark/20"
-              >
-                <option value="">All types</option>
-                <option value="external">External</option>
-                <option value="internal">Benchmark</option>
-              </select>
+                <div className="w-px h-5 bg-border mx-1" />
 
-              {hasActiveFilters && (
-                <button
-                  onClick={clearFilters}
-                  className="px-3 py-2 text-sm text-muted hover:text-dark transition-colors"
-                >
-                  Clear
-                </button>
-              )}
+                {/* Type chips */}
+                {[
+                  { value: 'external', label: 'External' },
+                  { value: 'internal', label: 'Benchmark' },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setFilters({ ...filters, candidateType: filters.candidateType === opt.value ? '' : opt.value })}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all ${
+                      filters.candidateType === opt.value
+                        ? 'bg-dark text-white'
+                        : 'bg-white border border-border text-muted hover:border-gray-300 hover:text-mid'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+
+                {/* Role dropdown - only show if there are roles */}
+                {uniqueRoles.length > 0 && (
+                  <>
+                    <div className="w-px h-5 bg-border mx-1" />
+                    <div className="relative">
+                      <button
+                        onClick={(e) => {
+                          const dropdown = e.currentTarget.nextElementSibling;
+                          dropdown?.classList.toggle('hidden');
+                        }}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all flex items-center gap-1 ${
+                          filters.role
+                            ? 'bg-indigo-100 text-indigo-700'
+                            : 'bg-white border border-border text-muted hover:border-gray-300 hover:text-mid'
+                        }`}
+                      >
+                        {filters.role || 'Role'}
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                      <div className="hidden absolute top-full left-0 mt-1 bg-white border border-border rounded-lg shadow-lg py-1 z-10 min-w-[160px]">
+                        <button
+                          onClick={(e) => {
+                            setFilters({ ...filters, role: '' });
+                            e.currentTarget.parentElement?.classList.add('hidden');
+                          }}
+                          className={`w-full text-left px-3 py-1.5 text-xs hover:bg-surface ${!filters.role ? 'text-indigo-600 font-medium' : 'text-mid'}`}
+                        >
+                          All roles
+                        </button>
+                        {uniqueRoles.map((role) => (
+                          <button
+                            key={role}
+                            onClick={(e) => {
+                              setFilters({ ...filters, role });
+                              e.currentTarget.parentElement?.classList.add('hidden');
+                            }}
+                            className={`w-full text-left px-3 py-1.5 text-xs hover:bg-surface ${filters.role === role ? 'text-indigo-600 font-medium' : 'text-mid'}`}
+                          >
+                            {role}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Clear all */}
+                {hasActiveFilters && (
+                  <button
+                    onClick={clearFilters}
+                    className="ml-2 px-2 py-1 text-xs text-muted hover:text-dark transition-colors flex items-center gap-1"
+                  >
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    Clear
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Results count */}
