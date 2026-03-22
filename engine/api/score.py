@@ -24,7 +24,7 @@ async def score_session(request: ScoreRequest):
     async with pool.acquire() as conn:
         # Get session data
         row = await conn.fetchrow("""
-            SELECT env, trace, artifact_trace, debrief, org_params, relationship_scores, integrity_data, started_at, completed_at
+            SELECT env, trace, artifact_trace, debrief, org_params, relationship_scores, started_at, completed_at
             FROM sessions WHERE session_id = $1
         """, request.session_id)
 
@@ -36,7 +36,7 @@ async def score_session(request: ScoreRequest):
         debrief = json.loads(row["debrief"]) if row["debrief"] else {}
         org_params = json.loads(row["org_params"]) if row["org_params"] else {}
         relationship_scores = json.loads(row["relationship_scores"]) if row["relationship_scores"] else {}
-        integrity_data = json.loads(row["integrity_data"]) if row["integrity_data"] else {}
+        integrity_data = {}  # Not yet implemented
 
         # Calculate duration
         started_at = row["started_at"]
