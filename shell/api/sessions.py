@@ -1,0 +1,263 @@
+"""Session management endpoints."""
+import json
+import secrets
+import os
+from typing import Optional
+
+import httpx
+from fastapi import APIRouter, HTTPException, Depends
+from pydantic import BaseModel, EmailStr
+
+from ..db.pool import get_pool
+from ..auth.jwt import TokenData
+from .auth import get_current_user
+
+router = APIRouter(prefix="/sessions")
+
+ENGINE_URL = os.environ.get("ENGINE_URL", "http://engine.railway.internal:8080")
+
+
+class CreateSessionRequest(BaseModel):
+    """Request to create a new session."""
+    org_name: Optional[str] = None
+    role: str
+    industry: str
+    stage: str
+    function: str
+    model: Optional[str] = "cmul8-workenv1"
+    candidate_name: str
+    candidate_email: EmailStr
+    candidate_type: Optional[str] = "external"  # 'internal' or 'external'
+
+
+class SessionResponse(BaseModel):
+    """Session response."""
+    session_id: str
+    candidate_name: str
+    candidate_email: str
+    candidate_link: str
+    candidate_type: str = "external"
+    status: str
+    created_at: str
+    org_name: Optional[str] = None
+    role: str
+
+
+class SessionListResponse(BaseModel):
+    """List of sessions."""
+    sessions: list[SessionResponse]
+
+
+class SessionDetailResponse(BaseModel):
+    """Detailed session response."""
+    session_id: str
+    candidate_name: str
+    candidate_email: str
+    candidate_link: str
+    status: str
+    created_at: str
+    started_at: Optional[str] = None
+    completed_at: Optional[str] = None
+    org_params: dict
+    env: Optional[dict] = None
+    report: Optional[dict] = None
+
+
+@router.post("", response_model=SessionResponse)
+async def create_session(
+    request: CreateSessionRequest,
+    current_user: TokenData = Depends(get_current_user)
+):
+    """Create a new simulation session."""
+    pool = await get_pool()
+
+    # Generate candidate token
+    candidate_token = secrets.token_urlsafe(32)
+
+    async with pool.acquire() as conn:
+        # Create session record
+        row = await conn.fetchrow("""
+            INSERT INTO sessions (
+                employer_id, candidate_token, candidate_name, candidate_email,
+                candidate_link, candidate_type, org_params, status
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, 'generating')
+            RETURNING session_id, created_at
+        """,
+            current_user.employer_id,
+            candidate_token,
+            request.candidate_name,
+            request.candidate_email,
+            "",  # Will be updated after we have the session_id
+            request.candidate_type or "external",
+            json.dumps({
+                "org_name": request.org_name,
+                "role": request.role,
+                "industry": request.industry,
+                "stage": request.stage,
+                "function": request.function,
+                "model": request.model
+            })
+        )
+
+        session_id = str(row["session_id"])
+
+        # Generate candidate link
+        # In production, use the actual domain
+        base_url = os.environ.get("FRONTEND_URL", "https://www.cmul8.work")
+        candidate_link = f"{base_url}/s/{session_id}/{candidate_token}"
+
+        # Update with candidate link
+        await conn.execute("""
+            UPDATE sessions SET candidate_link = $1 WHERE session_id = $2
+        """, candidate_link, session_id)
+
+    # Fetch full org profile for richer context
+    async with pool.acquire() as conn:
+        profile_row = await conn.fetchrow("""
+            SELECT company_name, industry, stage, company_size, description, hiring_focus
+            FROM employers WHERE id = $1
+        """, current_user.employer_id)
+
+    org_context = {
+        "org_name": profile_row["company_name"] if profile_row else request.org_name,
+        "industry": profile_row["industry"] if profile_row else request.industry,
+        "stage": profile_row["stage"] if profile_row else request.stage,
+        "company_size": profile_row["company_size"] if profile_row else None,
+        "description": profile_row["description"] if profile_row else None,
+        "hiring_focus": profile_row["hiring_focus"] if profile_row else None,
+    }
+
+    # Call engine to generate environment (async, don't wait)
+    try:
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            response = await client.post(
+                f"{ENGINE_URL}/generate",
+                json={
+                    "session_id": session_id,
+                    "org_name": org_context["org_name"],
+                    "role": request.role,
+                    "industry": org_context["industry"],
+                    "stage": org_context["stage"],
+                    "function": request.function,
+                    "candidate_name": request.candidate_name,
+                    "company_size": org_context["company_size"],
+                    "company_description": org_context["description"],
+                    "hiring_focus": org_context["hiring_focus"],
+                }
+            )
+            response.raise_for_status()
+    except httpx.HTTPError as e:
+        # Log error but don't fail - generation can be retried
+        print(f"Engine generation failed: {e}")
+
+    return SessionResponse(
+        session_id=session_id,
+        candidate_name=request.candidate_name,
+        candidate_email=request.candidate_email,
+        candidate_link=candidate_link,
+        candidate_type=request.candidate_type or "external",
+        status="generating",
+        created_at=row["created_at"].isoformat(),
+        org_name=request.org_name,
+        role=request.role
+    )
+
+
+@router.get("", response_model=SessionListResponse)
+async def list_sessions(current_user: TokenData = Depends(get_current_user)):
+    """List all sessions for the current employer."""
+    pool = await get_pool()
+
+    async with pool.acquire() as conn:
+        rows = await conn.fetch("""
+            SELECT session_id, candidate_name, candidate_email, candidate_link,
+                   candidate_type, status, created_at, org_params
+            FROM sessions
+            WHERE employer_id = $1
+            ORDER BY created_at DESC
+        """, current_user.employer_id)
+
+        sessions = []
+        for row in rows:
+            org_params = json.loads(row["org_params"]) if row["org_params"] else {}
+            sessions.append(SessionResponse(
+                session_id=str(row["session_id"]),
+                candidate_name=row["candidate_name"],
+                candidate_email=row["candidate_email"],
+                candidate_link=row["candidate_link"],
+                candidate_type=row["candidate_type"] or "external",
+                status=row["status"],
+                created_at=row["created_at"].isoformat(),
+                org_name=org_params.get("org_name"),
+                role=org_params.get("role", "Unknown")
+            ))
+
+    return SessionListResponse(sessions=sessions)
+
+
+@router.get("/{session_id}", response_model=SessionDetailResponse)
+async def get_session(
+    session_id: str,
+    current_user: TokenData = Depends(get_current_user)
+):
+    """Get detailed session info."""
+    pool = await get_pool()
+
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow("""
+            SELECT session_id, candidate_name, candidate_email, candidate_link,
+                   status, created_at, started_at, completed_at, org_params, env, report
+            FROM sessions
+            WHERE session_id = $1 AND employer_id = $2
+        """, session_id, current_user.employer_id)
+
+        if not row:
+            raise HTTPException(status_code=404, detail="Session not found")
+
+        return SessionDetailResponse(
+            session_id=str(row["session_id"]),
+            candidate_name=row["candidate_name"],
+            candidate_email=row["candidate_email"],
+            candidate_link=row["candidate_link"],
+            status=row["status"],
+            created_at=row["created_at"].isoformat(),
+            started_at=row["started_at"].isoformat() if row["started_at"] else None,
+            completed_at=row["completed_at"].isoformat() if row["completed_at"] else None,
+            org_params=json.loads(row["org_params"]) if row["org_params"] else {},
+            env=json.loads(row["env"]) if row["env"] else None,
+            report=json.loads(row["report"]) if row["report"] else None
+        )
+
+
+@router.get("/{session_id}/context")
+async def get_session_context(session_id: str, token: str):
+    """Get session context for candidate landing page (public, validates token)."""
+    pool = await get_pool()
+
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow("""
+            SELECT candidate_name, candidate_token, org_params, env, status
+            FROM sessions
+            WHERE session_id = $1
+        """, session_id)
+
+        if not row:
+            raise HTTPException(status_code=404, detail="Session not found")
+
+        if row["candidate_token"] != token:
+            raise HTTPException(status_code=403, detail="Invalid token")
+
+        if row["status"] == "expired":
+            raise HTTPException(status_code=410, detail="Session expired")
+
+        org_params = json.loads(row["org_params"]) if row["org_params"] else {}
+        env = json.loads(row["env"]) if row["env"] else None
+
+        return {
+            "candidate_name": row["candidate_name"],
+            "company_name": env.get("company_name") if env else org_params.get("org_name", "Company"),
+            "role": org_params.get("role", "Role"),
+            "status": row["status"],
+            "ready": row["status"] == "pending" and env is not None
+        }

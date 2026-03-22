@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, monospace;
+
+  /* cmul8 Design System Colors */
+  --color-bg: #fafafb;
+  --color-accent: #1a1a1a;
+  --color-dark: #1a1a1a;
+  --color-mid: #555555;
+  --color-muted: #888888;
+  --color-border: #ededed;
+  --color-surface: #fafafb;
+  --color-white: #ffffff;
+  --color-card-dark: #141414;
+
+  /* Legacy aliases for compatibility */
+  --color-primary: #1a1a1a;
+
+  /* Status colors - muted to fit design system */
+  --color-status-pending: #888888;
+  --color-status-generating: #888888;
+  --color-status-progress: #1a1a1a;
+  --color-status-complete: #1a1a1a;
+  --color-status-expired: #888888;
+
+  /* Agent colors - grayscale to fit design system */
+  --color-agent-manager: #1a1a1a;
+  --color-agent-report: #555555;
+  --color-agent-peer: #777777;
+  --color-agent-client: #333333;
+  --color-agent-system: #888888;
+
+  /* Card shadow */
+  --shadow-card: 0 2px 40px rgba(0, 0, 0, 0.06);
+}
+
+@layer base {
+  body {
+    @apply antialiased text-dark bg-surface;
+    font-family: var(--font-sans);
+  }
+}

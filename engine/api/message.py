@@ -1,0 +1,291 @@
+"""POST /message - Send a message to an agent and get a response.
+
+Implements Generative Agents memory architecture:
+- Records observations to memory stream
+- Retrieves relevant memories for context
+- Triggers reflections when importance threshold exceeded
+"""
+import json
+import uuid
+import time
+from pathlib import Path
+
+from fastapi import APIRouter, HTTPException
+
+from ..schemas.input_schema import MessageRequest
+from ..schemas.env_schema import MessageResponse, TraceEvent
+from ..engine.kimi_client import call_kimi
+from ..engine.memory import (
+    record_agent_interaction,
+    get_memory_context,
+    should_reflect,
+    generate_reflections
+)
+from ..db.pool import get_pool
+
+router = APIRouter()
+
+# Load prompt template
+PROMPT_PATH = Path(__file__).parent.parent / "prompts" / "agent_runtime.txt"
+AGENT_PROMPT = PROMPT_PATH.read_text()
+
+
+def calculate_relationship_delta(message: str, reply: str) -> float:
+    """Calculate relationship score change based on interaction quality."""
+    # Simple heuristic - in production this could be more sophisticated
+    positive_signals = ["thank", "appreciate", "understand", "help", "great", "agree"]
+    negative_signals = ["no", "can't", "won't", "busy", "later", "don't"]
+
+    message_lower = message.lower()
+    delta = 0.0
+
+    for signal in positive_signals:
+        if signal in message_lower:
+            delta += 0.03
+
+    for signal in negative_signals:
+        if signal in message_lower:
+            delta -= 0.02
+
+    # Clamp delta
+    return max(-0.1, min(0.15, delta))
+
+
+@router.post("/message", response_model=MessageResponse)
+async def send_message(request: MessageRequest) -> MessageResponse:
+    """Send a message to an agent and get their response.
+
+    Uses Generative Agents memory architecture for context retrieval.
+    """
+
+    pool = await get_pool()
+
+    async with pool.acquire() as conn:
+        # Get session data
+        row = await conn.fetchrow("""
+            SELECT env, agent_histories, relationship_scores, trace
+            FROM sessions WHERE session_id = $1
+        """, request.session_id)
+
+        if not row:
+            raise HTTPException(status_code=404, detail="Session not found")
+
+        env = json.loads(row["env"]) if row["env"] else {}
+        agent_histories = json.loads(row["agent_histories"]) if row["agent_histories"] else {}
+        relationship_scores = json.loads(row["relationship_scores"]) if row["relationship_scores"] else {}
+        trace = json.loads(row["trace"]) if row["trace"] else []
+
+        # Find the agent
+        agent = None
+        for a in env.get("agents", []):
+            if a["agent_id"] == request.agent_id:
+                agent = a
+                break
+
+        if not agent:
+            raise HTTPException(status_code=404, detail="Agent not found")
+
+        # Get conversation history for this agent
+        history = agent_histories.get(request.agent_id, [])
+        # All relationships start at 0.5 (neutral midpoint)
+        current_score = relationship_scores.get(request.agent_id, 0.5)
+
+        # Record incoming message as observation in memory stream
+        await record_agent_interaction(
+            pool=pool,
+            session_id=request.session_id,
+            agent_id=request.agent_id,
+            interaction_type="message_received",
+            content=f"The candidate said: '{request.message_text}'",
+            metadata={"sender": "candidate", "thread_id": request.thread_id}
+        )
+
+        # Get relevant memories for context (Generative Agents retrieval)
+        memory_context = await get_memory_context(
+            pool=pool,
+            session_id=request.session_id,
+            agent_id=request.agent_id,
+            current_situation=f"The candidate just sent me this message: {request.message_text}",
+            max_memories=8
+        )
+
+        # Check if we should trigger reflections
+        if await should_reflect(pool, request.session_id, request.agent_id):
+            await generate_reflections(
+                pool=pool,
+                session_id=request.session_id,
+                agent_id=request.agent_id,
+                agent_persona=agent.get("persona_prompt", agent["name"])
+            )
+
+        # Build conversation history string (last 6 messages for immediate context)
+        history_str = ""
+        for msg in history[-6:]:
+            role = "Candidate" if msg["sender"] == "candidate" else agent["name"]
+            content = msg.get("content", "")
+            # Handle multimodal content
+            if isinstance(content, list):
+                text_parts = [c.get("text", "") for c in content if c.get("type") == "text"]
+                content = " ".join(text_parts) + " [+image]" if any(c.get("type") == "image_url" for c in content) else " ".join(text_parts)
+            history_str += f"{role}: {content}\n"
+
+        # Build task knowledge context
+        task_knowledge_str = ""
+        for tk in agent.get("task_knowledge", []):
+            task_knowledge_str += f"- Task '{tk.get('task_id', 'unknown')}': {tk.get('info_description', 'N/A')}\n"
+            task_knowledge_str += f"  Share condition: {tk.get('will_share_if', 'when asked')}\n"
+        if not task_knowledge_str:
+            task_knowledge_str = "No specific task-related information."
+
+        # Build background chatter context (conversations involving this agent)
+        chatter_str = ""
+        agent_names = {a["agent_id"]: a["name"] for a in env.get("agents", [])}
+        for chatter in env.get("background_chatter", []):
+            if chatter.get("agent_a_id") == request.agent_id or chatter.get("agent_b_id") == request.agent_id:
+                other_id = chatter.get("agent_b_id") if chatter.get("agent_a_id") == request.agent_id else chatter.get("agent_a_id")
+                other_name = agent_names.get(other_id, "a colleague")
+                chatter_str += f"- Recently talked with {other_name} about: {chatter.get('topic', 'work')}\n"
+                chatter_str += f"  Summary: {chatter.get('summary', '')}\n"
+        if not chatter_str:
+            chatter_str = "No recent conversations with colleagues."
+
+        # Handle multimodal message content
+        message_text_raw = request.message_text
+        image_url = None
+        image_note = ""
+
+        # Check if message_text is actually multimodal content (list of content blocks)
+        if isinstance(message_text_raw, list):
+            text_parts = []
+            for content_block in message_text_raw:
+                # Handle both dict and Pydantic model
+                if hasattr(content_block, "type"):
+                    block_type = content_block.type
+                    block_text = content_block.text
+                    block_image = content_block.image_url
+                else:
+                    block_type = content_block.get("type")
+                    block_text = content_block.get("text", "")
+                    block_image = content_block.get("image_url", "")
+
+                if block_type == "text" and block_text:
+                    text_parts.append(block_text)
+                elif block_type == "image_url" and block_image:
+                    image_url = block_image
+            message_text = " ".join(text_parts)
+            if image_url:
+                image_note = "(The candidate has shared an image/diagram with this message)"
+        else:
+            message_text = message_text_raw
+
+        # Build the prompt with memory context
+        prompt = AGENT_PROMPT.format(
+            agent_name=agent["name"],
+            agent_role=agent["role"],
+            company_name=env.get("company_name", "the company"),
+            persona_prompt=agent.get("persona_prompt", ""),
+            task_knowledge=task_knowledge_str,
+            hidden_information=agent.get("hidden_information", ""),
+            relationship_score=current_score,
+            background_chatter=chatter_str,
+            artifact_knowledge=agent.get("artifact_knowledge", "N/A"),
+            memory_context=memory_context or "No relevant memories yet.",
+            conversation_history=history_str or "No previous conversation.",
+            message=message_text,
+            image_note=image_note
+        )
+
+        # Call Kimi (with optional image for multimodal)
+        try:
+            if image_url:
+                # Multimodal message with image
+                reply = await call_kimi(
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": [
+                                {"type": "text", "text": prompt},
+                                {"type": "image_url", "image_url": {"url": image_url}}
+                            ]
+                        }
+                    ],
+                    temperature=0.7,
+                    max_tokens=500
+                )
+            else:
+                # Text-only message
+                reply = await call_kimi(
+                    messages=[
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.7,
+                    max_tokens=500
+                )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Agent response failed: {e}")
+
+        # Record agent's reply as observation
+        await record_agent_interaction(
+            pool=pool,
+            session_id=request.session_id,
+            agent_id=request.agent_id,
+            interaction_type="message_sent",
+            content=f"I replied to the candidate: '{reply}'",
+            metadata={"relationship_score": current_score}
+        )
+
+        # Calculate new relationship score
+        delta = calculate_relationship_delta(request.message_text, reply)
+        new_score = max(0.0, min(1.0, current_score + delta))
+
+        # Update histories
+        timestamp = time.time()
+        history.append({
+            "id": str(uuid.uuid4()),
+            "sender": "candidate",
+            "content": request.message_text,
+            "timestamp": timestamp
+        })
+        history.append({
+            "id": str(uuid.uuid4()),
+            "sender": "agent",
+            "agent_id": request.agent_id,
+            "content": reply,
+            "timestamp": timestamp + 0.1
+        })
+        agent_histories[request.agent_id] = history
+        relationship_scores[request.agent_id] = new_score
+
+        # Add trace event
+        trace_event = TraceEvent(
+            event_id=str(uuid.uuid4()),
+            session_id=request.session_id,
+            timestamp=timestamp,
+            elapsed_seconds=request.elapsed_seconds,
+            event_type="reply_sent",
+            agent_id=request.agent_id,
+            content={
+                "candidate_message": request.message_text,
+                "agent_reply": reply,
+                "relationship_score": new_score
+            }
+        )
+        trace.append(trace_event.model_dump())
+
+        # Save to database
+        await conn.execute("""
+            UPDATE sessions
+            SET agent_histories = $1, relationship_scores = $2, trace = trace || $3::jsonb
+            WHERE session_id = $4
+        """,
+            json.dumps(agent_histories),
+            json.dumps(relationship_scores),
+            json.dumps([trace_event.model_dump()]),
+            request.session_id
+        )
+
+    return MessageResponse(
+        reply=reply,
+        relationship_score=new_score,
+        agent_id=request.agent_id
+    )

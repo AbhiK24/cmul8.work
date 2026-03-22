@@ -1,0 +1,241 @@
+/**
+ * API client for WorkSim backend
+ */
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://shell-production-7135.up.railway.app';
+
+interface ApiOptions {
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  body?: unknown;
+  token?: string;
+}
+
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.status = status;
+  }
+}
+
+export async function apiRequest<T>(endpoint: string, options: ApiOptions = {}): Promise<T> {
+  const { method = 'GET', body, token } = options;
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
+    throw new ApiError(error.detail || 'Request failed', response.status);
+  }
+
+  return response.json();
+}
+
+// Auth endpoints
+export const auth = {
+  register: (email: string, password: string) =>
+    apiRequest<{ access_token: string; token_type: string }>('/auth/register', {
+      method: 'POST',
+      body: { email, password },
+    }),
+
+  login: (email: string, password: string) =>
+    apiRequest<{ access_token: string; token_type: string }>('/auth/login', {
+      method: 'POST',
+      body: { email, password },
+    }),
+
+  me: (token: string) =>
+    apiRequest<{ id: string; email: string }>('/auth/me', { token }),
+
+  forgotPassword: (email: string) =>
+    apiRequest<{ message: string }>('/auth/forgot-password', {
+      method: 'POST',
+      body: { email },
+    }),
+
+  resetPassword: (token: string, password: string) =>
+    apiRequest<{ message: string }>('/auth/reset-password', {
+      method: 'POST',
+      body: { token, password },
+    }),
+};
+
+// Session endpoints
+export interface CreateSessionRequest {
+  org_name?: string;
+  role: string;
+  industry: string;
+  stage: string;
+  function: string;
+  model?: string;
+  candidate_name: string;
+  candidate_email: string;
+  candidate_type?: 'internal' | 'external';
+}
+
+export interface SessionResponse {
+  session_id: string;
+  candidate_name: string;
+  candidate_email: string;
+  candidate_link: string;
+  candidate_type: 'internal' | 'external';
+  status: string;
+  created_at: string;
+  org_name?: string;
+  role: string;
+  score?: number;
+}
+
+export interface SessionDetailResponse extends SessionResponse {
+  started_at?: string;
+  completed_at?: string;
+  org_params: Record<string, string>;
+  env?: Record<string, unknown>;
+  report?: Record<string, unknown>;
+}
+
+export const sessions = {
+  create: (token: string, data: CreateSessionRequest) =>
+    apiRequest<SessionResponse>('/sessions', {
+      method: 'POST',
+      body: data,
+      token,
+    }),
+
+  list: (token: string) =>
+    apiRequest<{ sessions: SessionResponse[] }>('/sessions', { token }),
+
+  get: (token: string, sessionId: string) =>
+    apiRequest<SessionDetailResponse>(`/sessions/${sessionId}`, { token }),
+
+  getContext: (sessionId: string, candidateToken: string) =>
+    apiRequest<{
+      candidate_name: string;
+      company_name: string;
+      role: string;
+      status: string;
+      ready: boolean;
+    }>(`/sessions/${sessionId}/context?token=${candidateToken}`),
+};
+
+// Profile endpoints
+export interface OrgProfile {
+  email: string;
+  company_name?: string;
+  industry?: string;
+  stage?: string;
+  company_size?: string;
+  description?: string;
+  website?: string;
+  hiring_focus?: string;
+  profile_completed: boolean;
+}
+
+export interface UpdateProfileRequest {
+  company_name?: string;
+  industry?: string;
+  stage?: string;
+  company_size?: string;
+  description?: string;
+  website?: string;
+  hiring_focus?: string;
+}
+
+export const profile = {
+  get: (token: string) =>
+    apiRequest<OrgProfile>('/profile', { token }),
+
+  update: (token: string, data: UpdateProfileRequest) =>
+    apiRequest<OrgProfile>('/profile', {
+      method: 'PUT',
+      body: data,
+      token,
+    }),
+};
+
+// Candidate endpoints
+export interface MessageContentBlock {
+  type: 'text' | 'image_url';
+  text?: string;
+  image_url?: string;
+}
+
+export interface MessageRequest {
+  session_id: string;
+  token: string;
+  agent_id: string;
+  message_text: string | MessageContentBlock[];  // Text or multimodal content
+  elapsed_seconds: number;
+  thread_id?: string;
+}
+
+export interface TraceRequest {
+  session_id: string;
+  token: string;
+  event_type: 'thread_open' | 'task_update' | 'artifact_view';
+  elapsed_seconds: number;
+  agent_id?: string;
+  thread_id?: string;
+  task_id?: string;
+  content?: Record<string, unknown>;
+}
+
+export interface ArtifactCommentRequest {
+  session_id: string;
+  token: string;
+  section_id: string;
+  comment_text: string;
+  elapsed_seconds: number;
+}
+
+export const candidate = {
+  sendMessage: (data: MessageRequest) =>
+    apiRequest<{ reply: string; relationship_score: number; agent_id: string }>('/candidate/message', {
+      method: 'POST',
+      body: data,
+    }),
+
+  getEnvironment: (sessionId: string, token: string) =>
+    apiRequest<Record<string, unknown>>(`/candidate/env/${sessionId}?token=${token}`),
+
+  submitDebrief: (
+    sessionId: string,
+    token: string,
+    q1: string,
+    q2: string,
+    q3: string
+  ) =>
+    apiRequest<{ status: string; message: string; report_url?: string }>(
+      `/sessions/${sessionId}/debrief`,
+      {
+        method: 'POST',
+        body: { token, q1, q2, q3 },
+      }
+    ),
+
+  // Trace endpoints for behavioral logging
+  trace: (data: TraceRequest) =>
+    apiRequest<{ status: string; event_id: string }>('/candidate/trace', {
+      method: 'POST',
+      body: data,
+    }),
+
+  artifactComment: (data: ArtifactCommentRequest) =>
+    apiRequest<{ status: string; event_id: string }>('/candidate/artifact-comment', {
+      method: 'POST',
+      body: data,
+    }),
+};
