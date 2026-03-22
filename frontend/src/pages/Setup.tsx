@@ -13,10 +13,19 @@ const MODELS = [
   { id: 'cmul8-workenv2', name: 'cmul8-workenv2', description: 'Advanced simulation' },
 ];
 
+const LOADING_STEPS = [
+  'Analyzing role requirements...',
+  'Simulating coworkers...',
+  'Creating project tasks...',
+  'Adding stress triggers...',
+  'Finalizing environment...',
+];
+
 export default function Setup() {
   const navigate = useNavigate();
   const { token } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingStep, setLoadingStep] = useState(0);
   const [error, setError] = useState<ParsedError | null>(null);
   const [orgProfile, setOrgProfile] = useState<OrgProfile | null>(null);
   const [form, setForm] = useState({
@@ -55,7 +64,13 @@ export default function Setup() {
     if (!isValid || !token) return;
 
     setIsLoading(true);
+    setLoadingStep(0);
     setError(null);
+
+    // Animate through loading steps
+    const stepInterval = setInterval(() => {
+      setLoadingStep((prev) => (prev < LOADING_STEPS.length - 1 ? prev + 1 : prev));
+    }, 2500);
 
     try {
       const response = await sessions.create(token, {
@@ -70,6 +85,7 @@ export default function Setup() {
         candidate_type: form.candidate_type,
       }, jdFile || undefined);
 
+      clearInterval(stepInterval);
       navigate(`/preview/${response.session_id}`, {
         state: {
           ...form,
@@ -81,6 +97,7 @@ export default function Setup() {
         },
       });
     } catch (err) {
+      clearInterval(stepInterval);
       const statusCode = err instanceof ApiError ? err.status : undefined;
       setError(parseError(err, statusCode));
       setIsLoading(false);
@@ -278,13 +295,18 @@ export default function Setup() {
               </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={!isValid || isLoading}
-              className="w-full mt-6 bg-dark text-white py-3 px-4 rounded-full font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-85 transition-all duration-200 hover:-translate-y-0.5"
-            >
-              {isLoading ? (
-                <span className="flex items-center justify-center gap-2">
+            {isLoading ? (
+              <div className="mt-6 space-y-4">
+                {/* Progress bar */}
+                <div className="w-full bg-surface rounded-full h-2 overflow-hidden">
+                  <div
+                    className="h-full bg-dark rounded-full transition-all duration-500 ease-out"
+                    style={{ width: `${((loadingStep + 1) / LOADING_STEPS.length) * 100}%` }}
+                  />
+                </div>
+
+                {/* Current step */}
+                <div className="flex items-center justify-center gap-2 text-sm text-muted">
                   <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
                     <circle
                       className="opacity-25"
@@ -301,12 +323,30 @@ export default function Setup() {
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     />
                   </svg>
-                  Generating...
-                </span>
-              ) : (
-                'Generate simulation'
-              )}
-            </button>
+                  <span className="animate-pulse">{LOADING_STEPS[loadingStep]}</span>
+                </div>
+
+                {/* Step indicators */}
+                <div className="flex justify-center gap-1.5">
+                  {LOADING_STEPS.map((_, idx) => (
+                    <div
+                      key={idx}
+                      className={`w-1.5 h-1.5 rounded-full transition-colors duration-300 ${
+                        idx <= loadingStep ? 'bg-dark' : 'bg-border'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <button
+                type="submit"
+                disabled={!isValid}
+                className="w-full mt-6 bg-dark text-white py-3 px-4 rounded-full font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-85 transition-all duration-200 hover:-translate-y-0.5"
+              >
+                Generate simulation
+              </button>
+            )}
           </form>
         </div>
       </main>
