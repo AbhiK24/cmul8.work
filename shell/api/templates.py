@@ -1,11 +1,9 @@
 """Training templates API endpoints."""
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
-import uuid
 
 from ..db.pool import get_pool
-from ..auth.jwt import get_current_employer
 
 router = APIRouter(prefix="/templates", tags=["templates"])
 
