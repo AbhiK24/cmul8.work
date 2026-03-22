@@ -78,6 +78,14 @@ const bandColors: Record<string, string> = {
   'Calibrating': 'bg-gray-100 text-gray-800 border-gray-200',
 };
 
+// Generate DiceBear avatar URL for agents without one (retroactive support)
+const avatarStyles = ['avataaars', 'personas', 'notionists', 'lorelei', 'adventurer'];
+function getAvatarUrl(name: string, avatarUrl?: string, index: number = 0): string {
+  if (avatarUrl) return avatarUrl;
+  const style = avatarStyles[index % avatarStyles.length];
+  return `https://api.dicebear.com/7.x/${style}/svg?seed=${name.replace(/\s+/g, '')}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
+}
+
 function ScoreBar({ score, max = 10 }: { score: number; max?: number }) {
   const percent = (score / max) * 100;
   const color = score >= 7 ? 'bg-emerald-500' : score >= 5 ? 'bg-amber-500' : 'bg-red-400';
@@ -339,17 +347,11 @@ export default function Report() {
                 <div key={idx} className="p-5 bg-surface/50 rounded-xl border border-border/50 hover:border-border transition-colors">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      {agent.avatar_url ? (
-                        <img
-                          src={agent.avatar_url}
-                          alt={agent.agent_name}
-                          className="w-12 h-12 rounded-full bg-surface"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 rounded-full bg-dark/10 flex items-center justify-center text-dark font-semibold text-lg">
-                          {agent.agent_name.charAt(0)}
-                        </div>
-                      )}
+                      <img
+                        src={getAvatarUrl(agent.agent_name, agent.avatar_url, idx)}
+                        alt={agent.agent_name}
+                        className="w-12 h-12 rounded-full bg-surface"
+                      />
                       <div>
                         <span className="font-semibold text-dark">{agent.agent_name}</span>
                         <p className="text-muted text-xs">{agent.role}</p>

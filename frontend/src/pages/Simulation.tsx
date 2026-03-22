@@ -44,8 +44,12 @@ const statusColors: Record<string, string> = {
   away: 'bg-gray-400',
 };
 
-function getInitials(name: string) {
-  return name.split(' ').map((n) => n[0]).join('').toUpperCase();
+// Generate DiceBear avatar URL for agents without one (retroactive support)
+const avatarStyles = ['avataaars', 'personas', 'notionists', 'lorelei', 'adventurer'];
+function getAvatarUrl(agent: { name: string; avatar_url?: string }, index: number = 0): string {
+  if (agent.avatar_url) return agent.avatar_url;
+  const style = avatarStyles[index % avatarStyles.length];
+  return `https://api.dicebear.com/7.x/${style}/svg?seed=${agent.name.replace(/\s+/g, '')}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
 }
 
 function formatTime(ts: number) {
@@ -650,7 +654,7 @@ export default function Simulation() {
           <div className="p-3 border-b border-border">
             <h3 className="text-[9px] uppercase tracking-widest text-muted mb-2">Team</h3>
             <div className="space-y-1">
-              {agents.map((agent) => (
+              {agents.map((agent, idx) => (
                 <div key={agent.agent_id} className="relative">
                   <button
                     onClick={() => openNewThread(agent.agent_id)}
@@ -659,19 +663,11 @@ export default function Simulation() {
                     className="w-full flex items-center gap-2 p-1.5 rounded hover:bg-surface transition-colors text-left"
                   >
                     <div className="relative">
-                      {agent.avatar_url ? (
-                        <img
-                          src={agent.avatar_url}
-                          alt={agent.name}
-                          className="w-8 h-8 rounded-full bg-surface shadow-sm"
-                        />
-                      ) : (
-                        <div
-                          className={`w-8 h-8 rounded-full ${relationshipColors[agent.relationship_to_candidate] || 'bg-dark'} text-white flex items-center justify-center text-[10px] font-medium shadow-sm`}
-                        >
-                          {getInitials(agent.name)}
-                        </div>
-                      )}
+                      <img
+                        src={getAvatarUrl(agent, idx)}
+                        alt={agent.name}
+                        className="w-8 h-8 rounded-full bg-surface shadow-sm"
+                      />
                       <div
                         className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ${statusColors[agent.status] || 'bg-gray-400'} border-2 border-white`}
                       />
@@ -695,17 +691,11 @@ export default function Simulation() {
                   {hoveredAgent === agent.agent_id && (
                     <div className="absolute left-full top-0 ml-2 z-50 w-56 p-3 bg-white rounded-lg shadow-lg border border-border">
                       <div className="flex items-center gap-2 mb-2">
-                        {agent.avatar_url ? (
-                          <img
-                            src={agent.avatar_url}
-                            alt={agent.name}
-                            className="w-10 h-10 rounded-full bg-surface"
-                          />
-                        ) : (
-                          <div className={`w-10 h-10 rounded-full ${relationshipColors[agent.relationship_to_candidate] || 'bg-gray-500'} text-white flex items-center justify-center text-sm font-medium`}>
-                            {getInitials(agent.name)}
-                          </div>
-                        )}
+                        <img
+                          src={getAvatarUrl(agent, idx)}
+                          alt={agent.name}
+                          className="w-10 h-10 rounded-full bg-surface"
+                        />
                         <div>
                           <div className="text-sm font-medium text-dark">{agent.name}</div>
                           <div className="text-[10px] text-muted">{agent.role}</div>
@@ -857,21 +847,14 @@ export default function Simulation() {
                       </div>
                     );
                   }
+                  const agentIdx = agents.findIndex(a => a.agent_id === msg.agent_id);
                   return (
                     <div key={msg.id} className="flex gap-2">
-                      {msgAgent?.avatar_url ? (
-                        <img
-                          src={msgAgent.avatar_url}
-                          alt={msgAgent.name}
-                          className="w-7 h-7 rounded-full bg-surface shrink-0"
-                        />
-                      ) : (
-                        <div
-                          className={`w-7 h-7 rounded-full ${relationshipColors[msgAgent?.relationship_to_candidate || 'system']} text-white flex items-center justify-center text-[10px] font-medium shrink-0`}
-                        >
-                          {getInitials(msgAgent?.name || 'A')}
-                        </div>
-                      )}
+                      <img
+                        src={msgAgent ? getAvatarUrl(msgAgent, agentIdx >= 0 ? agentIdx : 0) : `https://api.dicebear.com/7.x/avataaars/svg?seed=System`}
+                        alt={msgAgent?.name || 'Agent'}
+                        className="w-7 h-7 rounded-full bg-surface shrink-0"
+                      />
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-0.5">
                           <span className="text-xs font-medium text-dark">{msgAgent?.name}</span>
@@ -882,21 +865,13 @@ export default function Simulation() {
                     </div>
                   );
                 })}
-                {isTyping && (
+                {isTyping && activeAgent && (
                   <div className="flex gap-2">
-                    {activeAgent?.avatar_url ? (
-                      <img
-                        src={activeAgent.avatar_url}
-                        alt={activeAgent.name}
-                        className="w-7 h-7 rounded-full bg-surface"
-                      />
-                    ) : (
-                      <div
-                        className={`w-7 h-7 rounded-full ${relationshipColors[activeAgent?.relationship_to_candidate || 'system']} text-white flex items-center justify-center text-[10px] font-medium`}
-                      >
-                        {getInitials(activeAgent?.name || 'A')}
-                      </div>
-                    )}
+                    <img
+                      src={getAvatarUrl(activeAgent, agents.findIndex(a => a.agent_id === activeAgent.agent_id))}
+                      alt={activeAgent.name}
+                      className="w-7 h-7 rounded-full bg-surface"
+                    />
                     <div className="bg-surface rounded-lg px-3 py-2">
                       <div className="flex gap-1">
                         <span className="w-1.5 h-1.5 bg-muted rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
