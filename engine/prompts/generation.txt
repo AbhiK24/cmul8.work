@@ -54,6 +54,93 @@ This simulation is TASK-DRIVEN, not open-ended. The candidate must:
 
 The simulation environment is a communication and document editing platform, NOT a coding environment.
 
+## CRITICAL: Behavioral Trait Coverage (Pymetrics Framework)
+
+Your simulation MUST be designed to probe ALL 9 behavioral traits below. Each task, agent interaction, and scenario element should create opportunities to observe these traits.
+
+### 1. ATTENTION
+Signal capture through:
+- **Time-to-first-action**: How quickly does candidate engage with urgent vs non-urgent threads?
+- **Distraction filtering**: Include decoy emails/messages that are interesting but low-priority
+- **Sustained focus**: Tasks requiring extended engagement without switching
+
+Design requirement: Include at least one LOW-PRIORITY but INTERESTING distraction thread. Track which threads candidate opens first and how long they engage with each.
+
+### 2. DECISION MAKING
+Signal capture through:
+- **Evidence-seeking**: Does candidate ask clarifying questions before deciding?
+- **Belief updating**: When new info contradicts initial assumptions, do they adapt?
+- **Escalation judgment**: Do they know when to make a call vs when to escalate?
+
+Design requirement: Include a task where initial information is incomplete or misleading. One agent should have contradicting info that requires belief updating.
+
+### 3. EFFORT
+Signal capture through:
+- **Selective effort**: Do they invest more effort in high-impact tasks?
+- **Reward sensitivity**: How do they respond to positive feedback mid-simulation?
+- **Consistency**: Is quality maintained across all tasks or does it drop for later ones?
+
+Design requirement: Tasks should vary in importance/visibility. Include at least one "quick win" task and one "high effort, high impact" task.
+
+### 4. EMOTION (Emotional Intelligence)
+Signal capture through:
+- **Subtext reading**: Can they detect when an agent is frustrated, anxious, or hiding something?
+- **Register calibration**: Do they adjust tone for different stakeholders (peer vs executive vs report)?
+- **Client empathy**: Can they acknowledge feelings while still addressing business needs?
+
+Design requirement: One agent should have an emotional undertone (frustrated, anxious, passive-aggressive). Include both senior and junior stakeholders requiring different communication registers.
+
+### 5. FAIRNESS
+Signal capture through:
+- **Process fairness**: Do they consider how decisions affect different team members?
+- **Resource allocation**: When resources are limited, how do they distribute them?
+
+Design requirement: Include a scenario with competing stakeholder needs or limited resources where the "fair" answer isn't obvious.
+
+### 6. FOCUS (Adaptability)
+Signal capture through:
+- **Context switching**: How well do they handle interruptions (stress injects)?
+- **Adaptability**: When plans change mid-task, do they pivot gracefully?
+
+Design requirement: Stress injects should require immediate context switches. At least one inject should invalidate or significantly change a previous task.
+
+### 7. GENEROSITY (Collaboration)
+Signal capture through:
+- **Trust extension**: Do they give agents the benefit of the doubt?
+- **Information sharing**: Do they proactively share useful info with agents who might need it?
+
+Design requirement: Create opportunities where candidate has info that would help an agent. Include an agent who initially seems unhelpful but becomes valuable with trust.
+
+### 8. LEARNING
+Signal capture through:
+- **Error acknowledgment**: If they make a mistake, do they own it?
+- **Pattern detection**: Can they connect dots across different conversations?
+- **Recovery quality**: After setbacks, do they recover well or spiral?
+
+Design requirement: Include scattered information across agents that forms a pattern when connected. One task should build on another, testing pattern recognition.
+
+### 9. RISK TOLERANCE
+Signal capture through:
+- **Ambiguity commitment**: Can they make decisions with incomplete information?
+- **Downside sensitivity**: Do they over-focus on what could go wrong?
+- **Social risk**: Will they push back on senior stakeholders when warranted?
+
+Design requirement: Include a decision that must be made without full information. Include a scenario where the "safe" answer isn't necessarily the "right" answer. One senior agent should propose something questionable.
+
+## Trait-Task Mapping Checklist
+When designing tasks, ensure coverage:
+| Trait | Primary Task | Secondary Signal |
+|-------|-------------|------------------|
+| Attention | Thread prioritization | Time tracking |
+| Decision Making | Incomplete info task | Belief update scenario |
+| Effort | High-impact strategic task | Quick operational task |
+| Emotion | Difficult stakeholder | Multi-level communication |
+| Fairness | Resource allocation decision | Stakeholder trade-off |
+| Focus | Response to inject | Plan adaptation |
+| Generosity | Info sharing opportunity | Trust-building interaction |
+| Learning | Connected pattern task | Recovery from setback |
+| Risk Tolerance | Ambiguous decision | Senior pushback moment |
+
 ## Your Task
 Generate a complete simulation environment:
 

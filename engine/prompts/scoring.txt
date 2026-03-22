@@ -44,41 +44,73 @@ From the trace, calculate and consider:
 - High blur time (>5 min total): Extended time away from simulation
 - Risk score > 50: Warrants scrutiny of response authenticity
 
-## Assessment Framework
+## Assessment Framework (Pymetrics Behavioral Traits)
 Evaluate the candidate on these 9 behavioral dimensions (score each 1-10):
 
-1. **Prioritization**: How well did they identify and focus on high-impact work?
-   - Consider: Which threads they opened first, urgent vs non-urgent response times
-2. **Communication**: Clarity, tone, and effectiveness of their messages
-   - Consider: Message length, professionalism, action orientation
-3. **Stakeholder Management**: How they navigated different personalities and needs
-   - Consider: Relationship score deltas, handling of difficult archetype
-4. **Problem Solving**: Approach to understanding and addressing issues
-   - Consider: Questions asked, solutions proposed, trade-off analysis
-5. **Time Management**: How they allocated their 45 minutes
-   - Consider: Time per thread, response gaps, artifact time
-6. **Adaptability**: Response to stress injects and changing priorities
-   - Consider: Inject response times, pivot behavior
-7. **Attention to Detail**: Thoroughness in artifact review and task completion
-   - Consider: Artifact comments, task completion, thread read-through
-8. **Empathy**: How they handled the difficult stakeholder and built relationships
-   - Consider: Relationship improvements, acknowledgment of concerns
-9. **Self-Awareness**: Accuracy of their self-reflection vs observed behavior
-   - Consider: Debrief claims vs trace evidence
+1. **ATTENTION**: How well did they filter distractions and sustain focus?
+   - Time-to-first-action: How quickly did they engage with urgent threads?
+   - Distraction filtering: Did they ignore low-priority but interesting threads?
+   - Sustained focus: Did they complete threads before jumping to new ones?
+   - Consider: Thread open order, time spent on each, engagement with decoy content
+
+2. **DECISION MAKING**: How well did they gather evidence and update beliefs?
+   - Evidence-seeking: Did they ask clarifying questions before deciding?
+   - Belief updating: When contradicting info emerged, did they adapt?
+   - Escalation judgment: Did they know when to decide vs when to escalate?
+   - Consider: Questions asked, how they handled conflicting information, decision quality
+
+3. **EFFORT**: Did they allocate effort strategically?
+   - Selective effort: More investment in high-impact tasks?
+   - Reward sensitivity: How did they respond to positive feedback?
+   - Consistency: Was quality maintained across all tasks?
+   - Consider: Message depth per task importance, quality variance across tasks
+
+4. **EMOTION (Emotional Intelligence)**: Did they read and respond to emotional cues?
+   - Subtext reading: Did they detect frustration, anxiety, or hidden concerns?
+   - Register calibration: Did they adjust tone for different stakeholders?
+   - Client empathy: Did they acknowledge feelings while addressing business needs?
+   - Consider: Tone adaptation, response to emotional agents, stakeholder sensitivity
+
+5. **FAIRNESS**: Did they consider equitable outcomes?
+   - Process fairness: Did they consider how decisions affect different team members?
+   - Resource allocation: When resources were limited, how did they distribute?
+   - Consider: Trade-off reasoning, stakeholder consideration, balanced decisions
+
+6. **FOCUS (Adaptability)**: How well did they handle interruptions and change?
+   - Context switching: How effectively did they handle stress injects?
+   - Adaptability: When plans changed, did they pivot gracefully?
+   - Consider: Inject response times, pivot behavior, recovery speed
+
+7. **GENEROSITY (Collaboration)**: Did they build trust and share proactively?
+   - Trust extension: Did they give agents the benefit of the doubt?
+   - Information sharing: Did they proactively share useful info with agents?
+   - Consider: Relationship score improvements, proactive communication, trust-building
+
+8. **LEARNING**: Did they recognize patterns and recover from setbacks?
+   - Error acknowledgment: If they made mistakes, did they own them?
+   - Pattern detection: Did they connect information across conversations?
+   - Recovery quality: After setbacks, did they recover well?
+   - Consider: Pattern recognition, recovery behavior, knowledge synthesis
+
+9. **RISK TOLERANCE**: How did they handle ambiguity and social risk?
+   - Ambiguity commitment: Could they decide with incomplete information?
+   - Downside sensitivity: Did they over-focus on what could go wrong?
+   - Social risk: Did they push back on senior stakeholders when warranted?
+   - Consider: Decision confidence, risk framing, willingness to challenge
 
 ## Response Format
 Return a JSON object with:
 {{
   "trait_scores": {{
-    "prioritization": {{"score": 1-10, "evidence": "specific observation from trace"}},
-    "communication": {{"score": 1-10, "evidence": "specific observation"}},
-    "stakeholder_management": {{"score": 1-10, "evidence": "specific observation"}},
-    "problem_solving": {{"score": 1-10, "evidence": "specific observation"}},
-    "time_management": {{"score": 1-10, "evidence": "specific observation"}},
-    "adaptability": {{"score": 1-10, "evidence": "specific observation"}},
-    "attention_to_detail": {{"score": 1-10, "evidence": "specific observation"}},
-    "empathy": {{"score": 1-10, "evidence": "specific observation"}},
-    "self_awareness": {{"score": 1-10, "evidence": "specific observation"}}
+    "attention": {{"score": 1-10, "evidence": "specific observation from trace", "sub_signals": {{"time_to_first_action": "observation", "distraction_filtering": "observation", "sustained_focus": "observation"}}}},
+    "decision_making": {{"score": 1-10, "evidence": "specific observation", "sub_signals": {{"evidence_seeking": "observation", "belief_updating": "observation", "escalation_judgment": "observation"}}}},
+    "effort": {{"score": 1-10, "evidence": "specific observation", "sub_signals": {{"selective_effort": "observation", "reward_sensitivity": "observation", "consistency": "observation"}}}},
+    "emotion": {{"score": 1-10, "evidence": "specific observation", "sub_signals": {{"subtext_reading": "observation", "register_calibration": "observation", "client_empathy": "observation"}}}},
+    "fairness": {{"score": 1-10, "evidence": "specific observation", "sub_signals": {{"process_fairness": "observation", "resource_allocation": "observation"}}}},
+    "focus": {{"score": 1-10, "evidence": "specific observation", "sub_signals": {{"context_switching": "observation", "adaptability": "observation"}}}},
+    "generosity": {{"score": 1-10, "evidence": "specific observation", "sub_signals": {{"trust_extension": "observation", "information_sharing": "observation"}}}},
+    "learning": {{"score": 1-10, "evidence": "specific observation", "sub_signals": {{"error_acknowledgment": "observation", "pattern_detection": "observation", "recovery_quality": "observation"}}}},
+    "risk_tolerance": {{"score": 1-10, "evidence": "specific observation", "sub_signals": {{"ambiguity_commitment": "observation", "downside_sensitivity": "observation", "social_risk": "observation"}}}}
   }},
   "time_analysis": {{
     "first_response_seconds": 0,
