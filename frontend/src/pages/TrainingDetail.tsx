@@ -128,7 +128,7 @@ export default function TrainingDetail() {
         {/* Hero */}
         <div className="bg-white border border-border rounded-xl p-6 mb-6">
           <div className="flex items-start gap-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-xl flex items-center justify-center shrink-0">
+            <div className="w-16 h-16 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-xl flex items-center justify-center shrink-0">
               <span className="text-3xl">
                 {categoryIcons[template.skill_category] || '📚'}
               </span>
@@ -157,6 +157,15 @@ export default function TrainingDetail() {
                   </div>
                   <span className="text-muted">{difficulty.label}</span>
                 </div>
+                <button
+                  onClick={() => setShowAssignModal(true)}
+                  className="ml-auto flex items-center gap-1.5 bg-dark text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-dark/90 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Assign to Team Member
+                </button>
               </div>
             </div>
           </div>
