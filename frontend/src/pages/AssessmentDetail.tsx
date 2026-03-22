@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { sessions, type SessionResponse, ApiError } from '../api/client';
 import Logo from '../components/Logo';
@@ -15,7 +15,7 @@ function getRoleEmoji(role: string): string {
   if (r.includes('manager') || r.includes('lead') || r.includes('director')) return '👔';
   if (r.includes('data') || r.includes('analyst')) return '📊';
   if (r.includes('hr') || r.includes('people') || r.includes('recruit')) return '👥';
-  if (r.includes('finance') || r.includes('account')) return '💰';
+  if (r.includes('finance')) return '💰';
   if (r.includes('support') || r.includes('customer') || r.includes('success')) return '🎧';
   if (r.includes('ops') || r.includes('operation')) return '⚙️';
   if (r.includes('legal') || r.includes('compliance')) return '⚖️';
@@ -30,28 +30,52 @@ function getTestedSkills(role: string): string[] {
   const baseSkills = ['Communication', 'Problem-solving'];
 
   if (r.includes('engineer') || r.includes('developer')) {
-    return [...baseSkills, 'Technical depth', 'Collaboration'];
+    return [...baseSkills, 'Technical depth', 'Collaboration', 'Code review'];
   }
   if (r.includes('product') || r.includes('pm')) {
-    return [...baseSkills, 'Prioritization', 'Stakeholder mgmt'];
+    return [...baseSkills, 'Prioritization', 'Stakeholder mgmt', 'Strategic thinking'];
   }
   if (r.includes('design')) {
-    return [...baseSkills, 'Design thinking', 'Feedback handling'];
+    return [...baseSkills, 'Design thinking', 'Feedback handling', 'User empathy'];
   }
   if (r.includes('sales')) {
-    return [...baseSkills, 'Negotiation', 'Relationship building'];
+    return [...baseSkills, 'Negotiation', 'Relationship building', 'Objection handling'];
   }
   if (r.includes('manager') || r.includes('lead')) {
-    return [...baseSkills, 'Decision making', 'Team leadership'];
+    return [...baseSkills, 'Decision making', 'Team leadership', 'Conflict resolution'];
   }
   if (r.includes('data') || r.includes('analyst')) {
-    return [...baseSkills, 'Analytical thinking', 'Data storytelling'];
+    return [...baseSkills, 'Analytical thinking', 'Data storytelling', 'Attention to detail'];
   }
   if (r.includes('support') || r.includes('customer')) {
-    return [...baseSkills, 'Empathy', 'Conflict resolution'];
+    return [...baseSkills, 'Empathy', 'Conflict resolution', 'Patience'];
   }
   return [...baseSkills, 'Critical thinking', 'Adaptability'];
 }
+
+// Difficulty based on role seniority
+function getRoleDifficulty(role: string): 'beginner' | 'intermediate' | 'advanced' {
+  const r = role.toLowerCase();
+  if (r.includes('senior') || r.includes('sr') || r.includes('lead') || r.includes('principal')) {
+    return 'advanced';
+  }
+  if (r.includes('manager') || r.includes('director') || r.includes('head') || r.includes('vp')) {
+    return 'advanced';
+  }
+  if (r.includes('mid') || r.includes('ii') || r.includes('2')) {
+    return 'intermediate';
+  }
+  if (r.includes('junior') || r.includes('jr') || r.includes('entry') || r.includes('associate')) {
+    return 'beginner';
+  }
+  return 'intermediate';
+}
+
+const difficultyConfig = {
+  beginner: { label: 'Beginner', bars: 1, color: 'bg-emerald-500' },
+  intermediate: { label: 'Intermediate', bars: 2, color: 'bg-amber-500' },
+  advanced: { label: 'Advanced', bars: 3, color: 'bg-red-500' },
+};
 
 const statusConfig = {
   generating: { label: 'Generating', bg: 'bg-amber-100', text: 'text-amber-700', dot: 'bg-amber-500' },
@@ -72,6 +96,7 @@ function formatDate(date: string) {
 
 export default function AssessmentDetail() {
   const { role } = useParams();
+  const navigate = useNavigate();
   const { token } = useAuth();
   const [allSessions, setAllSessions] = useState<SessionResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -131,7 +156,7 @@ export default function AssessmentDetail() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-surface flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-2 border-indigo-500 border-t-transparent rounded-full" />
+        <div className="animate-spin h-8 w-8 border-2 border-dark border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -140,8 +165,11 @@ export default function AssessmentDetail() {
     return (
       <div className="min-h-screen bg-surface flex items-center justify-center">
         <div className="text-center">
-          <p className="text-muted mb-4">{error || 'WorkSim not found'}</p>
-          <Link to="/" className="text-dark hover:opacity-70">Back to dashboard</Link>
+          <h1 className="text-xl font-medium text-dark mb-2">Error</h1>
+          <p className="text-muted text-sm mb-4">{error || 'WorkSim not found'}</p>
+          <Link to="/" className="text-indigo-600 hover:text-indigo-700">
+            ← Back to Dashboard
+          </Link>
         </div>
       </div>
     );
@@ -152,174 +180,278 @@ export default function AssessmentDetail() {
   const inProgressCount = workSimSessions.filter(s => s.status === 'in_progress').length;
   const emoji = getRoleEmoji(workSim.role);
   const skills = getTestedSkills(workSim.role);
+  const difficultyLevel = getRoleDifficulty(workSim.role);
+  const difficulty = difficultyConfig[difficultyLevel];
 
   return (
     <div className="min-h-screen bg-surface">
+      {/* Header */}
       <header className="bg-white border-b border-border">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <Logo size="md" />
-          <Link to="/" className="text-sm text-muted hover:text-dark transition-colors">
-            Back to Dashboard
+          <Link
+            to="/"
+            className="text-sm text-muted hover:text-dark transition-colors"
+          >
+            ← Back to Dashboard
           </Link>
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-8">
+      <main className="max-w-4xl mx-auto px-6 py-8">
         {/* Hero */}
-        <div className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-700 rounded-2xl p-8 mb-8 text-white relative overflow-hidden">
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute inset-0" style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23fff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-            }} />
-          </div>
-          <div className="relative flex items-start justify-between">
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">
-                  <span className="text-3xl">{emoji}</span>
-                </div>
-                <span className="px-3 py-1 bg-white/20 rounded-full text-xs font-medium">Assessment WorkSim</span>
-              </div>
-              <h1 className="text-3xl font-bold mb-2">{workSim.role}</h1>
-              <p className="text-white/70 text-lg mb-4">{workSim.org_name || 'Custom Organization'}</p>
-
-              {/* Duration */}
-              <div className="flex items-center gap-2 text-white/70 text-sm mb-4">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                20-30 min simulation
-              </div>
-
-              {/* Skills */}
-              <div className="flex flex-wrap gap-2">
-                {skills.map((skill, i) => (
-                  <span key={i} className="px-3 py-1 bg-white/20 rounded-full text-xs font-medium">
-                    {skill}
-                  </span>
-                ))}
-              </div>
+        <div className="bg-white border border-border rounded-xl p-6 mb-6">
+          <div className="flex items-start gap-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-indigo-100 to-blue-100 rounded-xl flex items-center justify-center shrink-0">
+              <span className="text-3xl">{emoji}</span>
             </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <h1 className="text-2xl font-semibold text-dark">{workSim.role}</h1>
+                <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded text-xs font-medium">
+                  Assessment
+                </span>
+              </div>
+              <p className="text-mid leading-relaxed">
+                {workSim.org_name || 'Custom Organization'} • Evaluate candidates through realistic workplace scenarios
+              </p>
 
-            {/* Stats */}
-            <div className="text-right">
-              <div className="grid grid-cols-3 gap-6">
-                <div className="text-center">
-                  <div className="text-3xl font-bold">{completedCount}</div>
-                  <div className="text-white/60 text-xs">Completed</div>
+              <div className="flex items-center gap-4 mt-4">
+                <div className="flex items-center gap-1.5 text-sm text-muted">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  ~25 minutes
                 </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold">{inProgressCount}</div>
-                  <div className="text-white/60 text-xs">In Progress</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold">{pendingCount}</div>
-                  <div className="text-white/60 text-xs">Ready</div>
+                <div className="flex items-center gap-1.5 text-sm">
+                  <div className="flex items-center gap-0.5">
+                    {[1, 2, 3].map((i) => (
+                      <div
+                        key={i}
+                        className={`w-1.5 h-3 rounded-sm ${
+                          i <= difficulty.bars ? difficulty.color : 'bg-gray-200'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-muted">{difficulty.label}</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Assign New */}
-        <div className="bg-white border border-border rounded-xl p-6 mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-dark">Assign to Candidate</h2>
-              <p className="text-sm text-muted mt-1">Send this WorkSim to a new candidate</p>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left column */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* What's Tested */}
+            <div className="bg-white border border-border rounded-xl p-6">
+              <h2 className="font-semibold text-dark mb-4 flex items-center gap-2">
+                <span className="text-lg">🎯</span>
+                Skills Evaluated
+              </h2>
+              <ul className="space-y-3">
+                {skills.map((skill, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-indigo-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span className="text-mid">{skill}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <Link
-              to={`/setup?role=${encodeURIComponent(workSim.role)}&org=${encodeURIComponent(workSim.org_name || '')}`}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
+
+            {/* Stats Overview */}
+            <div className="bg-white border border-border rounded-xl p-6">
+              <h2 className="font-semibold text-dark mb-4 flex items-center gap-2">
+                <span className="text-lg">📊</span>
+                Assessment Stats
+              </h2>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="bg-emerald-50 rounded-lg p-4 text-center">
+                  <div className="text-2xl font-bold text-emerald-700">{completedCount}</div>
+                  <div className="text-xs text-emerald-600">Completed</div>
+                </div>
+                <div className="bg-blue-50 rounded-lg p-4 text-center">
+                  <div className="text-2xl font-bold text-blue-700">{inProgressCount}</div>
+                  <div className="text-xs text-blue-600">In Progress</div>
+                </div>
+                <div className="bg-amber-50 rounded-lg p-4 text-center">
+                  <div className="text-2xl font-bold text-amber-700">{pendingCount}</div>
+                  <div className="text-xs text-amber-600">Ready</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Assigned Candidates Table */}
+            <div className="bg-white border border-border rounded-xl overflow-hidden">
+              <div className="px-6 py-4 border-b border-border">
+                <h2 className="font-semibold text-dark flex items-center gap-2">
+                  <span className="text-lg">👥</span>
+                  Assigned Candidates
+                </h2>
+              </div>
+
+              {workSimSessions.length === 0 ? (
+                <div className="p-8 text-center">
+                  <p className="text-muted text-sm">No candidates assigned yet</p>
+                </div>
+              ) : (
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border bg-surface/50">
+                      <th className="text-left px-6 py-3 text-xs uppercase tracking-widest text-muted font-medium">Candidate</th>
+                      <th className="text-left px-6 py-3 text-xs uppercase tracking-widest text-muted font-medium">Type</th>
+                      <th className="text-left px-6 py-3 text-xs uppercase tracking-widest text-muted font-medium">Status</th>
+                      <th className="text-left px-6 py-3 text-xs uppercase tracking-widest text-muted font-medium">Date</th>
+                      <th className="text-left px-6 py-3 text-xs uppercase tracking-widest text-muted font-medium">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {workSimSessions.map((session) => {
+                      const status = statusConfig[session.status as keyof typeof statusConfig] || statusConfig.pending;
+                      return (
+                        <tr key={session.session_id} className="border-b border-border last:border-0 hover:bg-surface/30">
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-xs font-medium">
+                                {session.candidate_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                              </div>
+                              <div>
+                                <div className="font-medium text-dark text-sm">{session.candidate_name}</div>
+                                <div className="text-xs text-muted">{session.candidate_email}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${
+                              session.candidate_type === 'internal' ? 'bg-dark/10 text-dark' : 'bg-gray-100 text-gray-600'
+                            }`}>
+                              {session.candidate_type === 'internal' ? 'Benchmark' : 'External'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${status.bg} ${status.text}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`} />
+                              {status.label}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-muted">{formatDate(session.created_at)}</td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => copyLink(session.session_id, session.candidate_link)}
+                                className="px-2 py-1 text-xs text-muted hover:text-dark transition-colors"
+                              >
+                                {copiedId === session.session_id ? '✓ Copied' : 'Copy Link'}
+                              </button>
+                              {session.has_report ? (
+                                <Link
+                                  to={`/report/${session.session_id}`}
+                                  className="px-2 py-1 bg-indigo-50 text-indigo-700 rounded text-xs font-medium hover:bg-indigo-100"
+                                >
+                                  View Report
+                                </Link>
+                              ) : session.status === 'complete' ? (
+                                <button
+                                  onClick={() => generateReport(session.session_id)}
+                                  disabled={generatingReportId === session.session_id}
+                                  className="px-2 py-1 bg-dark text-white rounded text-xs font-medium hover:bg-dark/90 disabled:opacity-50"
+                                >
+                                  {generatingReportId === session.session_id ? '...' : 'Generate'}
+                                </button>
+                              ) : null}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+
+          {/* Right column */}
+          <div className="space-y-6">
+            {/* Quick Info */}
+            <div className="bg-white border border-border rounded-xl p-6">
+              <h2 className="font-semibold text-dark mb-4 flex items-center gap-2">
+                <span className="text-lg">📋</span>
+                Quick Info
+              </h2>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-xs text-muted mb-1">Organization</p>
+                  <p className="text-sm font-medium text-dark">{workSim.org_name || 'Custom Organization'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted mb-1">Role</p>
+                  <p className="text-sm font-medium text-dark">{workSim.role}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted mb-1">Difficulty</p>
+                  <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-0.5">
+                      {[1, 2, 3].map((i) => (
+                        <div
+                          key={i}
+                          className={`w-1.5 h-3 rounded-sm ${
+                            i <= difficulty.bars ? difficulty.color : 'bg-gray-200'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-sm text-dark">{difficulty.label}</span>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs text-muted mb-1">Duration</p>
+                  <p className="text-sm font-medium text-dark">~25 minutes</p>
+                </div>
+              </div>
+            </div>
+
+            {/* How It Works */}
+            <div className="bg-white border border-border rounded-xl p-6">
+              <h2 className="font-semibold text-dark mb-4 flex items-center gap-2">
+                <span className="text-lg">💡</span>
+                How It Works
+              </h2>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 text-xs font-semibold shrink-0">
+                    1
+                  </div>
+                  <p className="text-sm text-mid">Candidate receives unique link</p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 text-xs font-semibold shrink-0">
+                    2
+                  </div>
+                  <p className="text-sm text-mid">They interact with AI coworkers in realistic scenarios</p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 text-xs font-semibold shrink-0">
+                    3
+                  </div>
+                  <p className="text-sm text-mid">You get detailed report on their soft skills</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Assign Button */}
+            <button
+              onClick={() => navigate(`/setup?role=${encodeURIComponent(workSim.role)}&org=${encodeURIComponent(workSim.org_name || '')}`)}
+              className="w-full bg-dark text-white py-3 rounded-xl font-medium hover:bg-dark/90 transition-colors flex items-center justify-center gap-2"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
               Assign New Candidate
-            </Link>
+            </button>
           </div>
-        </div>
-
-        {/* Candidates List */}
-        <div className="bg-white border border-border rounded-xl overflow-hidden">
-          <div className="px-6 py-4 border-b border-border">
-            <h2 className="text-lg font-semibold text-dark">Assigned Candidates</h2>
-          </div>
-
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border bg-surface/50">
-                <th className="text-left px-6 py-3 text-xs uppercase tracking-widest text-muted font-medium">Candidate</th>
-                <th className="text-left px-6 py-3 text-xs uppercase tracking-widest text-muted font-medium">Type</th>
-                <th className="text-left px-6 py-3 text-xs uppercase tracking-widest text-muted font-medium">Status</th>
-                <th className="text-left px-6 py-3 text-xs uppercase tracking-widest text-muted font-medium">Date</th>
-                <th className="text-left px-6 py-3 text-xs uppercase tracking-widest text-muted font-medium">Link</th>
-                <th className="text-left px-6 py-3 text-xs uppercase tracking-widest text-muted font-medium">Report</th>
-              </tr>
-            </thead>
-            <tbody>
-              {workSimSessions.map((session) => {
-                const status = statusConfig[session.status as keyof typeof statusConfig] || statusConfig.pending;
-                return (
-                  <tr key={session.session_id} className="border-b border-border last:border-0 hover:bg-surface/30">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-xs font-medium">
-                          {session.candidate_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                        </div>
-                        <div>
-                          <div className="font-medium text-dark text-sm">{session.candidate_name}</div>
-                          <div className="text-xs text-muted">{session.candidate_email}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${
-                        session.candidate_type === 'internal' ? 'bg-dark/10 text-dark' : 'bg-gray-100 text-gray-600'
-                      }`}>
-                        {session.candidate_type === 'internal' ? 'Benchmark' : 'External'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${status.bg} ${status.text}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`} />
-                        {status.label}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-muted">{formatDate(session.created_at)}</td>
-                    <td className="px-6 py-4">
-                      <button
-                        onClick={() => copyLink(session.session_id, session.candidate_link)}
-                        className="text-sm text-muted hover:text-dark transition-colors"
-                      >
-                        {copiedId === session.session_id ? 'Copied!' : 'Copy'}
-                      </button>
-                    </td>
-                    <td className="px-6 py-4">
-                      {session.has_report ? (
-                        <Link
-                          to={`/report/${session.session_id}`}
-                          className="px-2 py-1 bg-indigo-50 text-indigo-700 rounded text-xs font-medium hover:bg-indigo-100"
-                        >
-                          View
-                        </Link>
-                      ) : session.status === 'complete' ? (
-                        <button
-                          onClick={() => generateReport(session.session_id)}
-                          disabled={generatingReportId === session.session_id}
-                          className="px-2 py-1 bg-dark text-white rounded text-xs font-medium hover:bg-dark/90 disabled:opacity-50"
-                        >
-                          {generatingReportId === session.session_id ? '...' : 'Generate'}
-                        </button>
-                      ) : (
-                        <span className="text-xs text-muted">-</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
         </div>
       </main>
     </div>

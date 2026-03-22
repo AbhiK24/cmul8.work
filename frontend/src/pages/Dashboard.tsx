@@ -62,6 +62,30 @@ function getTestedSkills(role: string): string[] {
   return [...baseSkills, 'Critical thinking', 'Adaptability'];
 }
 
+// Difficulty based on role seniority
+function getRoleDifficulty(role: string): 'beginner' | 'intermediate' | 'advanced' {
+  const r = role.toLowerCase();
+  if (r.includes('senior') || r.includes('sr') || r.includes('lead') || r.includes('principal')) {
+    return 'advanced';
+  }
+  if (r.includes('manager') || r.includes('director') || r.includes('head') || r.includes('vp')) {
+    return 'advanced';
+  }
+  if (r.includes('mid') || r.includes('ii') || r.includes('2')) {
+    return 'intermediate';
+  }
+  if (r.includes('junior') || r.includes('jr') || r.includes('entry') || r.includes('associate')) {
+    return 'beginner';
+  }
+  return 'intermediate';
+}
+
+const difficultyConfig = {
+  beginner: { label: 'Beginner', bars: 1, color: 'bg-emerald-500' },
+  intermediate: { label: 'Intermediate', bars: 2, color: 'bg-amber-500' },
+  advanced: { label: 'Advanced', bars: 3, color: 'bg-red-500' },
+};
+
 function formatDate(date: string) {
   return new Date(date).toLocaleDateString('en-US', {
     month: 'short',
@@ -310,7 +334,7 @@ export default function Dashboard() {
               </div>
             ) : workSimGroups.length === 0 ? (
               <div className="text-center py-16">
-                <div className="w-16 h-16 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-2xl mx-auto mb-4 flex items-center justify-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-indigo-100 to-blue-100 rounded-2xl mx-auto mb-4 flex items-center justify-center">
                   <span className="text-2xl">📋</span>
                 </div>
                 <h3 className="text-lg font-medium text-dark mb-2">No assessments yet</h3>
@@ -334,6 +358,8 @@ export default function Dashboard() {
                   const totalCount = group.sessions.length;
                   const skills = getTestedSkills(group.role);
                   const emoji = getRoleEmoji(group.role);
+                  const difficultyLevel = getRoleDifficulty(group.role);
+                  const difficulty = difficultyConfig[difficultyLevel];
 
                   return (
                     <Link
@@ -342,7 +368,7 @@ export default function Dashboard() {
                       className="group bg-white border border-border rounded-xl p-5 hover:shadow-lg hover:border-indigo-200 transition-all duration-200"
                     >
                       {/* Icon */}
-                      <div className="w-12 h-12 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                      <div className="w-12 h-12 bg-gradient-to-br from-indigo-100 to-blue-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                         <span className="text-2xl">{emoji}</span>
                       </div>
 
@@ -350,66 +376,63 @@ export default function Dashboard() {
                       <h3 className="font-semibold text-dark mb-1 group-hover:text-indigo-700 transition-colors">
                         {group.role}
                       </h3>
-                      <p className="text-sm text-muted mb-3">{group.orgName}</p>
+                      <p className="text-sm text-muted mb-3 line-clamp-1">{group.orgName}</p>
 
-                      {/* Meta: Duration & Candidates */}
+                      {/* Meta: Duration & Difficulty */}
                       <div className="flex items-center justify-between text-xs mb-4">
                         <div className="flex items-center gap-1 text-muted">
                           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
-                          20-30 min
+                          ~25 min
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <div className="flex items-center gap-1">
-                            <span className="w-2 h-2 rounded-full bg-indigo-500" />
-                            <span className="text-muted">{completedCount}/{totalCount}</span>
+                          <div className="flex items-center gap-0.5">
+                            {[1, 2, 3].map((i) => (
+                              <div
+                                key={i}
+                                className={`w-1.5 h-3 rounded-sm ${
+                                  i <= difficulty.bars ? difficulty.color : 'bg-gray-200'
+                                }`}
+                              />
+                            ))}
                           </div>
-                          <span className="text-muted">completed</span>
+                          <span className="text-muted">{difficulty.label}</span>
                         </div>
                       </div>
 
                       {/* Skills tested */}
                       <div className="pt-4 border-t border-border">
                         <p className="text-xs text-muted mb-2">Skills tested:</p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {skills.slice(0, 3).map((skill, i) => (
-                            <span
-                              key={i}
-                              className="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[10px] font-medium"
-                            >
+                        <ul className="space-y-1.5">
+                          {skills.slice(0, 2).map((skill, i) => (
+                            <li key={i} className="text-xs text-mid flex items-start gap-1.5">
+                              <svg className="w-3 h-3 text-indigo-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
                               {skill}
-                            </span>
+                            </li>
                           ))}
-                          {skills.length > 3 && (
-                            <span className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded text-[10px] font-medium">
-                              +{skills.length - 3}
-                            </span>
+                          {skills.length > 2 && (
+                            <li className="text-xs text-muted">
+                              +{skills.length - 2} more
+                            </li>
                           )}
-                        </div>
+                        </ul>
                       </div>
 
-                      {/* Candidates preview & View link */}
+                      {/* Stats & View link */}
                       <div className="mt-4 pt-4 border-t border-border">
                         <div className="flex items-center justify-between">
-                          <div className="flex -space-x-2">
-                            {group.sessions.slice(0, 4).map((session) => (
-                              <div
-                                key={session.session_id}
-                                className="w-7 h-7 rounded-full bg-indigo-100 border-2 border-white flex items-center justify-center text-indigo-600 text-[10px] font-medium"
-                                title={session.candidate_name}
-                              >
-                                {session.candidate_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                              </div>
-                            ))}
-                            {group.sessions.length > 4 && (
-                              <div className="w-7 h-7 rounded-full bg-gray-100 border-2 border-white flex items-center justify-center text-gray-600 text-[10px] font-medium">
-                                +{group.sessions.length - 4}
-                              </div>
-                            )}
+                          <div className="flex items-center gap-3 text-xs text-muted">
+                            <span className="flex items-center gap-1">
+                              <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                              {completedCount} done
+                            </span>
+                            <span>{totalCount} total</span>
                           </div>
                           <span className="text-xs font-medium text-indigo-600 group-hover:text-indigo-700 flex items-center gap-1">
-                            View all
+                            View
                             <svg className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                             </svg>
