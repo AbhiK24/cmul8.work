@@ -63,7 +63,7 @@ export default function Preview() {
       try {
         const data = await sessions.get(token, sessionId);
         if (data.env) {
-          setEnv(data.env as EnvData);
+          setEnv(data.env as unknown as EnvData);
         }
       } catch (err) {
         setError('Failed to load session data');
