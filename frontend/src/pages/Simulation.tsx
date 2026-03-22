@@ -568,7 +568,7 @@ export default function Simulation() {
                       ) : (
                         <div
                           className="prose prose-sm max-w-none text-mid leading-relaxed"
-                          dangerouslySetInnerHTML={{ __html: section.content.replace(/\n/g, '<br/>') }}
+                          dangerouslySetInnerHTML={{ __html: (section.content || '').replace(/\n/g, '<br/>') }}
                         />
                       )}
                     </div>
@@ -687,7 +687,7 @@ export default function Simulation() {
                   {hoveredAgent === agent.agent_id && (
                     <div className="absolute left-full top-0 ml-2 z-50 w-56 p-3 bg-white rounded-lg shadow-lg border border-border">
                       <div className="flex items-center gap-2 mb-2">
-                        <div className={`w-10 h-10 rounded-full ${relationshipColors[agent.relationship_to_candidate]} text-white flex items-center justify-center text-sm font-medium`}>
+                        <div className={`w-10 h-10 rounded-full ${relationshipColors[agent.relationship_to_candidate] || 'bg-gray-500'} text-white flex items-center justify-center text-sm font-medium`}>
                           {getInitials(agent.name)}
                         </div>
                         <div>
@@ -698,9 +698,9 @@ export default function Simulation() {
                       <div className="space-y-1.5 text-[11px]">
                         <div className="flex items-center gap-2">
                           <span className={`px-1.5 py-0.5 rounded text-[9px] font-medium ${
-                            relationshipColors[agent.relationship_to_candidate].replace('bg-', 'bg-').replace('-600', '-100')
-                          } ${relationshipColors[agent.relationship_to_candidate].replace('bg-', 'text-')}`}>
-                            {relationshipLabels[agent.relationship_to_candidate] || agent.relationship_to_candidate}
+                            (relationshipColors[agent.relationship_to_candidate] || 'bg-gray-600').replace('bg-', 'bg-').replace('-600', '-100')
+                          } ${(relationshipColors[agent.relationship_to_candidate] || 'bg-gray-600').replace('bg-', 'text-')}`}>
+                            {relationshipLabels[agent.relationship_to_candidate] || agent.relationship_to_candidate || 'Colleague'}
                           </span>
                         </div>
                         <p className="text-muted leading-relaxed">
