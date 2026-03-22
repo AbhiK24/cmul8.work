@@ -185,32 +185,33 @@ async def _create_session_internal(
 
 @router.post("", response_model=SessionResponse)
 async def create_session(
-    request: Optional[CreateSessionRequest] = None,
-    data: Optional[str] = Form(None),
+    data: str = Form(...),
     jd_file: Optional[UploadFile] = File(None),
     current_user: TokenData = Depends(get_current_user)
 ):
-    """Create a new simulation session with optional JD PDF upload."""
+    """Create a new simulation session with optional JD PDF upload.
+
+    Always expects multipart form with 'data' as JSON string.
+    """
     job_description = None
 
-    # Handle multipart form data (with file)
-    if data:
-        try:
-            request_data = json.loads(data)
-            request = CreateSessionRequest(**request_data)
-        except (json.JSONDecodeError, Exception) as e:
-            raise HTTPException(status_code=400, detail=f"Invalid request data: {e}")
-
-    if not request:
-        raise HTTPException(status_code=400, detail="Request data required")
+    # Parse the JSON data from form field
+    try:
+        request_data = json.loads(data)
+        request = CreateSessionRequest(**request_data)
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid JSON in data field: {e}")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid request data: {e}")
 
     # Extract text from JD PDF if provided
-    if jd_file:
+    if jd_file and jd_file.filename:
         try:
             content = await jd_file.read()
-            job_description = extract_pdf_text(content)
-            if job_description:
-                print(f"Extracted JD text: {len(job_description)} characters")
+            if content:
+                job_description = extract_pdf_text(content)
+                if job_description:
+                    print(f"Extracted JD text: {len(job_description)} characters")
         except Exception as e:
             print(f"Failed to extract JD: {e}")
 

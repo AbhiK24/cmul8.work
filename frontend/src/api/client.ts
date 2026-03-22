@@ -111,34 +111,27 @@ export const sessions = {
   create: async (token: string, data: CreateSessionRequest, jdFile?: File): Promise<SessionResponse> => {
     const API_URL_BASE = import.meta.env.VITE_API_URL || 'https://shell-production-7135.up.railway.app';
 
+    // Always use FormData - backend expects multipart form
+    const formData = new FormData();
+    formData.append('data', JSON.stringify(data));
     if (jdFile) {
-      // Use FormData for file upload
-      const formData = new FormData();
       formData.append('jd_file', jdFile);
-      formData.append('data', JSON.stringify(data));
-
-      const response = await fetch(`${API_URL_BASE}/sessions`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
-        throw new ApiError(error.detail || 'Request failed', response.status);
-      }
-
-      return response.json();
     }
 
-    // Regular JSON request without file
-    return apiRequest<SessionResponse>('/sessions', {
+    const response = await fetch(`${API_URL_BASE}/sessions`, {
       method: 'POST',
-      body: data,
-      token,
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
     });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
+      throw new ApiError(error.detail || 'Request failed', response.status);
+    }
+
+    return response.json();
   },
 
   list: (token: string) =>
