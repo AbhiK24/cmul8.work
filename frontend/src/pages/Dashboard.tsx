@@ -146,23 +146,32 @@ export default function Dashboard() {
       <header className="bg-white border-b border-border">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <Logo size="md" />
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
             <Link
               to="/profile"
-              className="text-sm text-muted hover:text-dark transition-colors"
+              className="flex items-center gap-1.5 text-sm text-muted hover:text-dark transition-colors px-3 py-2 rounded-lg hover:bg-surface"
             >
-              Profile
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+              Org Profile
             </Link>
             <Link
               to="/setup"
-              className="bg-dark text-white px-5 py-2 rounded-full text-sm font-medium hover:opacity-85 transition-all duration-200 hover:-translate-y-0.5"
+              className="flex items-center gap-1.5 bg-dark text-white px-4 py-2 rounded-full text-sm font-medium hover:opacity-85 transition-all duration-200 hover:-translate-y-0.5"
             >
-              New simulation
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Create WorkSim
             </Link>
             <button
               onClick={logout}
-              className="text-sm text-muted hover:text-dark transition-colors"
+              className="flex items-center gap-1.5 text-sm text-muted hover:text-dark transition-colors px-3 py-2 rounded-lg hover:bg-surface"
             >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
               Sign out
             </button>
           </div>
@@ -207,7 +216,7 @@ export default function Dashboard() {
               to="/setup"
               className="inline-flex bg-dark text-white px-6 py-2.5 rounded-full text-sm font-medium hover:opacity-85 transition-all duration-200 hover:-translate-y-0.5"
             >
-              Create simulation
+              Create WorkSim
             </Link>
           </div>
         ) : (

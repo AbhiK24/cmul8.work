@@ -127,7 +127,7 @@ export default function Setup() {
 
       <main className="max-w-xl mx-auto px-6 py-12">
         <div className="mb-8">
-          <h2 className="text-2xl font-medium text-dark tracking-tight">New simulation</h2>
+          <h2 className="text-2xl font-medium text-dark tracking-tight">Create WorkSim</h2>
           <p className="text-muted text-sm mt-2">Configure the scenario for your candidate assessment.</p>
         </div>
 
