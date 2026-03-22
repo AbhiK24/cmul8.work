@@ -78,7 +78,7 @@ Candidates drop into simulation without full context of:
 
 ### Solution: Pre-Simulation Onboarding Flow
 
-- [ ] **Context briefing screen** before simulation starts
+- [x] **Context briefing screen** before simulation starts ✓
   - Your role: "You are a PM at [Company]"
   - Team overview: Quick intro to key people
   - Situation: "It's Monday morning, Q4 planning is due Friday"
@@ -90,12 +90,12 @@ Candidates drop into simulation without full context of:
   - How to use task list
   - How to edit artifact
 
-- [ ] **"Day in the life" brief**
+- [x] **"Day in the life" brief** ✓
   - What happened before you arrived
   - Key context from recent events
   - Pending items in your inbox
 
-- [ ] **Character cards** - Meet your team
+- [x] **Character cards** - Meet your team ✓
   - Photo (avatar)
   - Name, role
   - Personality hint
