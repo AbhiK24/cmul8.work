@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { sessions, type SessionResponse, ApiError } from '../api/client';
+import { sessions, type SessionResponse, type SessionDetailResponse, ApiError } from '../api/client';
 import Logo from '../components/Logo';
 
 // Role-based emoji mapping
@@ -96,21 +96,36 @@ function formatDate(date: string) {
 
 export default function AssessmentDetail() {
   const { role } = useParams();
-  const navigate = useNavigate();
   const { token } = useAuth();
   const [allSessions, setAllSessions] = useState<SessionResponse[]>([]);
+  const [sessionDetail, setSessionDetail] = useState<SessionDetailResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [generatingReportId, setGeneratingReportId] = useState<string | null>(null);
 
+  // Modal state
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [assignForm, setAssignForm] = useState({ name: '', email: '' });
+  const [isAssigning, setIsAssigning] = useState(false);
+  const [assignedLink, setAssignedLink] = useState('');
+
   useEffect(() => {
-    async function loadSessions() {
+    async function loadData() {
       if (!token) return;
 
       try {
         const response = await sessions.list(token);
         setAllSessions(response.sessions);
+
+        // Find first session for this role and get its details
+        const firstSession = response.sessions.find(
+          s => s.mode !== 'train' && s.role === decodeURIComponent(role || '')
+        );
+        if (firstSession) {
+          const detail = await sessions.get(token, firstSession.session_id);
+          setSessionDetail(detail);
+        }
       } catch (err) {
         if (err instanceof ApiError) {
           setError(err.message);
@@ -122,8 +137,8 @@ export default function AssessmentDetail() {
       }
     }
 
-    loadSessions();
-  }, [token]);
+    loadData();
+  }, [token, role]);
 
   // Filter sessions for this WorkSim (by role)
   const workSimSessions = allSessions.filter(
@@ -151,6 +166,38 @@ export default function AssessmentDetail() {
     } finally {
       setGeneratingReportId(null);
     }
+  };
+
+  const handleAssign = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!token || !sessionDetail || !assignForm.name || !assignForm.email) return;
+
+    setIsAssigning(true);
+    try {
+      const orgParams = sessionDetail.org_params || {};
+      const newSession = await sessions.create(token, {
+        org_name: orgParams.org_name || workSim.org_name || '',
+        role: workSim.role,
+        industry: orgParams.industry || '',
+        stage: orgParams.stage || '',
+        function: orgParams.function || '',
+        candidate_name: assignForm.name,
+        candidate_email: assignForm.email,
+        candidate_type: 'external',
+      });
+      setAssignedLink(newSession.candidate_link);
+      // Refresh sessions list
+      const response = await sessions.list(token);
+      setAllSessions(response.sessions);
+    } catch (err) {
+      setError('Failed to create session');
+    } finally {
+      setIsAssigning(false);
+    }
+  };
+
+  const copyAssignedLink = () => {
+    navigator.clipboard.writeText(assignedLink);
   };
 
   if (isLoading) {
@@ -183,6 +230,12 @@ export default function AssessmentDetail() {
   const difficultyLevel = getRoleDifficulty(workSim.role);
   const difficulty = difficultyConfig[difficultyLevel];
 
+  // Extract scenario info from session detail
+  const env = sessionDetail?.env as Record<string, unknown> | undefined;
+  const companyName = env?.company_name as string || workSim.org_name || 'Custom Organization';
+  const companyDescription = env?.company_description as string;
+  const scenarioTension = env?.scenario_tension as string;
+
   return (
     <div className="min-h-screen bg-surface">
       {/* Header */}
@@ -213,7 +266,7 @@ export default function AssessmentDetail() {
                 </span>
               </div>
               <p className="text-mid leading-relaxed">
-                {workSim.org_name || 'Custom Organization'} • Evaluate candidates through realistic workplace scenarios
+                {companyName} • Evaluate candidates through realistic workplace scenarios
               </p>
 
               <div className="flex items-center gap-4 mt-4">
@@ -236,6 +289,15 @@ export default function AssessmentDetail() {
                   </div>
                   <span className="text-muted">{difficulty.label}</span>
                 </div>
+                <button
+                  onClick={() => setShowAssignModal(true)}
+                  className="ml-auto flex items-center gap-1.5 bg-dark text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-dark/90 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Assign Candidate
+                </button>
               </div>
             </div>
           </div>
@@ -244,6 +306,28 @@ export default function AssessmentDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left column */}
           <div className="lg:col-span-2 space-y-6">
+            {/* The Scenario - if available */}
+            {(companyDescription || scenarioTension) && (
+              <div className="bg-white border border-border rounded-xl p-6">
+                <h2 className="font-semibold text-dark mb-4 flex items-center gap-2">
+                  <span className="text-lg">📖</span>
+                  The Scenario
+                </h2>
+                <div className="bg-surface rounded-lg p-4 mb-4">
+                  <p className="text-sm font-medium text-dark mb-1">{companyName}</p>
+                  {companyDescription && (
+                    <p className="text-sm text-mid">{companyDescription}</p>
+                  )}
+                </div>
+                {scenarioTension && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <p className="text-sm font-medium text-amber-800 mb-1">Current Situation</p>
+                    <p className="text-sm text-amber-900">{scenarioTension}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* What's Tested */}
             <div className="bg-white border border-border rounded-xl p-6">
               <h2 className="font-semibold text-dark mb-4 flex items-center gap-2">
@@ -384,7 +468,7 @@ export default function AssessmentDetail() {
               <div className="space-y-4">
                 <div>
                   <p className="text-xs text-muted mb-1">Organization</p>
-                  <p className="text-sm font-medium text-dark">{workSim.org_name || 'Custom Organization'}</p>
+                  <p className="text-sm font-medium text-dark">{companyName}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted mb-1">Role</p>
@@ -409,6 +493,10 @@ export default function AssessmentDetail() {
                 <div>
                   <p className="text-xs text-muted mb-1">Duration</p>
                   <p className="text-sm font-medium text-dark">~25 minutes</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted mb-1">Total Candidates</p>
+                  <p className="text-sm font-medium text-dark">{workSimSessions.length}</p>
                 </div>
               </div>
             </div>
@@ -443,7 +531,7 @@ export default function AssessmentDetail() {
 
             {/* Assign Button */}
             <button
-              onClick={() => navigate(`/setup?role=${encodeURIComponent(workSim.role)}&org=${encodeURIComponent(workSim.org_name || '')}`)}
+              onClick={() => setShowAssignModal(true)}
               className="w-full bg-dark text-white py-3 rounded-xl font-medium hover:bg-dark/90 transition-colors flex items-center justify-center gap-2"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -454,6 +542,122 @@ export default function AssessmentDetail() {
           </div>
         </div>
       </main>
+
+      {/* Assign Modal */}
+      {showAssignModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
+            <div className="p-6">
+              {assignedLink ? (
+                <>
+                  <div className="text-center mb-6">
+                    <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <svg className="w-8 h-8 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-semibold text-dark">Candidate Assigned!</h3>
+                    <p className="text-sm text-muted mt-1">
+                      Share this link with {assignForm.name}
+                    </p>
+                  </div>
+
+                  <div className="bg-surface rounded-lg p-3 mb-4">
+                    <p className="text-xs text-muted mb-1">Assessment Link</p>
+                    <p className="text-sm text-dark break-all font-mono">{assignedLink}</p>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={copyAssignedLink}
+                      className="flex-1 bg-dark text-white py-2.5 rounded-lg font-medium hover:bg-dark/90 transition-colors"
+                    >
+                      Copy Link
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowAssignModal(false);
+                        setAssignedLink('');
+                        setAssignForm({ name: '', email: '' });
+                      }}
+                      className="flex-1 border border-border py-2.5 rounded-lg font-medium hover:bg-surface transition-colors"
+                    >
+                      Done
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h3 className="text-lg font-semibold text-dark mb-1">
+                    Assign: {workSim.role}
+                  </h3>
+                  <p className="text-sm text-muted mb-6">
+                    Enter candidate details to send them this assessment.
+                  </p>
+
+                  <form onSubmit={handleAssign}>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-dark mb-1">
+                          Name
+                        </label>
+                        <input
+                          type="text"
+                          value={assignForm.name}
+                          onChange={(e) => setAssignForm({ ...assignForm, name: e.target.value })}
+                          placeholder="John Smith"
+                          className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-dark/20"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-dark mb-1">
+                          Email
+                        </label>
+                        <input
+                          type="email"
+                          value={assignForm.email}
+                          onChange={(e) => setAssignForm({ ...assignForm, email: e.target.value })}
+                          placeholder="john@example.com"
+                          className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-dark/20"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3 mt-6">
+                      <button
+                        type="button"
+                        onClick={() => setShowAssignModal(false)}
+                        className="flex-1 border border-border py-2.5 rounded-lg font-medium hover:bg-surface transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isAssigning || !assignForm.name || !assignForm.email}
+                        className="flex-1 bg-dark text-white py-2.5 rounded-lg font-medium hover:bg-dark/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        {isAssigning ? (
+                          <>
+                            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                            </svg>
+                            Creating...
+                          </>
+                        ) : (
+                          'Send Assessment'
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
