@@ -224,190 +224,171 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="py-20 px-6 bg-white">
+      {/* Social Proof Bar */}
+      <section className="py-8 px-6 bg-white border-y border-gray-100">
         <div className="max-w-5xl mx-auto">
-          <p className="text-center text-sm font-medium text-muted uppercase tracking-wider mb-4">What people are saying</p>
-          <h2 className="text-3xl md:text-4xl font-medium text-dark text-center mb-16 tracking-tight">
-            Skills that changed careers
-          </h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            {/* Testimonial 1 */}
-            <div className="relative">
-              <div className="absolute -top-4 -left-2 text-6xl text-gray-100 font-serif">"</div>
-              <div className="relative bg-gradient-to-br from-gray-50 to-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                <p className="text-dark text-base mb-6 leading-relaxed relative z-10">
-                  I bombed my first PM interview. After 3 WorkSim sessions, I walked into Google confident. <span className="font-medium">Got the offer.</span>
-                </p>
-                <div className="flex items-center gap-4">
-                  <img
-                    src="https://api.dicebear.com/7.x/notionists/svg?seed=arun&backgroundColor=c0aede"
-                    className="w-12 h-12 rounded-full border-2 border-white shadow-sm"
-                    alt="Arun K."
-                  />
-                  <div>
-                    <p className="font-medium text-dark">Arun K.</p>
-                    <p className="text-sm text-muted">Product Manager</p>
-                    <div className="flex items-center gap-1 mt-1">
-                      <svg className="w-4 h-4 text-[#4285F4]" viewBox="0 0 24 24" fill="currentColor"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-                      <span className="text-xs text-muted">Google</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+          <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-4 text-sm text-muted">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl font-semibold text-dark">2,400+</span>
+              <span>simulations completed</span>
             </div>
-
-            {/* Testimonial 2 */}
-            <div className="relative md:mt-8">
-              <div className="absolute -top-4 -left-2 text-6xl text-gray-100 font-serif">"</div>
-              <div className="relative bg-gradient-to-br from-gray-50 to-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                <p className="text-dark text-base mb-6 leading-relaxed relative z-10">
-                  The difficult conversations track changed how I give feedback. <span className="font-medium">My team actually thanks me for reviews now.</span>
-                </p>
-                <div className="flex items-center gap-4">
-                  <img
-                    src="https://api.dicebear.com/7.x/notionists/svg?seed=sarah-eng&backgroundColor=b6e3f4"
-                    className="w-12 h-12 rounded-full border-2 border-white shadow-sm"
-                    alt="Sarah M."
-                  />
-                  <div>
-                    <p className="font-medium text-dark">Sarah M.</p>
-                    <p className="text-sm text-muted">Engineering Manager</p>
-                    <div className="flex items-center gap-1 mt-1">
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#FF9900"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h2v-2h-2v2zm0-4h2V7h-2v6z"/></svg>
-                      <span className="text-xs text-muted">Amazon</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <div className="hidden sm:block w-px h-8 bg-gray-200" />
+            <div className="flex items-center gap-2">
+              <span className="text-2xl font-semibold text-dark">94%</span>
+              <span>felt more confident after</span>
             </div>
-
-            {/* Testimonial 3 */}
-            <div className="relative">
-              <div className="absolute -top-4 -left-2 text-6xl text-gray-100 font-serif">"</div>
-              <div className="relative bg-gradient-to-br from-gray-50 to-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                <p className="text-dark text-base mb-6 leading-relaxed relative z-10">
-                  Practiced negotiating my raise here first. Asked for 20% more than I planned. <span className="font-medium">Got it.</span>
-                </p>
-                <div className="flex items-center gap-4">
-                  <img
-                    src="https://api.dicebear.com/7.x/notionists/svg?seed=james-design&backgroundColor=d1d4f9"
-                    className="w-12 h-12 rounded-full border-2 border-white shadow-sm"
-                    alt="James L."
-                  />
-                  <div>
-                    <p className="font-medium text-dark">James L.</p>
-                    <p className="text-sm text-muted">Senior Designer</p>
-                    <div className="flex items-center gap-1 mt-1">
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#1877F2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                      <span className="text-xs text-muted">Meta</span>
-                    </div>
-                  </div>
-                </div>
+            <div className="hidden sm:block w-px h-8 bg-gray-200" />
+            <div className="flex items-center gap-3">
+              <span>Practiced by people at</span>
+              <div className="flex items-center gap-3">
+                <svg className="h-5 text-gray-400" viewBox="0 0 24 24" fill="currentColor"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/></svg>
+                <svg className="h-4 text-gray-400" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                <svg className="h-5 text-gray-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c5.51 0 10-4.48 10-10S17.51 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* What You'll Practice */}
+      {/* What You'll Practice - Compact Pills */}
       <section className="py-16 px-6">
-        <div className="max-w-5xl mx-auto">
-          <p className="text-center text-sm font-medium text-muted uppercase tracking-wider mb-3">Skill tracks</p>
-          <h2 className="text-3xl md:text-4xl font-medium text-dark text-center mb-12 tracking-tight">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-3xl md:text-4xl font-medium text-dark mb-4 tracking-tight">
             Train on what actually matters
           </h2>
-          <div className="grid md:grid-cols-3 gap-5">
-            <div className="group relative bg-gradient-to-br from-gray-50 to-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all hover:-translate-y-1">
-              <div className="absolute top-4 right-4 text-xs font-medium text-muted bg-gray-100 px-2 py-0.5 rounded-full">6 scenarios</div>
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-4 shadow-sm">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
+          <p className="text-muted mb-10 max-w-xl mx-auto">Pick a skill. Get dropped into a realistic scenario. Practice until it clicks.</p>
+
+          <div className="flex flex-wrap justify-center gap-3 mb-12">
+            <div className="group flex items-center gap-2 bg-white border border-gray-200 rounded-full px-4 py-2.5 hover:border-blue-300 hover:bg-blue-50 transition-all cursor-pointer">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0" /></svg>
               </div>
-              <h3 className="font-medium text-dark mb-2">Interview Prep</h3>
-              <p className="text-sm text-muted leading-relaxed">PM, consulting, leadership. Get grilled by interviewers who've seen it all.</p>
+              <span className="font-medium text-dark">Interview Prep</span>
+              <span className="text-xs text-muted bg-gray-100 px-2 py-0.5 rounded-full">6</span>
             </div>
 
-            <div className="group relative bg-gradient-to-br from-gray-50 to-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all hover:-translate-y-1">
-              <div className="absolute top-4 right-4 text-xs font-medium text-muted bg-gray-100 px-2 py-0.5 rounded-full">5 scenarios</div>
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-4 shadow-sm">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" /></svg>
+            <div className="group flex items-center gap-2 bg-white border border-gray-200 rounded-full px-4 py-2.5 hover:border-purple-300 hover:bg-purple-50 transition-all cursor-pointer">
+              <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center">
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" /></svg>
               </div>
-              <h3 className="font-medium text-dark mb-2">Difficult Conversations</h3>
-              <p className="text-sm text-muted leading-relaxed">Giving feedback, saying no, managing up. The talks everyone avoids.</p>
+              <span className="font-medium text-dark">Hard Conversations</span>
+              <span className="text-xs text-muted bg-gray-100 px-2 py-0.5 rounded-full">5</span>
             </div>
 
-            <div className="group relative bg-gradient-to-br from-gray-50 to-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all hover:-translate-y-1">
-              <div className="absolute top-4 right-4 text-xs font-medium text-muted bg-gray-100 px-2 py-0.5 rounded-full">4 scenarios</div>
-              <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center mb-4 shadow-sm">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>
+            <div className="group flex items-center gap-2 bg-white border border-gray-200 rounded-full px-4 py-2.5 hover:border-amber-300 hover:bg-amber-50 transition-all cursor-pointer">
+              <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-orange-500 rounded-full flex items-center justify-center">
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>
               </div>
-              <h3 className="font-medium text-dark mb-2">Pressure Management</h3>
-              <p className="text-sm text-muted leading-relaxed">Competing deadlines, angry stakeholders. Stay cool when it counts.</p>
+              <span className="font-medium text-dark">Under Pressure</span>
+              <span className="text-xs text-muted bg-gray-100 px-2 py-0.5 rounded-full">4</span>
             </div>
 
-            <div className="group relative bg-gradient-to-br from-gray-50 to-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all hover:-translate-y-1">
-              <div className="absolute top-4 right-4 text-xs font-medium text-muted bg-gray-100 px-2 py-0.5 rounded-full">4 scenarios</div>
-              <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center mb-4 shadow-sm">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" /></svg>
+            <div className="group flex items-center gap-2 bg-white border border-gray-200 rounded-full px-4 py-2.5 hover:border-emerald-300 hover:bg-emerald-50 transition-all cursor-pointer">
+              <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-green-600 rounded-full flex items-center justify-center">
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584" /></svg>
               </div>
-              <h3 className="font-medium text-dark mb-2">Stakeholder Management</h3>
-              <p className="text-sm text-muted leading-relaxed">Navigate competing interests, build alignment, manage expectations.</p>
+              <span className="font-medium text-dark">Stakeholders</span>
+              <span className="text-xs text-muted bg-gray-100 px-2 py-0.5 rounded-full">4</span>
             </div>
 
-            <div className="group relative bg-gradient-to-br from-gray-50 to-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all hover:-translate-y-1">
-              <div className="absolute top-4 right-4 text-xs font-medium text-muted bg-gray-100 px-2 py-0.5 rounded-full">5 scenarios</div>
-              <div className="w-10 h-10 bg-gradient-to-br from-rose-500 to-pink-600 rounded-xl flex items-center justify-center mb-4 shadow-sm">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" /></svg>
+            <div className="group flex items-center gap-2 bg-white border border-gray-200 rounded-full px-4 py-2.5 hover:border-rose-300 hover:bg-rose-50 transition-all cursor-pointer">
+              <div className="w-8 h-8 bg-gradient-to-br from-rose-500 to-pink-600 rounded-full flex items-center justify-center">
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" /></svg>
               </div>
-              <h3 className="font-medium text-dark mb-2">Leadership Moments</h3>
-              <p className="text-sm text-muted leading-relaxed">First-time manager challenges. Team conflict. Performance issues.</p>
+              <span className="font-medium text-dark">Leadership</span>
+              <span className="text-xs text-muted bg-gray-100 px-2 py-0.5 rounded-full">5</span>
             </div>
 
-            <div className="group relative bg-gradient-to-br from-gray-50 to-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all hover:-translate-y-1">
-              <div className="absolute top-4 right-4 text-xs font-medium text-muted bg-gray-100 px-2 py-0.5 rounded-full">3 scenarios</div>
-              <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-xl flex items-center justify-center mb-4 shadow-sm">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <div className="group flex items-center gap-2 bg-white border border-gray-200 rounded-full px-4 py-2.5 hover:border-cyan-300 hover:bg-cyan-50 transition-all cursor-pointer">
+              <div className="w-8 h-8 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-full flex items-center justify-center">
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               </div>
-              <h3 className="font-medium text-dark mb-2">Negotiation</h3>
-              <p className="text-sm text-muted leading-relaxed">Salary talks, vendor deals, resource allocation. Get what you need.</p>
+              <span className="font-medium text-dark">Negotiation</span>
+              <span className="text-xs text-muted bg-gray-100 px-2 py-0.5 rounded-full">3</span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* How It Works */}
-      <section className="py-16 px-6 bg-gradient-to-b from-white to-gray-50">
-        <div className="max-w-4xl mx-auto">
-          <p className="text-center text-sm font-medium text-muted uppercase tracking-wider mb-3">How it works</p>
-          <h2 className="text-3xl md:text-4xl font-medium text-dark text-center mb-12 tracking-tight">
+      {/* How It Works - Horizontal Timeline */}
+      <section className="py-16 px-6 bg-dark text-white overflow-hidden">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-medium text-center mb-16 tracking-tight">
             Three steps. Real skills.
           </h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="relative bg-gradient-to-br from-gray-50 to-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-              <div className="absolute -top-3 -left-3 w-8 h-8 bg-dark text-white rounded-full flex items-center justify-center font-semibold text-sm shadow-lg">1</div>
-              <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center mb-4">
-                <svg className="w-5 h-5 text-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" /></svg>
+
+          <div className="relative">
+            {/* Connection line */}
+            <div className="hidden md:block absolute top-8 left-[16%] right-[16%] h-0.5 bg-white/20" />
+
+            <div className="grid md:grid-cols-3 gap-8 md:gap-4">
+              <div className="text-center relative">
+                <div className="w-16 h-16 bg-white text-dark rounded-2xl flex items-center justify-center mx-auto mb-6 text-2xl font-bold shadow-lg relative z-10">1</div>
+                <h3 className="text-xl font-medium mb-2">Pick a scenario</h3>
+                <p className="text-white/60 text-sm leading-relaxed">Interview prep, tough feedback, negotiation — choose your challenge</p>
               </div>
-              <h3 className="font-medium text-dark mb-2">Pick a scenario</h3>
-              <p className="text-sm text-muted leading-relaxed">Choose your challenge. Interview prep, tough feedback, negotiation.</p>
+
+              <div className="text-center relative">
+                <div className="w-16 h-16 bg-white text-dark rounded-2xl flex items-center justify-center mx-auto mb-6 text-2xl font-bold shadow-lg relative z-10">2</div>
+                <h3 className="text-xl font-medium mb-2">Face the heat</h3>
+                <p className="text-white/60 text-sm leading-relaxed">AI coworkers with real personalities push back on your ideas</p>
+              </div>
+
+              <div className="text-center relative">
+                <div className="w-16 h-16 bg-white text-dark rounded-2xl flex items-center justify-center mx-auto mb-6 text-2xl font-bold shadow-lg relative z-10">3</div>
+                <h3 className="text-xl font-medium mb-2">Get real feedback</h3>
+                <p className="text-white/60 text-sm leading-relaxed">Detailed report shows what worked and where to improve</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials - Featured Quote */}
+      <section className="py-20 px-6 bg-gradient-to-b from-gray-50 to-white">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <p className="text-sm font-medium text-muted uppercase tracking-wider mb-3">Results that matter</p>
+          </div>
+
+          {/* Featured large quote */}
+          <div className="relative mb-16">
+            <div className="text-8xl text-gray-100 font-serif absolute -top-8 left-0">"</div>
+            <blockquote className="relative z-10 text-2xl md:text-3xl font-medium text-dark leading-relaxed pl-8 md:pl-12">
+              I bombed my first PM interview. After 3 WorkSim sessions, I walked into Google confident.
+              <span className="text-accent"> Got the offer.</span>
+            </blockquote>
+            <div className="flex items-center gap-4 mt-8 pl-8 md:pl-12">
+              <img src="https://api.dicebear.com/7.x/notionists/svg?seed=arun&backgroundColor=c0aede" className="w-14 h-14 rounded-full border-2 border-white shadow-md" alt="" />
+              <div>
+                <p className="font-medium text-dark">Arun K.</p>
+                <p className="text-sm text-muted">Product Manager at Google</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Smaller testimonials */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+              <p className="text-dark mb-4">"The difficult conversations track changed how I give feedback. <span className="font-medium">My team actually thanks me for reviews now.</span>"</p>
+              <div className="flex items-center gap-3">
+                <img src="https://api.dicebear.com/7.x/notionists/svg?seed=sarah-eng&backgroundColor=b6e3f4" className="w-10 h-10 rounded-full" alt="" />
+                <div>
+                  <p className="text-sm font-medium text-dark">Sarah M.</p>
+                  <p className="text-xs text-muted">Engineering Manager, Amazon</p>
+                </div>
+              </div>
             </div>
 
-            <div className="relative bg-gradient-to-br from-gray-50 to-white p-6 rounded-2xl border border-gray-100 shadow-sm md:mt-4">
-              <div className="absolute -top-3 -left-3 w-8 h-8 bg-dark text-white rounded-full flex items-center justify-center font-semibold text-sm shadow-lg">2</div>
-              <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center mb-4">
-                <svg className="w-5 h-5 text-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" /></svg>
+            <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+              <p className="text-dark mb-4">"Practiced negotiating my raise here first. Asked for 20% more than I planned. <span className="font-medium">Got it.</span>"</p>
+              <div className="flex items-center gap-3">
+                <img src="https://api.dicebear.com/7.x/notionists/svg?seed=james-design&backgroundColor=d1d4f9" className="w-10 h-10 rounded-full" alt="" />
+                <div>
+                  <p className="text-sm font-medium text-dark">James L.</p>
+                  <p className="text-xs text-muted">Senior Designer, Meta</p>
+                </div>
               </div>
-              <h3 className="font-medium text-dark mb-2">Face the heat</h3>
-              <p className="text-sm text-muted leading-relaxed">Real personalities. Real pushback. The scenario tests your limits.</p>
-            </div>
-
-            <div className="relative bg-gradient-to-br from-gray-50 to-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-              <div className="absolute -top-3 -left-3 w-8 h-8 bg-dark text-white rounded-full flex items-center justify-center font-semibold text-sm shadow-lg">3</div>
-              <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center mb-4">
-                <svg className="w-5 h-5 text-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" /></svg>
-              </div>
-              <h3 className="font-medium text-dark mb-2">Get real feedback</h3>
-              <p className="text-sm text-muted leading-relaxed">Detailed report. What worked, what didn't, how to improve.</p>
             </div>
           </div>
         </div>
