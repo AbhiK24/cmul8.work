@@ -1,6 +1,9 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { useUser, useAuth as useClerkAuth } from '@clerk/clerk-react';
 
+// Check if Clerk is properly configured
+const CLERK_AVAILABLE = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+
 // Consumer email domains that indicate B2C users
 const CONSUMER_DOMAINS = [
   'gmail.com', 'googlemail.com',
@@ -54,8 +57,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  // Clerk state
+// Inner provider that uses Clerk hooks (only rendered when Clerk is available)
+function ClerkAuthProvider({ children }: { children: ReactNode }) {
   const { user: clerkUser, isLoaded: isClerkLoaded } = useUser();
   const { getToken: getClerkToken, signOut: clerkSignOut } = useClerkAuth();
 
@@ -126,6 +129,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       {children}
     </AuthContext.Provider>
   );
+}
+
+// Fallback provider when Clerk is not configured
+function FallbackAuthProvider({ children }: { children: ReactNode }) {
+  return (
+    <AuthContext.Provider value={{
+      user: null,
+      userType: null,
+      token: null,
+      isLoading: false,
+      isClerkLoaded: false,
+      b2cUser: null,
+      b2cToken: null,
+      logout: async () => {},
+      getToken: async () => null,
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  // Use Clerk if configured, otherwise use fallback
+  if (CLERK_AVAILABLE) {
+    return <ClerkAuthProvider>{children}</ClerkAuthProvider>;
+  }
+  console.warn('Clerk not configured - authentication disabled');
+  return <FallbackAuthProvider>{children}</FallbackAuthProvider>;
 }
 
 export function useAuth() {

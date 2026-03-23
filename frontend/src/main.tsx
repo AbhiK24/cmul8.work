@@ -8,7 +8,7 @@ import App from './App'
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
 
 if (!CLERK_PUBLISHABLE_KEY) {
-  console.warn('Missing VITE_CLERK_PUBLISHABLE_KEY - B2C auth will not work')
+  console.warn('Missing VITE_CLERK_PUBLISHABLE_KEY - authentication will be disabled')
 }
 
 createRoot(document.getElementById('root')!).render(
