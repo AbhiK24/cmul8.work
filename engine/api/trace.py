@@ -13,6 +13,28 @@ from ..schemas.env_schema import TraceEvent
 router = APIRouter()
 
 
+async def get_session_table(conn, session_id: str):
+    """Find which table contains the session.
+
+    Returns: (row, table_name) or (None, None)
+    """
+    row = await conn.fetchrow(
+        "SELECT status FROM b2b_sessions WHERE session_id = $1",
+        session_id
+    )
+    if row:
+        return row, "b2b_sessions"
+
+    row = await conn.fetchrow(
+        "SELECT status FROM b2c_sessions WHERE session_id = $1",
+        session_id
+    )
+    if row:
+        return row, "b2c_sessions"
+
+    return None, None
+
+
 class TraceRequest(BaseModel):
     """Request to log a trace event."""
     session_id: str
@@ -31,10 +53,7 @@ async def log_trace_event(request: TraceRequest):
 
     async with pool.acquire() as conn:
         # Verify session exists
-        row = await conn.fetchrow(
-            "SELECT status FROM sessions WHERE session_id = $1",
-            request.session_id
-        )
+        row, table_name = await get_session_table(conn, request.session_id)
         if not row:
             raise HTTPException(status_code=404, detail="Session not found")
 
@@ -51,16 +70,16 @@ async def log_trace_event(request: TraceRequest):
         )
 
         # Append to trace
-        await conn.execute("""
-            UPDATE sessions
+        await conn.execute(f"""
+            UPDATE {table_name}
             SET trace = trace || $1::jsonb
             WHERE session_id = $2
         """, json.dumps([trace_event.model_dump()]), request.session_id)
 
-        # If this is a session_end event, also store integrity data separately
-        if request.event_type == "session_end" and "integrity" in request.content:
-            await conn.execute("""
-                UPDATE sessions
+        # If this is a session_end event, also store integrity data separately (B2B only)
+        if request.event_type == "session_end" and "integrity" in request.content and table_name == "b2b_sessions":
+            await conn.execute(f"""
+                UPDATE {table_name}
                 SET integrity_data = $1::jsonb
                 WHERE session_id = $2
             """, json.dumps(request.content.get("integrity")), request.session_id)
@@ -75,10 +94,7 @@ async def log_artifact_comment(request: TraceRequest):
 
     async with pool.acquire() as conn:
         # Verify session exists
-        row = await conn.fetchrow(
-            "SELECT artifact_trace FROM sessions WHERE session_id = $1",
-            request.session_id
-        )
+        row, table_name = await get_session_table(conn, request.session_id)
         if not row:
             raise HTTPException(status_code=404, detail="Session not found")
 
@@ -95,12 +111,19 @@ async def log_artifact_comment(request: TraceRequest):
             }
         )
 
-        # Append to both trace and artifact_trace
-        await conn.execute("""
-            UPDATE sessions
-            SET trace = trace || $1::jsonb,
-                artifact_trace = COALESCE(artifact_trace, '[]'::jsonb) || $1::jsonb
-            WHERE session_id = $2
-        """, json.dumps([trace_event.model_dump()]), request.session_id)
+        # Append to trace (B2B has artifact_trace, B2C may not)
+        if table_name == "b2b_sessions":
+            await conn.execute(f"""
+                UPDATE {table_name}
+                SET trace = trace || $1::jsonb,
+                    artifact_trace = COALESCE(artifact_trace, '[]'::jsonb) || $1::jsonb
+                WHERE session_id = $2
+            """, json.dumps([trace_event.model_dump()]), request.session_id)
+        else:
+            await conn.execute(f"""
+                UPDATE {table_name}
+                SET trace = trace || $1::jsonb
+                WHERE session_id = $2
+            """, json.dumps([trace_event.model_dump()]), request.session_id)
 
     return {"status": "logged", "event_id": trace_event.event_id}

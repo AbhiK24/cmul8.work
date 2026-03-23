@@ -15,6 +15,28 @@ PROMPT_PATH = Path(__file__).parent.parent / "prompts" / "scoring.txt"
 SCORING_PROMPT = PROMPT_PATH.read_text()
 
 
+async def get_session_for_scoring(conn, session_id: str):
+    """Find session in either B2B or B2C tables.
+
+    Returns: (row, table_name) or (None, None)
+    """
+    row = await conn.fetchrow("""
+        SELECT env, trace, artifact_trace, debrief, org_params, relationship_scores, started_at, completed_at
+        FROM b2b_sessions WHERE session_id = $1
+    """, session_id)
+    if row:
+        return row, "b2b_sessions"
+
+    row = await conn.fetchrow("""
+        SELECT env, trace, debrief, org_params, relationship_scores, started_at, completed_at
+        FROM b2c_sessions WHERE session_id = $1
+    """, session_id)
+    if row:
+        return row, "b2c_sessions"
+
+    return None, None
+
+
 @router.post("/score")
 async def score_session(request: ScoreRequest):
     """Score a completed session using Kimi 2.5."""
@@ -23,10 +45,7 @@ async def score_session(request: ScoreRequest):
 
     async with pool.acquire() as conn:
         # Get session data
-        row = await conn.fetchrow("""
-            SELECT env, trace, artifact_trace, debrief, org_params, relationship_scores, started_at, completed_at
-            FROM sessions WHERE session_id = $1
-        """, request.session_id)
+        row, table_name = await get_session_for_scoring(conn, request.session_id)
 
         if not row:
             raise HTTPException(status_code=404, detail="Session not found")
@@ -123,8 +142,8 @@ async def score_session(request: ScoreRequest):
             raise HTTPException(status_code=500, detail=f"Scoring failed: {e}")
 
         # Save report to database
-        await conn.execute("""
-            UPDATE sessions
+        await conn.execute(f"""
+            UPDATE {table_name}
             SET report = $1, status = 'complete', completed_at = NOW()
             WHERE session_id = $2
         """, json.dumps(report), request.session_id)

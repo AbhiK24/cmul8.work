@@ -323,6 +323,9 @@ async def init_pool():
                 IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'b2c_sessions' AND column_name = 'report') THEN
                     ALTER TABLE b2c_sessions ADD COLUMN report JSONB;
                 END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'b2c_sessions' AND column_name = 'relationship_scores') THEN
+                    ALTER TABLE b2c_sessions ADD COLUMN relationship_scores JSONB DEFAULT '{}'::jsonb;
+                END IF;
             END $$;
         """)
 

@@ -51,6 +51,30 @@ def calculate_relationship_delta(message: str, reply: str) -> float:
     return max(-0.1, min(0.15, delta))
 
 
+async def get_session_with_table(conn, session_id: str):
+    """Get session data from either b2b_sessions or b2c_sessions.
+
+    Returns: (row, table_name) or (None, None) if not found
+    """
+    # Try B2B first
+    row = await conn.fetchrow("""
+        SELECT env, agent_histories, relationship_scores, trace
+        FROM b2b_sessions WHERE session_id = $1
+    """, session_id)
+    if row:
+        return row, "b2b_sessions"
+
+    # Try B2C
+    row = await conn.fetchrow("""
+        SELECT env, agent_histories, relationship_scores, trace
+        FROM b2c_sessions WHERE session_id = $1
+    """, session_id)
+    if row:
+        return row, "b2c_sessions"
+
+    return None, None
+
+
 @router.post("/message", response_model=MessageResponse)
 async def send_message(request: MessageRequest) -> MessageResponse:
     """Send a message to an agent and get their response.
@@ -61,11 +85,8 @@ async def send_message(request: MessageRequest) -> MessageResponse:
     pool = await get_pool()
 
     async with pool.acquire() as conn:
-        # Get session data
-        row = await conn.fetchrow("""
-            SELECT env, agent_histories, relationship_scores, trace
-            FROM sessions WHERE session_id = $1
-        """, request.session_id)
+        # Get session data from either B2B or B2C table
+        row, table_name = await get_session_with_table(conn, request.session_id)
 
         if not row:
             raise HTTPException(status_code=404, detail="Session not found")
@@ -272,9 +293,9 @@ async def send_message(request: MessageRequest) -> MessageResponse:
         )
         trace.append(trace_event.model_dump())
 
-        # Save to database
-        await conn.execute("""
-            UPDATE sessions
+        # Save to database (use correct table)
+        await conn.execute(f"""
+            UPDATE {table_name}
             SET agent_histories = $1, relationship_scores = $2, trace = trace || $3::jsonb
             WHERE session_id = $4
         """,

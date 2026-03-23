@@ -302,11 +302,11 @@ async def generate_environment(request: GenerateRequest) -> EnvironmentResponse:
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Generation failed: {e}")
 
-    # Store in database
+    # Store in database (B2B sessions only use generate)
     pool = await get_pool()
     async with pool.acquire() as conn:
         await conn.execute("""
-            UPDATE sessions
+            UPDATE b2b_sessions
             SET env = $1, artifact_html = $2, status = 'pending'
             WHERE session_id = $3
         """, json.dumps(env.model_dump()), None, request.session_id)

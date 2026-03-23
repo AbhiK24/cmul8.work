@@ -13,6 +13,26 @@ from ..schemas.env_schema import TraceEvent
 router = APIRouter()
 
 
+async def get_session_for_events(conn, session_id: str):
+    """Find session in either B2B or B2C tables.
+
+    Returns: (row, table_name) or (None, None)
+    """
+    row = await conn.fetchrow("""
+        SELECT env, started_at FROM b2b_sessions WHERE session_id = $1
+    """, session_id)
+    if row:
+        return row, "b2b_sessions"
+
+    row = await conn.fetchrow("""
+        SELECT env, started_at FROM b2c_sessions WHERE session_id = $1
+    """, session_id)
+    if row:
+        return row, "b2c_sessions"
+
+    return None, None
+
+
 @router.get("/events/{session_id}")
 async def event_stream(session_id: str, request: Request):
     """SSE stream for pushing stress injects to the candidate."""
@@ -22,9 +42,7 @@ async def event_stream(session_id: str, request: Request):
 
         # Get session data
         async with pool.acquire() as conn:
-            row = await conn.fetchrow("""
-                SELECT env, started_at FROM sessions WHERE session_id = $1
-            """, session_id)
+            row, table_name = await get_session_for_events(conn, session_id)
 
             if not row or not row["env"]:
                 yield f"data: {json.dumps({'error': 'Session not found'})}\n\n"
@@ -35,8 +53,8 @@ async def event_stream(session_id: str, request: Request):
 
             if not started_at:
                 # Mark session as started
-                await conn.execute("""
-                    UPDATE sessions SET started_at = NOW(), status = 'in_progress'
+                await conn.execute(f"""
+                    UPDATE {table_name} SET started_at = NOW(), status = 'in_progress'
                     WHERE session_id = $1
                 """, session_id)
                 started_at = time.time()
@@ -81,10 +99,10 @@ async def event_stream(session_id: str, request: Request):
                         content={"inject": inject}
                     )
 
-                    # Store trace event
+                    # Store trace event (use same table_name from outer scope)
                     async with pool.acquire() as conn:
-                        await conn.execute("""
-                            UPDATE sessions
+                        await conn.execute(f"""
+                            UPDATE {table_name}
                             SET trace = trace || $1::jsonb
                             WHERE session_id = $2
                         """, json.dumps([trace_event.model_dump()]), session_id)

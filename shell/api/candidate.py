@@ -74,7 +74,7 @@ async def validate_candidate_token(session_id: str, token: str) -> tuple[bool, s
         if row:
             if row["candidate_token"] != token:
                 return False, ""
-            if row["status"] in ("expired", "completed"):
+            if row["status"] in ("expired", "complete"):
                 return False, ""
             return True, "b2c_sessions"
 
