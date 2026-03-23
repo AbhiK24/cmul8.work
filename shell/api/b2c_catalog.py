@@ -130,12 +130,13 @@ async def list_scenarios(current_user: dict = Depends(get_current_b2c_user)):
     pool = await get_pool()
 
     async with pool.acquire() as conn:
-        # Get all templates
+        # B2C sees 'both' and 'b2c_only' templates
         rows = await conn.fetch("""
             SELECT
                 template_id, slug, title, skill_category, description,
                 duration_minutes, difficulty, learning_objectives
             FROM training_templates
+            WHERE COALESCE(availability, 'both') IN ('both', 'b2c_only')
             ORDER BY skill_category, difficulty
         """)
 
@@ -179,13 +180,14 @@ async def get_scenario(slug: str, current_user: dict = Depends(get_current_b2c_u
     pool = await get_pool()
 
     async with pool.acquire() as conn:
+        # B2C can access 'both' and 'b2c_only' templates
         row = await conn.fetchrow("""
             SELECT
                 template_id, slug, title, skill_category, description,
                 duration_minutes, difficulty, learning_objectives,
                 company_context, agents, tasks, framework_name, framework_reference
             FROM training_templates
-            WHERE slug = $1
+            WHERE slug = $1 AND COALESCE(availability, 'both') IN ('both', 'b2c_only')
         """, slug)
 
         if not row:
@@ -224,12 +226,13 @@ async def list_categories(current_user: dict = Depends(get_current_b2c_user)):
     pool = await get_pool()
 
     async with pool.acquire() as conn:
-        # Get all templates
+        # B2C sees 'both' and 'b2c_only' templates
         rows = await conn.fetch("""
             SELECT
                 template_id, slug, title, skill_category, description,
                 duration_minutes, difficulty, learning_objectives
             FROM training_templates
+            WHERE COALESCE(availability, 'both') IN ('both', 'b2c_only')
             ORDER BY skill_category, difficulty
         """)
 
@@ -287,12 +290,12 @@ async def start_session(slug: str, current_user: dict = Depends(get_current_b2c_
     pool = await get_pool()
 
     async with pool.acquire() as conn:
-        # Get template
+        # Get template - B2C can only access 'both' and 'b2c_only' templates
         template = await conn.fetchrow("""
             SELECT template_id, slug, title, skill_category, company_context,
                    agents, tasks, inbox, framework_name, framework_reference, coaching_prompts
             FROM training_templates
-            WHERE slug = $1
+            WHERE slug = $1 AND COALESCE(availability, 'both') IN ('both', 'b2c_only')
         """, slug)
 
         if not template:

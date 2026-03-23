@@ -53,6 +53,7 @@ class TemplateListItem(BaseModel):
     duration_minutes: int
     difficulty: str
     learning_objectives: List[str]
+    availability: str = "both"  # 'both', 'b2b_only', 'b2c_only'
 
 
 class TemplateDetail(BaseModel):
@@ -69,18 +70,22 @@ class TemplateDetail(BaseModel):
     tasks: List[dict]
     framework_name: Optional[str]
     framework_reference: Optional[dict]
+    availability: str = "both"
 
 
 @router.get("", response_model=List[TemplateListItem])
 async def list_templates():
-    """List all available training templates."""
+    """List all available training templates for B2B users."""
     pool = await get_pool()
     async with pool.acquire() as conn:
+        # B2B sees 'both' and 'b2b_only' templates
         rows = await conn.fetch("""
             SELECT
                 template_id, slug, title, skill_category, description,
-                duration_minutes, difficulty, learning_objectives
+                duration_minutes, difficulty, learning_objectives,
+                COALESCE(availability, 'both') as availability
             FROM training_templates
+            WHERE COALESCE(availability, 'both') IN ('both', 'b2b_only')
             ORDER BY created_at ASC
         """)
 
@@ -93,7 +98,8 @@ async def list_templates():
                 description=row["description"] or "",
                 duration_minutes=row["duration_minutes"],
                 difficulty=row["difficulty"],
-                learning_objectives=parse_json_field(row["learning_objectives"], [])
+                learning_objectives=parse_json_field(row["learning_objectives"], []),
+                availability=row["availability"]
             )
             for row in rows
         ]
@@ -101,16 +107,18 @@ async def list_templates():
 
 @router.get("/{slug}", response_model=TemplateDetail)
 async def get_template(slug: str):
-    """Get detailed information about a training template."""
+    """Get detailed information about a training template (B2B access)."""
     pool = await get_pool()
     async with pool.acquire() as conn:
+        # B2B can access 'both' and 'b2b_only' templates
         row = await conn.fetchrow("""
             SELECT
                 template_id, slug, title, skill_category, description,
                 duration_minutes, difficulty, learning_objectives,
-                company_context, agents, tasks, framework_name, framework_reference
+                company_context, agents, tasks, framework_name, framework_reference,
+                COALESCE(availability, 'both') as availability
             FROM training_templates
-            WHERE slug = $1
+            WHERE slug = $1 AND COALESCE(availability, 'both') IN ('both', 'b2b_only')
         """, slug)
 
         if not row:
@@ -129,5 +137,6 @@ async def get_template(slug: str):
             agents=parse_json_field(row["agents"], []),
             tasks=parse_json_field(row["tasks"], []),
             framework_name=row["framework_name"],
-            framework_reference=parse_json_field(row["framework_reference"])
+            framework_reference=parse_json_field(row["framework_reference"]),
+            availability=row["availability"]
         )
