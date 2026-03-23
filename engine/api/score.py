@@ -55,10 +55,11 @@ async def get_session_for_scoring(conn, session_id: str):
         return row, "b2b_sessions", mode, template_data
 
     # Try B2C sessions (always training mode)
+    # Note: training_template_id might not exist in older tables, so we use template_slug
     row = await conn.fetchrow("""
         SELECT
             s.env, s.trace, s.debrief, s.org_params, s.relationship_scores,
-            s.started_at, s.completed_at, s.training_template_id, s.template_slug
+            s.started_at, s.completed_at, s.template_slug
         FROM b2c_sessions s
         WHERE s.session_id = $1
     """, session_uuid)
@@ -66,24 +67,15 @@ async def get_session_for_scoring(conn, session_id: str):
     if row:
         template_data = None
 
-        # Fetch template data by ID or slug
-        if row["training_template_id"]:
-            template_row = await conn.fetchrow("""
-                SELECT framework_name, framework_reference, learning_objectives,
-                       skill_category, title, coaching_prompts
-                FROM training_templates WHERE id = $1
-            """, row["training_template_id"])
-        elif row["template_slug"]:
+        # Fetch template data by slug (more reliable than training_template_id)
+        if row["template_slug"]:
             template_row = await conn.fetchrow("""
                 SELECT framework_name, framework_reference, learning_objectives,
                        skill_category, title, coaching_prompts
                 FROM training_templates WHERE slug = $1
             """, row["template_slug"])
-        else:
-            template_row = None
-
-        if template_row:
-            template_data = dict(template_row)
+            if template_row:
+                template_data = dict(template_row)
 
         return row, "b2c_sessions", "train", template_data
 
