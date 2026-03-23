@@ -307,6 +307,7 @@ async def init_pool():
                 trace JSONB DEFAULT '[]'::jsonb,
                 debrief JSONB,
                 report JSONB,
+                relationship_scores JSONB DEFAULT '{}'::jsonb,
                 created_at TIMESTAMPTZ DEFAULT NOW(),
                 started_at TIMESTAMPTZ,
                 completed_at TIMESTAMPTZ

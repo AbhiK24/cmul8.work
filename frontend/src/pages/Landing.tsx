@@ -57,7 +57,7 @@ export default function Landing() {
               to="/signup"
               className="bg-accent text-white px-8 py-4 rounded-full text-base font-medium hover:opacity-85 transition-all hover:-translate-y-0.5 shadow-lg shadow-dark/20"
             >
-              Start Practicing Free →
+              Start Simulation Free →
             </Link>
           </div>
           <p className="text-sm text-muted mt-4">No credit card required</p>
@@ -309,7 +309,7 @@ export default function Landing() {
         <div className="max-w-5xl mx-auto">
           <p className="text-center text-sm font-medium text-muted uppercase tracking-wider mb-3">Skill tracks</p>
           <h2 className="text-3xl md:text-4xl font-medium text-dark text-center mb-12 tracking-tight">
-            Practice what actually matters
+            Train on what actually matters
           </h2>
           <div className="grid md:grid-cols-3 gap-5">
             <div className="group relative bg-gradient-to-br from-gray-50 to-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all hover:-translate-y-1">

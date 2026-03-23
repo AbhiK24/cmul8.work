@@ -216,7 +216,7 @@ export default function Practice() {
               <>
                 <div className="flex items-center justify-between mb-6">
                   <div>
-                    <h2 className="text-xl font-semibold text-dark">Practice Library</h2>
+                    <h2 className="text-xl font-semibold text-dark">Training Library</h2>
                     <p className="text-muted text-sm mt-1">Build workplace skills with AI-powered simulations</p>
                   </div>
                 </div>
@@ -228,7 +228,7 @@ export default function Practice() {
                     </div>
                     <h2 className="text-lg font-medium text-dark mb-2">No scenarios available yet</h2>
                     <p className="text-muted text-sm max-w-md mx-auto">
-                      Practice scenarios are being prepared. Check back soon!
+                      Training scenarios are being prepared. Check back soon!
                     </p>
                   </div>
                 ) : (
@@ -311,7 +311,7 @@ export default function Practice() {
                             <div className="w-5 h-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
                           ) : (
                             <span className="text-xs font-medium text-emerald-600 flex items-center gap-1">
-                              Start practice
+                              Start Simulation
                               <svg className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                               </svg>
@@ -331,7 +331,7 @@ export default function Practice() {
                 <div className="flex items-center justify-between mb-6">
                   <div>
                     <h2 className="text-xl font-semibold text-dark">Your Activity</h2>
-                    <p className="text-muted text-sm mt-1">Track your practice sessions and progress</p>
+                    <p className="text-muted text-sm mt-1">Track your training sessions and progress</p>
                   </div>
                 </div>
 
@@ -363,7 +363,7 @@ export default function Practice() {
                     </div>
                     <h3 className="text-lg font-medium text-dark mb-2">No activity yet</h3>
                     <p className="text-muted text-sm mb-6 max-w-md mx-auto">
-                      Start practicing to track your progress and see your improvement over time.
+                      Start training to track your progress and see your improvement over time.
                     </p>
                     <button
                       onClick={() => setActiveTab('library')}
