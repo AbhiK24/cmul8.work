@@ -17,29 +17,80 @@ async def init_pool():
         raise ValueError("DATABASE_URL environment variable is required")
     pool = await asyncpg.create_pool(DATABASE_URL, min_size=2, max_size=10)
 
-    # Run migrations
+    # Run migrations - create all tables
     async with pool.acquire() as conn:
-        # Add custom_roles column if not exists
+        # ============================================
+        # B2B TABLES (Enterprise)
+        # ============================================
+
+        # Employers table - B2B enterprise accounts
         await conn.execute("""
-            ALTER TABLE employers ADD COLUMN IF NOT EXISTS custom_roles JSONB DEFAULT '[]'::jsonb
+            CREATE TABLE IF NOT EXISTS employers (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                email TEXT UNIQUE NOT NULL,
+                password_hash TEXT,
+                clerk_id TEXT,
+                name TEXT,
+                company_name TEXT,
+                company_description TEXT,
+                industry TEXT,
+                company_size TEXT,
+                custom_roles JSONB DEFAULT '[]'::jsonb,
+                created_at TIMESTAMPTZ DEFAULT NOW()
+            )
         """)
 
-        # Fix retroactive session statuses based on timestamps
-        # Sessions with completed_at should be 'complete'
+        # Sessions table - B2B assessment/training sessions
         await conn.execute("""
-            UPDATE sessions
-            SET status = 'complete'
-            WHERE completed_at IS NOT NULL AND status != 'complete'
+            CREATE TABLE IF NOT EXISTS sessions (
+                session_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                employer_id UUID REFERENCES employers(id),
+                candidate_token TEXT NOT NULL,
+                candidate_name TEXT NOT NULL,
+                candidate_email TEXT NOT NULL,
+                candidate_link TEXT,
+                candidate_type TEXT DEFAULT 'external',
+                role TEXT NOT NULL,
+                org_name TEXT,
+                org_params JSONB NOT NULL,
+                env JSONB,
+                artifact_html TEXT,
+                agent_histories JSONB DEFAULT '{}'::jsonb,
+                relationship_scores JSONB DEFAULT '{}'::jsonb,
+                status TEXT DEFAULT 'pending',
+                trace JSONB DEFAULT '[]'::jsonb,
+                artifact_trace JSONB DEFAULT '[]'::jsonb,
+                debrief JSONB,
+                report JSONB,
+                report_html_candidate TEXT,
+                report_html_employer TEXT,
+                mode TEXT DEFAULT 'test',
+                template_id UUID,
+                framework_score FLOAT,
+                coaching_notes JSONB DEFAULT '[]'::jsonb,
+                created_at TIMESTAMPTZ DEFAULT NOW(),
+                started_at TIMESTAMPTZ,
+                completed_at TIMESTAMPTZ
+            )
         """)
 
-        # Sessions with started_at but no completed_at should be 'in_progress'
+        # Password reset tokens
         await conn.execute("""
-            UPDATE sessions
-            SET status = 'in_progress'
-            WHERE started_at IS NOT NULL AND completed_at IS NULL AND status NOT IN ('in_progress', 'complete')
+            CREATE TABLE IF NOT EXISTS password_reset_tokens (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                employer_id UUID NOT NULL REFERENCES employers(id),
+                token TEXT NOT NULL,
+                expires_at TIMESTAMPTZ NOT NULL,
+                used BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMPTZ DEFAULT NOW()
+            )
         """)
 
-        # Create users table for B2C users (Clerk auth)
+        # ============================================
+        # B2C TABLES (Individual Users)
+        # ============================================
+
+        # Users table - B2C individual users (Clerk auth)
         await conn.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -56,7 +107,7 @@ async def init_pool():
             )
         """)
 
-        # Create user_sessions table for B2C practice sessions
+        # User sessions table - B2C practice sessions
         await conn.execute("""
             CREATE TABLE IF NOT EXISTS user_sessions (
                 session_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -77,12 +128,11 @@ async def init_pool():
             )
         """)
 
-        # Add availability column to training_templates for B2B/B2C filtering
-        await conn.execute("""
-            ALTER TABLE training_templates ADD COLUMN IF NOT EXISTS availability TEXT DEFAULT 'both'
-        """)
+        # ============================================
+        # SHARED TABLES
+        # ============================================
 
-        # Create training_templates table for pre-built training sims
+        # Training templates - pre-built scenarios for Train mode
         await conn.execute("""
             CREATE TABLE IF NOT EXISTS training_templates (
                 template_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -93,6 +143,7 @@ async def init_pool():
                 learning_objectives JSONB DEFAULT '[]'::jsonb,
                 duration_minutes INT DEFAULT 10,
                 difficulty TEXT DEFAULT 'beginner',
+                availability TEXT DEFAULT 'both',
 
                 company_context JSONB NOT NULL,
                 agents JSONB NOT NULL,
@@ -110,19 +161,43 @@ async def init_pool():
             )
         """)
 
-        # Add training mode columns to sessions table
+        # ============================================
+        # MIGRATIONS - Add columns to existing tables
+        # ============================================
+
+        # Add foreign key for sessions.template_id if not exists
         await conn.execute("""
-            ALTER TABLE sessions ADD COLUMN IF NOT EXISTS mode TEXT DEFAULT 'test'
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.table_constraints
+                    WHERE constraint_name = 'sessions_template_id_fkey'
+                ) THEN
+                    ALTER TABLE sessions
+                    ADD CONSTRAINT sessions_template_id_fkey
+                    FOREIGN KEY (template_id) REFERENCES training_templates(template_id);
+                END IF;
+            EXCEPTION WHEN others THEN
+                NULL;
+            END $$;
         """)
+
+        # Fix retroactive session statuses based on timestamps
         await conn.execute("""
-            ALTER TABLE sessions ADD COLUMN IF NOT EXISTS template_id UUID REFERENCES training_templates(template_id)
+            UPDATE sessions
+            SET status = 'complete'
+            WHERE completed_at IS NOT NULL AND status != 'complete'
         """)
+
         await conn.execute("""
-            ALTER TABLE sessions ADD COLUMN IF NOT EXISTS framework_score FLOAT
+            UPDATE sessions
+            SET status = 'in_progress'
+            WHERE started_at IS NOT NULL AND completed_at IS NULL AND status NOT IN ('in_progress', 'complete')
         """)
-        await conn.execute("""
-            ALTER TABLE sessions ADD COLUMN IF NOT EXISTS coaching_notes JSONB DEFAULT '[]'::jsonb
-        """)
+
+        # ============================================
+        # SEED DATA
+        # ============================================
 
         # Seed training templates
         await seed_training_templates(conn)
