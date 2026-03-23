@@ -133,7 +133,7 @@ async def list_scenarios(current_user: TokenData = Depends(get_current_b2c_user)
         # B2C sees 'both' and 'b2c_only' templates
         rows = await conn.fetch("""
             SELECT
-                template_id, slug, title, skill_category, description,
+                id AS template_id, slug, title, skill_category, description,
                 duration_minutes, difficulty, learning_objectives
             FROM training_templates
             WHERE COALESCE(availability, 'both') IN ('both', 'b2c_only')
@@ -183,7 +183,7 @@ async def get_scenario(slug: str, current_user: TokenData = Depends(get_current_
         # B2C can access 'both' and 'b2c_only' templates
         row = await conn.fetchrow("""
             SELECT
-                template_id, slug, title, skill_category, description,
+                id AS template_id, slug, title, skill_category, description,
                 duration_minutes, difficulty, learning_objectives,
                 company_context, agents, tasks, framework_name, framework_reference
             FROM training_templates
@@ -229,7 +229,7 @@ async def list_categories(current_user: TokenData = Depends(get_current_b2c_user
         # B2C sees 'both' and 'b2c_only' templates
         rows = await conn.fetch("""
             SELECT
-                template_id, slug, title, skill_category, description,
+                id AS template_id, slug, title, skill_category, description,
                 duration_minutes, difficulty, learning_objectives
             FROM training_templates
             WHERE COALESCE(availability, 'both') IN ('both', 'b2c_only')
@@ -292,7 +292,7 @@ async def start_session(slug: str, current_user: TokenData = Depends(get_current
     async with pool.acquire() as conn:
         # Get template - B2C can only access 'both' and 'b2c_only' templates
         template = await conn.fetchrow("""
-            SELECT template_id, slug, title, skill_category, company_context,
+            SELECT id AS template_id, slug, title, skill_category, company_context,
                    agents, tasks, inbox, framework_name, framework_reference, coaching_prompts
             FROM training_templates
             WHERE slug = $1 AND COALESCE(availability, 'both') IN ('both', 'b2c_only')

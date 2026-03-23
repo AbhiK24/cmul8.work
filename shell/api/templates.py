@@ -81,7 +81,7 @@ async def list_templates():
         # B2B sees 'both' and 'b2b_only' templates
         rows = await conn.fetch("""
             SELECT
-                template_id, slug, title, skill_category, description,
+                id AS template_id, slug, title, skill_category, description,
                 duration_minutes, difficulty, learning_objectives,
                 COALESCE(availability, 'both') as availability
             FROM training_templates
@@ -113,7 +113,7 @@ async def get_template(slug: str):
         # B2B can access 'both' and 'b2b_only' templates
         row = await conn.fetchrow("""
             SELECT
-                template_id, slug, title, skill_category, description,
+                id AS template_id, slug, title, skill_category, description,
                 duration_minutes, difficulty, learning_objectives,
                 company_context, agents, tasks, framework_name, framework_reference,
                 COALESCE(availability, 'both') as availability
