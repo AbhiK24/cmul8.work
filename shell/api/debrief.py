@@ -60,11 +60,10 @@ async def submit_debrief(session_id: str, request: DebriefRequest):
             "If you had another hour, what would you do differently?": request.q3
         }
 
-        # Use 'complete' for b2b, 'completed' for b2c
-        complete_status = "complete" if table_name == "b2b_sessions" else "completed"
+        # Use 'complete' for both b2b and b2c
         await conn.execute(f"""
             UPDATE {table_name}
-            SET debrief = $1, completed_at = NOW(), status = '{complete_status}'
+            SET debrief = $1, completed_at = NOW(), status = 'complete'
             WHERE session_id = $2
         """, json.dumps(debrief), session_id)
 
@@ -81,7 +80,7 @@ async def submit_debrief(session_id: str, request: DebriefRequest):
             return {
                 "status": "complete",
                 "message": "Session scored successfully",
-                "report_url": f"/report/{session_id}/candidate"
+                "report_url": f"/sessions/{session_id}/report/candidate"
             }
     except httpx.HTTPError as e:
         # Log error but return partial success

@@ -141,11 +141,28 @@ async def score_session(request: ScoreRequest):
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Scoring failed: {e}")
 
+        # Calculate overall score (average of trait scores, converted to 0-100)
+        trait_scores = report.get("trait_scores", {})
+        scores = []
+        for trait, data in trait_scores.items():
+            if isinstance(data, dict) and "score" in data:
+                scores.append(data["score"])
+        overall_score = int((sum(scores) / len(scores)) * 10) if scores else None
+
         # Save report to database
-        await conn.execute(f"""
-            UPDATE {table_name}
-            SET report = $1, status = 'complete', completed_at = NOW()
-            WHERE session_id = $2
-        """, json.dumps(report), request.session_id)
+        if table_name == "b2c_sessions":
+            # B2C sessions have overall_score column
+            await conn.execute("""
+                UPDATE b2c_sessions
+                SET report = $1, status = 'complete', completed_at = NOW(), overall_score = $3
+                WHERE session_id = $2
+            """, json.dumps(report), request.session_id, overall_score)
+        else:
+            # B2B sessions
+            await conn.execute("""
+                UPDATE b2b_sessions
+                SET report = $1, status = 'complete', completed_at = NOW()
+                WHERE session_id = $2
+            """, json.dumps(report), request.session_id)
 
     return report

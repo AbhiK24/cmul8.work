@@ -437,11 +437,22 @@ async def get_candidate_report(session_id: str):
     pool = await get_pool()
 
     async with pool.acquire() as conn:
+        # Try B2B sessions first
         row = await conn.fetchrow("""
             SELECT candidate_name, org_params, env, report, status
             FROM b2b_sessions
             WHERE session_id = $1
         """, session_id)
+
+        is_b2c = False
+        if not row:
+            # Try B2C sessions
+            row = await conn.fetchrow("""
+                SELECT 'Practice User' as candidate_name, org_params, env, report, status
+                FROM b2c_sessions
+                WHERE session_id = $1
+            """, session_id)
+            is_b2c = True
 
         if not row:
             raise HTTPException(status_code=404, detail="Session not found")

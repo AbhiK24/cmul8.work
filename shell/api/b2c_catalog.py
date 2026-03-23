@@ -78,6 +78,7 @@ class UserSession(BaseModel):
     score: Optional[int]  # overall_score from DB
     created_at: str
     completed_at: Optional[str]
+    candidate_token: Optional[str] = None  # For continuing sessions
 
 
 class StartSessionResponse(BaseModel):
@@ -352,7 +353,7 @@ async def list_b2c_sessions(current_user: TokenData = Depends(get_current_b2c_us
     async with pool.acquire() as conn:
         rows = await conn.fetch("""
             SELECT session_id, template_slug, template_title, skill_category,
-                   status, overall_score, created_at, completed_at
+                   status, overall_score, created_at, completed_at, candidate_token
             FROM b2c_sessions
             WHERE user_id = $1
             ORDER BY created_at DESC
@@ -368,7 +369,8 @@ async def list_b2c_sessions(current_user: TokenData = Depends(get_current_b2c_us
                 status=row["status"],
                 score=row["overall_score"],
                 created_at=row["created_at"].isoformat() if row["created_at"] else "",
-                completed_at=row["completed_at"].isoformat() if row["completed_at"] else None
+                completed_at=row["completed_at"].isoformat() if row["completed_at"] else None,
+                candidate_token=row["candidate_token"]
             )
             for row in rows
         ]
@@ -383,7 +385,7 @@ async def get_user_session(session_id: str, current_user: TokenData = Depends(ge
     async with pool.acquire() as conn:
         row = await conn.fetchrow("""
             SELECT session_id, template_slug, template_title, skill_category,
-                   status, overall_score, created_at, completed_at
+                   status, overall_score, created_at, completed_at, candidate_token
             FROM b2c_sessions
             WHERE session_id = $1 AND user_id = $2
         """, uuid.UUID(session_id), user_id)
@@ -399,5 +401,6 @@ async def get_user_session(session_id: str, current_user: TokenData = Depends(ge
             status=row["status"],
             score=row["overall_score"],
             created_at=row["created_at"].isoformat() if row["created_at"] else "",
-            completed_at=row["completed_at"].isoformat() if row["completed_at"] else None
+            completed_at=row["completed_at"].isoformat() if row["completed_at"] else None,
+            candidate_token=row["candidate_token"]
         )

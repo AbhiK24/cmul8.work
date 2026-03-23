@@ -536,6 +536,7 @@ export interface B2CUserSession {
   score: number | null;
   created_at: string;
   completed_at: string | null;
+  candidate_token: string | null;
 }
 
 export interface B2CStartSessionResponse {
