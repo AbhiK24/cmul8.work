@@ -28,7 +28,7 @@ const COMPANY_SIZES = [
 
 export default function OrgOnboarding() {
   const navigate = useNavigate();
-  const { getToken, user } = useAuth();
+  const { getToken, user, refreshOrg } = useAuth();
 
   const [step, setStep] = useState(1);
   const [orgName, setOrgName] = useState('');
@@ -54,6 +54,9 @@ export default function OrgOnboarding() {
         industry: industry || undefined,
         company_size: companySize || undefined,
       });
+
+      // Refresh org info in auth context before navigating
+      await refreshOrg();
 
       // Redirect to dashboard
       navigate('/dashboard');

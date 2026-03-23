@@ -125,8 +125,10 @@ function ClerkAuthProvider({ children }: { children: ReactNode }) {
         } catch (e) {
           console.error('Failed to get Clerk token:', e);
         }
-      }
-      if (isClerkLoaded) {
+        // Only set loading false AFTER token and org are loaded
+        setIsLoading(false);
+      } else if (isClerkLoaded && !clerkUser) {
+        // No user logged in - loading complete
         setIsLoading(false);
       }
     }
