@@ -433,26 +433,35 @@ async def get_session_context(session_id: str, token: str):
 
 @router.get("/{session_id}/report/candidate")
 async def get_candidate_report(session_id: str):
-    """Get candidate-facing report (public, only for completed sessions)."""
+    """Get candidate-facing report (public, only for completed sessions).
+
+    Returns different data structure based on session mode:
+    - Assessment mode: trait_scores, overall_band, strengths, growth_areas
+    - Training mode: framework_scores, learning_objectives, coaching_notes
+    """
     pool = await get_pool()
 
     async with pool.acquire() as conn:
         # Try B2B sessions first
         row = await conn.fetchrow("""
-            SELECT candidate_name, org_params, env, report, status
+            SELECT candidate_name, org_params, env, report, status, mode
             FROM b2b_sessions
             WHERE session_id = $1
         """, session_id)
 
         is_b2c = False
+        is_training = False
         if not row:
-            # Try B2C sessions
+            # Try B2C sessions - always training mode
             row = await conn.fetchrow("""
-                SELECT 'Practice User' as candidate_name, org_params, env, report, status
+                SELECT 'Practice User' as candidate_name, org_params, env, report, status, 'train' as mode
                 FROM b2c_sessions
                 WHERE session_id = $1
             """, session_id)
             is_b2c = True
+            is_training = True
+        else:
+            is_training = row["mode"] == "train"
 
         if not row:
             raise HTTPException(status_code=404, detail="Session not found")
@@ -464,27 +473,50 @@ async def get_candidate_report(session_id: str):
         env = json.loads(row["env"]) if row["env"] else {}
         report = json.loads(row["report"]) if row["report"] else {}
 
-        trait_scores = report.get("trait_scores", {})
-        strengths = []
-        growth_areas = []
-
-        for trait, data in trait_scores.items():
-            if isinstance(data, dict) and "score" in data:
-                if data["score"] >= 7:
-                    strengths.append(f"Strong {trait.replace('_', ' ')}")
-                elif data["score"] < 5:
-                    growth_areas.append(f"Developing {trait.replace('_', ' ')}")
-
-        return {
+        # Base response
+        base_response = {
             "candidate_name": row["candidate_name"],
             "role": org_params.get("role", "Role"),
             "company_name": env.get("company_name") or org_params.get("org_name", "Company"),
-            "overall_band": report.get("overall_band", "Calibrating"),
-            "trait_scores": trait_scores,
-            "strengths": strengths or report.get("key_observations", [])[:3],
-            "growth_areas": growth_areas or [],
-            "session_summary": report.get("session_summary", "Your simulation has been completed and analyzed."),
+            "mode": "train" if is_training else "assess",
         }
+
+        if is_training:
+            # Training report format
+            return {
+                **base_response,
+                "framework_name": report.get("framework_name") or env.get("framework_name", ""),
+                "framework_reference": env.get("framework_reference"),
+                "framework_scores": report.get("framework_scores", []),
+                "overall_score": report.get("overall_score", 0),
+                "learning_objectives_met": report.get("learning_objectives_met", []),
+                "learning_objectives_missed": report.get("learning_objectives_missed", []),
+                "coaching_notes": report.get("coaching_notes", []),
+                "key_moments": report.get("key_moments", []),
+                "next_steps": report.get("next_steps", []),
+                "session_summary": report.get("session_summary", "Your training session has been completed and analyzed."),
+            }
+        else:
+            # Assessment report format
+            trait_scores = report.get("trait_scores", {})
+            strengths = []
+            growth_areas = []
+
+            for trait, data in trait_scores.items():
+                if isinstance(data, dict) and "score" in data:
+                    if data["score"] >= 7:
+                        strengths.append(f"Strong {trait.replace('_', ' ')}")
+                    elif data["score"] < 5:
+                        growth_areas.append(f"Developing {trait.replace('_', ' ')}")
+
+            return {
+                **base_response,
+                "overall_band": report.get("overall_band", "Calibrating"),
+                "trait_scores": trait_scores,
+                "strengths": strengths or report.get("key_observations", [])[:3],
+                "growth_areas": growth_areas or [],
+                "session_summary": report.get("session_summary", "Your simulation has been completed and analyzed."),
+            }
 
 
 @router.post("/{session_id}/score")
