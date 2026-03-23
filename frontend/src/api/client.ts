@@ -57,6 +57,13 @@ export const auth = {
       body: { email, password },
     }),
 
+  // Clerk-based login (verifies Clerk token and ensures work email)
+  clerkLogin: (clerkToken: string) =>
+    apiRequest<{ id: string; email: string }>('/auth/clerk', {
+      method: 'POST',
+      token: clerkToken,
+    }),
+
   me: (token: string) =>
     apiRequest<{ id: string; email: string }>('/auth/me', { token }),
 

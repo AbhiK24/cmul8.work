@@ -14,7 +14,10 @@ SCHEMA = """
 CREATE TABLE IF NOT EXISTS employers (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email TEXT UNIQUE NOT NULL,
-  password_hash TEXT NOT NULL,
+  password_hash TEXT NOT NULL DEFAULT '',
+  -- Clerk integration
+  clerk_id TEXT,
+  name TEXT,
   -- Org profile fields
   company_name TEXT,
   industry TEXT,

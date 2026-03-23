@@ -2,10 +2,13 @@
 import os
 import secrets
 from datetime import datetime, timedelta, timezone
+from typing import Optional
 from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, EmailStr
 import httpx
+import jwt
+from jwt import PyJWKClient
 
 from ..db.pool import get_pool
 from ..auth.jwt import (
@@ -19,8 +22,85 @@ from ..auth.jwt import (
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://www.cmul8.work")
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
 
+# Consumer email domains that indicate B2C users (not allowed for enterprise)
+CONSUMER_DOMAINS = [
+    'gmail.com', 'googlemail.com',
+    'yahoo.com', 'yahoo.co.uk', 'yahoo.co.in', 'ymail.com',
+    'hotmail.com', 'hotmail.co.uk', 'outlook.com', 'live.com', 'msn.com',
+    'icloud.com', 'me.com', 'mac.com',
+    'aol.com',
+    'protonmail.com', 'proton.me',
+    'zoho.com',
+    'mail.com',
+    'gmx.com', 'gmx.net',
+    'yandex.com', 'yandex.ru',
+    'qq.com', '163.com', '126.com',
+    'tutanota.com',
+    'fastmail.com',
+    'hey.com',
+]
+
+
+def is_consumer_email(email: str) -> bool:
+    """Check if email is from a consumer domain."""
+    domain = email.split('@')[1].lower() if '@' in email else ''
+    return domain in CONSUMER_DOMAINS
+
 router = APIRouter(prefix="/auth")
 security = HTTPBearer()
+
+
+class ClerkUser(BaseModel):
+    """Clerk user data."""
+    clerk_id: str
+    email: str
+    name: Optional[str] = None
+    avatar_url: Optional[str] = None
+
+
+async def verify_clerk_token(token: str) -> ClerkUser:
+    """Verify a Clerk JWT and return user data."""
+    try:
+        # First decode without verification to get the issuer
+        unverified = jwt.decode(token, options={"verify_signature": False})
+        issuer = unverified.get("iss", "")
+
+        if not issuer:
+            raise HTTPException(status_code=401, detail="Invalid token: no issuer")
+
+        # Get JWKS from Clerk
+        jwks_url = f"{issuer}/.well-known/jwks.json"
+        jwks_client = PyJWKClient(jwks_url)
+        signing_key = jwks_client.get_signing_key_from_jwt(token)
+
+        # Verify the token
+        payload = jwt.decode(
+            token,
+            signing_key.key,
+            algorithms=["RS256"],
+            issuer=issuer,
+            options={"verify_aud": False}  # Clerk doesn't always set aud
+        )
+
+        # Extract user info from Clerk token
+        clerk_id = payload.get("sub", "")
+        email = payload.get("email", "") or payload.get("primary_email", "")
+        name = payload.get("name", "") or payload.get("full_name", "")
+        avatar_url = payload.get("image_url", "") or payload.get("profile_image_url", "")
+
+        return ClerkUser(
+            clerk_id=clerk_id,
+            email=email,
+            name=name if name else None,
+            avatar_url=avatar_url if avatar_url else None
+        )
+
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.InvalidTokenError as e:
+        raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Token verification failed: {str(e)}")
 
 
 class RegisterRequest(BaseModel):
@@ -108,12 +188,60 @@ async def send_reset_email(email: str, reset_token: str):
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ) -> TokenData:
-    """Dependency to get the current authenticated user."""
+    """Dependency to get the current authenticated user.
+
+    Supports both custom JWT tokens and Clerk tokens.
+    For Clerk tokens, creates/updates employer in database.
+    """
     token = credentials.credentials
+
+    # First try our custom JWT
     token_data = decode_access_token(token)
-    if token_data is None:
+    if token_data is not None:
+        return token_data
+
+    # Try Clerk token
+    try:
+        clerk_user = await verify_clerk_token(token)
+
+        # Ensure work email for B2B
+        if is_consumer_email(clerk_user.email):
+            raise HTTPException(
+                status_code=403,
+                detail="Enterprise accounts require a work email address"
+            )
+
+        # Ensure employer exists in database
+        pool = await get_pool()
+        async with pool.acquire() as conn:
+            employer = await conn.fetchrow(
+                "SELECT id, email FROM employers WHERE email = $1",
+                clerk_user.email
+            )
+
+            if not employer:
+                # Create employer from Clerk data
+                employer_id = await conn.fetchval("""
+                    INSERT INTO employers (email, password_hash, clerk_id, name)
+                    VALUES ($1, '', $2, $3)
+                    RETURNING id
+                """, clerk_user.email, clerk_user.clerk_id, clerk_user.name)
+            else:
+                employer_id = employer["id"]
+                # Update clerk_id if not set
+                await conn.execute("""
+                    UPDATE employers
+                    SET clerk_id = COALESCE(clerk_id, $2),
+                        name = COALESCE($3, name)
+                    WHERE id = $1
+                """, employer_id, clerk_user.clerk_id, clerk_user.name)
+
+        return TokenData(employer_id=str(employer_id), email=clerk_user.email)
+
+    except HTTPException:
+        raise
+    except Exception:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
-    return token_data
 
 
 @router.post("/register", response_model=TokenResponse)
@@ -180,6 +308,50 @@ async def get_me(current_user: TokenData = Depends(get_current_user)):
 async def logout():
     """Logout (client should discard the token)."""
     return {"message": "Logged out successfully"}
+
+
+@router.post("/clerk", response_model=UserResponse)
+async def clerk_login(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Login/register via Clerk token (for enterprise users).
+
+    Verifies the Clerk token, ensures it's a work email, and creates/updates
+    the employer in the database.
+    """
+    token = credentials.credentials
+    clerk_user = await verify_clerk_token(token)
+
+    # Ensure work email for B2B
+    if is_consumer_email(clerk_user.email):
+        raise HTTPException(
+            status_code=403,
+            detail="Enterprise accounts require a work email address. Personal emails (Gmail, Yahoo, etc.) are not accepted."
+        )
+
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        employer = await conn.fetchrow(
+            "SELECT id, email FROM employers WHERE email = $1",
+            clerk_user.email
+        )
+
+        if not employer:
+            # Create new employer from Clerk data
+            employer_id = await conn.fetchval("""
+                INSERT INTO employers (email, password_hash, clerk_id, name)
+                VALUES ($1, '', $2, $3)
+                RETURNING id
+            """, clerk_user.email, clerk_user.clerk_id, clerk_user.name)
+        else:
+            employer_id = employer["id"]
+            # Update clerk_id and name if not set
+            await conn.execute("""
+                UPDATE employers
+                SET clerk_id = COALESCE(clerk_id, $2),
+                    name = COALESCE($3, name)
+                WHERE id = $1
+            """, employer_id, clerk_user.clerk_id, clerk_user.name)
+
+    return UserResponse(id=str(employer_id), email=clerk_user.email)
 
 
 @router.post("/forgot-password", response_model=MessageResponse)
