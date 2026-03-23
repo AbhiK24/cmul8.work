@@ -1009,6 +1009,336 @@ TRAINING_TEMPLATES = [
             "aggressive_no": "That came across as hostile. You can be direct without being rude.",
             "good_assertive": "That was assertive - clear, respectful, and you offered an alternative."
         }
+    },
+
+    # =========================================================================
+    # CRUCIAL CONVERSATIONS - The Pay Gap (uses STATE method)
+    # =========================================================================
+    {
+        "slug": "crucial-conversations",
+        "title": "The Pay Gap",
+        "skill_category": "communication",
+        "description": "You just learned you're paid 30% less than a colleague with the same title and fewer years. Have the conversation without burning bridges.",
+        "learning_objectives": [
+            "The STATE method for difficult conversations",
+            "Separating facts from emotions",
+            "Advocating for yourself professionally",
+            "Creating psychological safety in tense discussions",
+            "Finding mutual purpose when stakes are high"
+        ],
+        "duration_minutes": 12,
+        "difficulty": "advanced",
+        "availability": "both",
+        "company_context": {
+            "company_name": "Beacon Analytics",
+            "company_description": "A Series C analytics company. Publicly claims to value pay equity. Recently in the news for diversity initiatives. Performance review cycle is in 2 weeks.",
+            "scenario_tension": "A salary spreadsheet was accidentally shared. You discovered you make $145K while a colleague hired 6 months after you, with the same title and fewer responsibilities, makes $190K. Your manager doesn't know you know. Reviews are in 2 weeks.",
+            "candidate_role": "Senior Data Scientist",
+            "industry": "Technology",
+            "stakes": "Your financial future. Your sense of worth. The relationship with your manager. Whether you stay or leave."
+        },
+        "agents": [
+            {
+                "agent_id": "david-chen",
+                "name": "David Chen",
+                "role": "Director of Data Science",
+                "relationship_to_candidate": "manager",
+                "archetype": "standard",
+                "persona": "Your manager for 2 years. Generally supportive but avoids conflict. Didn't set your salary - inherited you from a reorg. Will be uncomfortable but is fundamentally fair. Needs to be pushed but will advocate for you if convinced. Hates surprises.",
+                "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=DavidChen&backgroundColor=b6e3f4"
+            },
+            {
+                "agent_id": "hr-partner",
+                "name": "Rachel Torres",
+                "role": "HR Business Partner",
+                "relationship_to_candidate": "hr",
+                "archetype": "standard",
+                "persona": "The HR partner for your org. Professional and process-oriented. Can be an ally if you approach correctly. Has seen salary inequities before. Will want to follow proper channels but genuinely cares about fairness.",
+                "avatar_url": "https://api.dicebear.com/7.x/personas/svg?seed=RachelTorres&backgroundColor=c0aede"
+            }
+        ],
+        "tasks": [
+            {
+                "task_id": "convo-david",
+                "title": "Have the conversation with David",
+                "description": "Raise the pay gap using STATE method",
+                "urgency": "high",
+                "completion_type": "message"
+            },
+            {
+                "task_id": "decide-hr",
+                "title": "Decide whether to involve HR",
+                "description": "Consider escalating to Rachel if needed",
+                "urgency": "medium",
+                "completion_type": "message"
+            }
+        ],
+        "inbox": [
+            {
+                "thread_id": "david-thread",
+                "from_agent_id": "david-chen",
+                "subject": "1:1 tomorrow",
+                "preview": "Quick sync before reviews",
+                "is_urgent": False,
+                "is_unread": True,
+                "messages": [
+                    {
+                        "id": "msg-1",
+                        "sender": "agent",
+                        "agent_id": "david-chen",
+                        "content": "Hey! Looking forward to our 1:1 tomorrow. Wanted to do a quick check-in before review season kicks off. Anything specific you want to discuss?",
+                        "timestamp": 1711000000000
+                    }
+                ]
+            }
+        ],
+        "framework_name": "STATE Method",
+        "framework_reference": {
+            "title": "STATE Method (Crucial Conversations)",
+            "steps": [
+                {
+                    "letter": "S",
+                    "name": "Share your facts",
+                    "description": "Start with observable, undeniable facts - not conclusions or accusations.",
+                    "example": "I recently learned that there's a significant gap between my compensation and others in the same role..."
+                },
+                {
+                    "letter": "T",
+                    "name": "Tell your story",
+                    "description": "Explain what conclusion you're drawing, tentatively.",
+                    "example": "I'm trying to understand what might explain this difference, and I'm struggling to see it..."
+                },
+                {
+                    "letter": "A",
+                    "name": "Ask for their path",
+                    "description": "Genuinely invite their perspective. They may have context you don't.",
+                    "example": "Can you help me understand how compensation decisions are made here?"
+                },
+                {
+                    "letter": "T",
+                    "name": "Talk tentatively",
+                    "description": "Use language that keeps dialogue open, not defensive.",
+                    "example": "I might be missing something, but..." or "Help me understand..."
+                },
+                {
+                    "letter": "E",
+                    "name": "Encourage testing",
+                    "description": "Make it safe for them to share, even if it's uncomfortable.",
+                    "example": "I want to have an honest conversation about this, even if it's awkward."
+                }
+            ],
+            "pro_tip": "You can be assertive AND curious. The goal isn't to attack - it's to be treated fairly."
+        },
+        "coaching_prompts": {
+            "accusatory": "That came across as an accusation. Start with facts and curiosity, not blame.",
+            "too_passive": "You're being too tentative. This is your livelihood. You can be direct and respectful.",
+            "threatening": "Ultimatums rarely work. Focus on understanding first, then solutions.",
+            "good_state": "Strong use of STATE - you shared facts, invited dialogue, and stayed professional."
+        }
+    },
+
+    # =========================================================================
+    # PRIORITIZATION - The Launch Crisis (uses Eisenhower Matrix)
+    # =========================================================================
+    {
+        "slug": "prioritization",
+        "title": "The Launch Crisis",
+        "skill_category": "prioritization",
+        "description": "48 hours to launch. Critical bug discovered. Legal flagged a compliance issue. Your biggest customer wants a demo. What do you tackle first?",
+        "learning_objectives": [
+            "The Eisenhower Matrix (Urgent vs Important)",
+            "Making decisions with incomplete information",
+            "Communicating trade-offs to stakeholders",
+            "Delegating effectively under pressure",
+            "Managing up when things go wrong"
+        ],
+        "duration_minutes": 15,
+        "difficulty": "intermediate",
+        "availability": "both",
+        "company_context": {
+            "company_name": "Quantum Health",
+            "company_description": "A healthtech startup that's raised $50M. Your product helps hospitals manage patient data. HIPAA compliance is non-negotiable. You've announced the launch date publicly.",
+            "scenario_tension": "It's Wednesday morning. Launch is Friday. QA just found a bug that causes data loss in 0.1% of cases. Legal says there's a consent flow that might not be HIPAA compliant. And your $2M prospect wants a live demo Thursday to make their board meeting. Your CEO is asking for a status update in 2 hours.",
+            "candidate_role": "VP of Product",
+            "industry": "Healthcare Technology",
+            "stakes": "Ship a buggy product and you could harm patients. Delay and you lose credibility and possibly the prospect. Get the legal wrong and you face fines and lawsuits."
+        },
+        "agents": [
+            {
+                "agent_id": "cto",
+                "name": "Marcus Webb",
+                "role": "CTO",
+                "relationship_to_candidate": "peer",
+                "archetype": "standard",
+                "persona": "Your technical counterpart. Pragmatic engineer who's been through launches before. Will give you honest assessments. Protective of his team but will push if needed. Respects decisiveness.",
+                "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=MarcusWebb&backgroundColor=b6e3f4"
+            },
+            {
+                "agent_id": "ceo",
+                "name": "Amanda Liu",
+                "role": "CEO",
+                "relationship_to_candidate": "manager",
+                "archetype": "standard",
+                "persona": "Founder-CEO who's bet everything on this launch. Under pressure from the board. Needs to know the real situation but hates surprises more than bad news. Will support tough calls if you make a clear case.",
+                "avatar_url": "https://api.dicebear.com/7.x/personas/svg?seed=AmandaLiu&backgroundColor=c0aede"
+            },
+            {
+                "agent_id": "legal",
+                "name": "Jennifer Park",
+                "role": "General Counsel",
+                "relationship_to_candidate": "peer",
+                "archetype": "standard",
+                "persona": "Cautious by nature but understands business realities. Has seen companies destroyed by compliance failures. Needs to protect the company but will find solutions if pushed. Respects people who take legal seriously.",
+                "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=JenniferPark&backgroundColor=d1d4f9"
+            },
+            {
+                "agent_id": "sales",
+                "name": "Derek Okafor",
+                "role": "VP of Sales",
+                "relationship_to_candidate": "peer",
+                "archetype": "difficult",
+                "persona": "Has been working this prospect for 8 months. Commission and quota on the line. Will push hard for the demo but can be reasoned with if you help him find alternatives. Not great at hearing 'no' but respects honesty.",
+                "avatar_url": "https://api.dicebear.com/7.x/adventurer/svg?seed=DerekOkafor&backgroundColor=ffdfbf"
+            }
+        ],
+        "tasks": [
+            {
+                "task_id": "assess-bug",
+                "title": "Assess the bug severity with Marcus",
+                "description": "Understand the real risk and fix timeline",
+                "urgency": "high",
+                "completion_type": "message"
+            },
+            {
+                "task_id": "legal-compliance",
+                "title": "Address the compliance issue with Jennifer",
+                "description": "Understand if this is a blocker or a fix",
+                "urgency": "high",
+                "completion_type": "message"
+            },
+            {
+                "task_id": "manage-demo",
+                "title": "Handle the demo request from Derek",
+                "description": "Find a path forward that doesn't derail the launch",
+                "urgency": "medium",
+                "completion_type": "message"
+            },
+            {
+                "task_id": "update-ceo",
+                "title": "Update Amanda on the situation",
+                "description": "Give her the real picture and your recommendation",
+                "urgency": "high",
+                "completion_type": "message"
+            }
+        ],
+        "inbox": [
+            {
+                "thread_id": "marcus-thread",
+                "from_agent_id": "cto",
+                "subject": "Critical bug - need to talk",
+                "preview": "QA found something",
+                "is_urgent": True,
+                "is_unread": True,
+                "messages": [
+                    {
+                        "id": "msg-1",
+                        "sender": "agent",
+                        "agent_id": "cto",
+                        "content": "Just got out of QA review. We found a race condition that causes data loss in about 0.1% of sync operations. In healthcare, that's patient records. I think we can fix it in 36 hours with an all-hands push, but it's going to be tight. What do you want to do?",
+                        "timestamp": 1711000000000
+                    }
+                ]
+            },
+            {
+                "thread_id": "legal-thread",
+                "from_agent_id": "legal",
+                "subject": "HIPAA concern - consent flow",
+                "preview": "Need to discuss before launch",
+                "is_urgent": True,
+                "is_unread": True,
+                "messages": [
+                    {
+                        "id": "msg-2",
+                        "sender": "agent",
+                        "agent_id": "legal",
+                        "content": "I've been reviewing the final build and I'm concerned about the consent flow on mobile. Users can technically proceed without explicitly acknowledging the data sharing terms. This could be a HIPAA issue. We should talk before launch.",
+                        "timestamp": 1711000100000
+                    }
+                ]
+            },
+            {
+                "thread_id": "derek-thread",
+                "from_agent_id": "sales",
+                "subject": "Demo for Memorial Health - THURSDAY",
+                "preview": "This is the big one",
+                "is_urgent": True,
+                "is_unread": True,
+                "messages": [
+                    {
+                        "id": "msg-3",
+                        "sender": "agent",
+                        "agent_id": "sales",
+                        "content": "Memorial Health wants a live demo Thursday afternoon for their board. This is a $2M annual deal and they're ready to sign if the demo goes well. I know launch is Friday but this is the deal that makes our quarter. Can we make this happen?",
+                        "timestamp": 1711000200000
+                    }
+                ]
+            },
+            {
+                "thread_id": "amanda-thread",
+                "from_agent_id": "ceo",
+                "subject": "Launch status?",
+                "preview": "Board is asking",
+                "is_urgent": False,
+                "is_unread": True,
+                "messages": [
+                    {
+                        "id": "msg-4",
+                        "sender": "agent",
+                        "agent_id": "ceo",
+                        "content": "Hey - board is asking for a launch confidence update. I told them we're on track. Are we? Let's sync in 2 hours.",
+                        "timestamp": 1711000300000
+                    }
+                ]
+            }
+        ],
+        "framework_name": "Eisenhower Matrix",
+        "framework_reference": {
+            "title": "Eisenhower Decision Matrix",
+            "steps": [
+                {
+                    "letter": "1",
+                    "name": "Urgent + Important",
+                    "description": "Do these NOW. Real crises with real consequences.",
+                    "example": "Data loss bug (patient safety), HIPAA compliance (legal risk)"
+                },
+                {
+                    "letter": "2",
+                    "name": "Important + Not Urgent",
+                    "description": "SCHEDULE these. They matter but can wait.",
+                    "example": "Long-term product roadmap, team development"
+                },
+                {
+                    "letter": "3",
+                    "name": "Urgent + Not Important",
+                    "description": "DELEGATE or deprioritize. Someone else's emergency.",
+                    "example": "Demo request (important to sales, but not a launch blocker)"
+                },
+                {
+                    "letter": "4",
+                    "name": "Not Urgent + Not Important",
+                    "description": "ELIMINATE. Don't let these distract you.",
+                    "example": "Nice-to-have features, low-priority requests"
+                }
+            ],
+            "pro_tip": "In a crisis, ruthlessly prioritize. You can't do everything, so do the right things."
+        },
+        "coaching_prompts": {
+            "trying_to_please_everyone": "You can't fix everything at once. What's the actual highest priority?",
+            "ignoring_legal": "Compliance isn't optional in healthcare. This could sink the company.",
+            "caving_to_sales": "Derek's deal is important but not more important than patient safety.",
+            "good_triage": "Good prioritization - you focused on the real blockers and managed expectations.",
+            "honest_with_ceo": "Good - you told Amanda the truth. She can't help if she doesn't know."
+        }
     }
 ]
 
