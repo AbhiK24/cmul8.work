@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { sessions, ApiError } from '../api/client';
+import { sessions, b2cCatalog, ApiError } from '../api/client';
 import type { FrameworkReference, FrameworkStep } from '../api/client';
 import Logo from '../components/Logo';
 
@@ -119,11 +119,13 @@ function StepScoreCard({ step }: { step: FrameworkStepScore }) {
 
 export default function TrainingReport() {
   const { sessionId } = useParams();
-  const { token } = useAuth();
+  const { token, userType } = useAuth();
   const [session, setSession] = useState<SessionDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
+
+  const isB2C = userType === 'b2c';
 
   const handleGenerateReport = async () => {
     if (!token || !sessionId) return;
@@ -132,11 +134,19 @@ export default function TrainingReport() {
     setError('');
 
     try {
-      await sessions.generateReport(token, sessionId);
+      // B2B uses sessions.generateReport, B2C report is auto-generated on debrief
+      if (!isB2C) {
+        await sessions.generateReport(token, sessionId);
+      }
 
       // Reload session to get the report
-      const data = await sessions.get(token, sessionId);
-      setSession(data as unknown as SessionDetail);
+      if (isB2C) {
+        const data = await b2cCatalog.getSessionDetail(token, sessionId);
+        setSession(data as unknown as SessionDetail);
+      } else {
+        const data = await sessions.get(token, sessionId);
+        setSession(data as unknown as SessionDetail);
+      }
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);
@@ -153,8 +163,14 @@ export default function TrainingReport() {
       if (!token || !sessionId) return;
 
       try {
-        const data = await sessions.get(token, sessionId);
-        setSession(data as unknown as SessionDetail);
+        // Use appropriate API based on user type
+        if (isB2C) {
+          const data = await b2cCatalog.getSessionDetail(token, sessionId);
+          setSession(data as unknown as SessionDetail);
+        } else {
+          const data = await sessions.get(token, sessionId);
+          setSession(data as unknown as SessionDetail);
+        }
       } catch (err) {
         if (err instanceof ApiError) {
           setError(err.message);
@@ -167,7 +183,7 @@ export default function TrainingReport() {
     }
 
     loadSession();
-  }, [token, sessionId]);
+  }, [token, sessionId, isB2C]);
 
   if (isLoading) {
     return (

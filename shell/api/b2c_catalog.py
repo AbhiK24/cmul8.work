@@ -404,3 +404,57 @@ async def get_user_session(session_id: str, current_user: TokenData = Depends(ge
             completed_at=row["completed_at"].isoformat() if row["completed_at"] else None,
             candidate_token=row["candidate_token"]
         )
+
+
+@router.get("/sessions/{session_id}/detail")
+async def get_session_detail(session_id: str, current_user: TokenData = Depends(get_current_b2c_user)):
+    """Get full session details including report for training report page."""
+    user_id = current_user.user_id
+    pool = await get_pool()
+
+    async with pool.acquire() as conn:
+        # Get session with all needed fields
+        row = await conn.fetchrow("""
+            SELECT s.session_id, s.template_slug, s.template_title, s.skill_category,
+                   s.status, s.overall_score, s.created_at, s.completed_at,
+                   s.env, s.org_params, s.report,
+                   u.name as user_name, u.email as user_email
+            FROM b2c_sessions s
+            JOIN users u ON s.user_id = u.id
+            WHERE s.session_id = $1 AND s.user_id = $2
+        """, uuid.UUID(session_id), user_id)
+
+        if not row:
+            raise HTTPException(status_code=404, detail="Session not found")
+
+        # Get framework data from template
+        template_row = await conn.fetchrow("""
+            SELECT framework_name, framework_reference, learning_objectives
+            FROM training_templates WHERE slug = $1
+        """, row["template_slug"])
+
+        env = parse_json_field(row["env"], {})
+        org_params = parse_json_field(row["org_params"], {})
+        report = parse_json_field(row["report"])
+
+        # Merge template framework data into env if not present
+        if template_row:
+            if "framework_name" not in env:
+                env["framework_name"] = template_row["framework_name"]
+            if "framework_reference" not in env:
+                env["framework_reference"] = parse_json_field(template_row["framework_reference"])
+            if "learning_objectives" not in env:
+                env["learning_objectives"] = parse_json_field(template_row["learning_objectives"], [])
+            # Also add to org_params for compatibility
+            org_params["framework_name"] = template_row["framework_name"]
+            org_params["template_title"] = row["template_title"]
+
+        return {
+            "session_id": str(row["session_id"]),
+            "candidate_name": row["user_name"] or "Practice User",
+            "candidate_email": row["user_email"] or "",
+            "status": row["status"],
+            "org_params": org_params,
+            "env": env,
+            "report": report
+        }

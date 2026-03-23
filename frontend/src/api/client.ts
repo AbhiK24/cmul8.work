@@ -572,4 +572,16 @@ export const b2cCatalog = {
   // Get specific session
   getSession: (token: string, sessionId: string) =>
     apiRequest<B2CUserSession>(`/b2c/catalog/sessions/${sessionId}`, { token }),
+
+  // Get session detail with report (for training report page)
+  getSessionDetail: (token: string, sessionId: string) =>
+    apiRequest<{
+      session_id: string;
+      candidate_name: string;
+      candidate_email: string;
+      status: string;
+      org_params: Record<string, unknown>;
+      env: Record<string, unknown>;
+      report: Record<string, unknown> | null;
+    }>(`/b2c/catalog/sessions/${sessionId}/detail`, { token }),
 };
