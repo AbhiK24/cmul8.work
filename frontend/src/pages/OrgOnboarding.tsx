@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { auth } from '../api/client';
@@ -28,19 +28,35 @@ const COMPANY_SIZES = [
 
 export default function OrgOnboarding() {
   const navigate = useNavigate();
-  const { getToken, user, refreshOrg } = useAuth();
+  const { getToken, user, refreshOrg, hasOrg, isLoading } = useAuth();
+
+  // Redirect to dashboard if user already has an org
+  useEffect(() => {
+    if (!isLoading && hasOrg) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isLoading, hasOrg, navigate]);
 
   const [step, setStep] = useState(1);
   const [orgName, setOrgName] = useState('');
   const [industry, setIndustry] = useState('');
   const [companySize, setCompanySize] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  // Show loading while checking auth state
+  if (isLoading || hasOrg) {
+    return (
+      <div className="min-h-screen bg-surface flex items-center justify-center">
+        <div className="animate-spin h-8 w-8 border-2 border-dark border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setIsLoading(true);
+    setIsSubmitting(true);
 
     try {
       const token = await getToken();
@@ -63,7 +79,7 @@ export default function OrgOnboarding() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create organization');
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -206,10 +222,10 @@ export default function OrgOnboarding() {
                 <div className="pt-4 space-y-3">
                   <button
                     type="submit"
-                    disabled={isLoading}
+                    disabled={isSubmitting}
                     className="w-full py-3 bg-dark text-white rounded-xl font-medium hover:bg-dark/90 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
                   >
-                    {isLoading ? (
+                    {isSubmitting ? (
                       <>
                         <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
