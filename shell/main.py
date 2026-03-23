@@ -39,6 +39,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         FRONTEND_URL,
+        "https://www.cmul8.work",
+        "https://cmul8.work",
         "http://localhost:5173",
         "http://localhost:3000",
     ],
