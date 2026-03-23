@@ -42,35 +42,37 @@ export default function Landing() {
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="pt-28 pb-8 px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-medium text-dark tracking-tight leading-tight mb-5">
-            Soft skills decide careers.<br/>
-            <span className="text-muted">Practice yours.</span>
-          </h1>
-          <p className="text-lg text-muted max-w-xl mx-auto mb-8">
-            High-stakes scenarios. Real feedback. Skills that stick.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              to="/signup"
-              className="bg-accent text-white px-8 py-4 rounded-full text-base font-medium hover:opacity-85 transition-all hover:-translate-y-0.5 shadow-lg shadow-dark/20"
-            >
-              Start Simulation Free →
-            </Link>
-          </div>
-          <p className="text-sm text-muted mt-4">No credit card required</p>
-        </div>
-      </section>
+      {/* Hero Section - Side by Side */}
+      <section className="pt-24 pb-16 px-6 min-h-[calc(100vh-80px)] flex items-center">
+        <div className="max-w-7xl mx-auto w-full">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            {/* Left - Hero Text */}
+            <div className="order-2 lg:order-1">
+              <h1 className="text-4xl md:text-5xl xl:text-6xl font-medium text-dark tracking-tight leading-[1.1] mb-6">
+                Soft skills decide careers.
+                <br />
+                <span className="text-muted">Practice yours.</span>
+              </h1>
+              <p className="text-lg md:text-xl text-muted max-w-lg mb-8 leading-relaxed">
+                High-stakes scenarios. Real feedback. Skills that stick.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link
+                  to="/signup"
+                  className="bg-accent text-white px-8 py-4 rounded-full text-base font-medium hover:opacity-85 transition-all hover:-translate-y-0.5 shadow-lg shadow-dark/20 text-center"
+                >
+                  Start Simulation Free →
+                </Link>
+              </div>
+              <p className="text-sm text-muted mt-4">No credit card required</p>
+            </div>
 
-      {/* Chaotic Simulation Demo */}
-      <section className="py-4 px-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-gradient-to-br from-gray-100 via-gray-50 to-gray-100 rounded-2xl p-4 md:p-6 aspect-[16/9] relative overflow-hidden border border-border">
+            {/* Right - Motion Demo */}
+            <div className="order-1 lg:order-2">
+              <div className="bg-gradient-to-br from-gray-100 via-gray-50 to-gray-100 rounded-2xl p-4 md:p-6 aspect-[4/3] lg:aspect-square relative overflow-hidden border border-border shadow-xl shadow-black/5">
 
-            {/* Orbiting work artifacts - tighter, faster */}
-            <style>{`
+                {/* Orbiting work artifacts - tighter, faster */}
+                <style>{`
               @keyframes orbit1 { from { transform: rotate(0deg) translateX(85px) rotate(0deg); } to { transform: rotate(360deg) translateX(85px) rotate(-360deg); } }
               @keyframes orbit2 { from { transform: rotate(60deg) translateX(95px) rotate(-60deg); } to { transform: rotate(420deg) translateX(95px) rotate(-420deg); } }
               @keyframes orbit3 { from { transform: rotate(120deg) translateX(80px) rotate(-120deg); } to { transform: rotate(480deg) translateX(80px) rotate(-480deg); } }
@@ -202,19 +204,21 @@ export default function Landing() {
               <p className="text-[10px] text-dark/70">"We need to talk"</p>
             </div>
 
-            {/* Response area */}
-            <div className="absolute bottom-2 left-3 right-3 bg-white border-2 border-dark/10 rounded-lg px-3 py-2 shadow-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-dark/40">How do you respond?</span>
-                <div className="flex items-center gap-0.5">
-                  <div className="w-1 h-1 bg-dark/30 rounded-full animate-pulse" />
-                  <div className="w-1 h-1 bg-dark/30 rounded-full animate-pulse" style={{ animationDelay: '0.15s' }} />
-                  <div className="w-1 h-1 bg-dark/30 rounded-full animate-pulse" style={{ animationDelay: '0.3s' }} />
+                {/* Response area */}
+                <div className="absolute bottom-2 left-3 right-3 bg-white border-2 border-dark/10 rounded-lg px-3 py-2 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-dark/40">How do you respond?</span>
+                    <div className="flex items-center gap-0.5">
+                      <div className="w-1 h-1 bg-dark/30 rounded-full animate-pulse" />
+                      <div className="w-1 h-1 bg-dark/30 rounded-full animate-pulse" style={{ animationDelay: '0.15s' }} />
+                      <div className="w-1 h-1 bg-dark/30 rounded-full animate-pulse" style={{ animationDelay: '0.3s' }} />
+                    </div>
+                  </div>
                 </div>
               </div>
+              <p className="text-center text-xs text-muted mt-3">Real scenarios. Real pressure. Safe environment.</p>
             </div>
           </div>
-          <p className="text-center text-xs text-muted mt-3">Real scenarios. Real pressure. Safe environment.</p>
         </div>
       </section>
 
