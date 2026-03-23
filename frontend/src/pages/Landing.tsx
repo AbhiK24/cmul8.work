@@ -7,9 +7,11 @@ export default function Landing() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-surface/80 backdrop-blur-sm border-b border-border">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 hover:opacity-70 transition-opacity">
-            <svg className="w-7 h-4" viewBox="0 0 28 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M7 8c0-2.5 2-4.5 4.5-4.5S16 5.5 16 8s-2 4.5-4.5 4.5S7 10.5 7 8z"/>
-              <path d="M12 8c0-2.5 2-4.5 4.5-4.5S21 5.5 21 8s-2 4.5-4.5 4.5S12 10.5 12 8z"/>
+            <svg className="w-7 h-4" viewBox="0 0 28 16" fill="none">
+              <path d="M7 8c0-2.5 2-4.5 4.5-4.5S16 5.5 16 8s-2 4.5-4.5 4.5S7 10.5 7 8z" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+              <path d="M12 8c0-2.5 2-4.5 4.5-4.5S21 5.5 21 8s-2 4.5-4.5 4.5S12 10.5 12 8z" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+              <line x1="1" y1="8" x2="27" y2="8" stroke="currentColor" strokeWidth="1" strokeDasharray="2 2"/>
+              <polygon points="25,6 27,8 25,10" fill="currentColor"/>
             </svg>
             <span className="font-semibold text-dark tracking-tight">WorkSim</span>
           </Link>
@@ -31,8 +33,8 @@ export default function Landing() {
       <section className="pt-28 pb-8 px-6">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-medium text-dark tracking-tight leading-tight mb-5">
-            Soft skills separate leaders from everyone else.<br/>
-            <span className="text-muted">You can't learn them from a book.</span>
+            Soft skills decide careers.<br/>
+            <span className="text-muted">Practice yours.</span>
           </h1>
           <p className="text-lg text-muted max-w-xl mx-auto mb-8">
             High-stakes scenarios. Real feedback. Skills that stick.
@@ -412,9 +414,11 @@ export default function Landing() {
       <footer className="py-12 px-6 border-t border-border bg-white">
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2">
-            <svg className="w-6 h-3.5" viewBox="0 0 28 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M7 8c0-2.5 2-4.5 4.5-4.5S16 5.5 16 8s-2 4.5-4.5 4.5S7 10.5 7 8z"/>
-              <path d="M12 8c0-2.5 2-4.5 4.5-4.5S21 5.5 21 8s-2 4.5-4.5 4.5S12 10.5 12 8z"/>
+            <svg className="w-6 h-3.5" viewBox="0 0 28 16" fill="none">
+              <path d="M7 8c0-2.5 2-4.5 4.5-4.5S16 5.5 16 8s-2 4.5-4.5 4.5S7 10.5 7 8z" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+              <path d="M12 8c0-2.5 2-4.5 4.5-4.5S21 5.5 21 8s-2 4.5-4.5 4.5S12 10.5 12 8z" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+              <line x1="1" y1="8" x2="27" y2="8" stroke="currentColor" strokeWidth="1" strokeDasharray="2 2"/>
+              <polygon points="25,6 27,8 25,10" fill="currentColor"/>
             </svg>
             <span className="text-muted text-sm">WorkSim by cmul8</span>
           </div>
