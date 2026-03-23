@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import Logo from '../components/Logo';
 
 export default function Landing() {
   return (
@@ -7,12 +6,15 @@ export default function Landing() {
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-surface/80 backdrop-blur-sm border-b border-border">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Logo className="w-7 h-4" />
-            <span className="font-medium text-dark">WorkSim</span>
-          </div>
+          <Link to="/" className="flex items-center gap-2 hover:opacity-70 transition-opacity">
+            <svg className="w-7 h-4" viewBox="0 0 28 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M7 8c0-2.5 2-4.5 4.5-4.5S16 5.5 16 8s-2 4.5-4.5 4.5S7 10.5 7 8z"/>
+              <path d="M12 8c0-2.5 2-4.5 4.5-4.5S21 5.5 21 8s-2 4.5-4.5 4.5S12 10.5 12 8z"/>
+            </svg>
+            <span className="font-semibold text-dark tracking-tight">WorkSim</span>
+          </Link>
           <div className="flex items-center gap-6">
-            <a href="https://www.cmul8.com" className="text-muted hover:text-dark transition-colors text-sm">
+            <a href="https://www.cmul8.com" className="text-muted hover:text-dark transition-colors text-sm hidden sm:block">
               cmul8
             </a>
             <Link
@@ -26,22 +28,20 @@ export default function Landing() {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-6">
+      <section className="pt-32 pb-16 px-6">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-medium text-dark tracking-tight leading-tight mb-6">
-            Practice high-stakes work scenarios.
-            <span className="block text-muted">Before they're real.</span>
+            Simulate work. Build skills.
           </h1>
-          <p className="text-lg md:text-xl text-muted max-w-2xl mx-auto mb-10 leading-relaxed">
-            Realistic workplace simulations with AI colleagues. Train teams, assess candidates,
-            and build skills for difficult conversations—all in a safe environment.
+          <p className="text-lg md:text-xl text-muted max-w-xl mx-auto mb-10">
+            AI-powered workplace scenarios for training, assessment, and growth.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               to="/login"
               className="bg-accent text-white px-8 py-4 rounded-full text-base font-medium hover:opacity-85 transition-all hover:-translate-y-0.5"
             >
-              Start Free Trial
+              Get Started
             </Link>
             <a
               href="mailto:hello@cmul8.com?subject=WorkSim Demo"
@@ -53,27 +53,79 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Visual Demo Section */}
-      <section className="py-16 px-6">
+      {/* Animated Demo Section */}
+      <section className="py-12 px-6">
         <div className="max-w-5xl mx-auto">
-          <div className="bg-card-dark rounded-2xl p-8 md:p-12 aspect-video flex items-center justify-center relative overflow-hidden">
-            {/* Simulated chat interface preview */}
-            <div className="absolute inset-0 opacity-20">
-              <div className="absolute top-8 left-8 w-48 h-3 bg-white/30 rounded" />
-              <div className="absolute top-14 left-8 w-32 h-3 bg-white/20 rounded" />
-              <div className="absolute top-24 right-8 w-56 h-3 bg-white/30 rounded" />
-              <div className="absolute top-30 right-8 w-40 h-3 bg-white/20 rounded" />
-              <div className="absolute bottom-24 left-8 w-64 h-3 bg-white/30 rounded" />
-              <div className="absolute bottom-16 left-8 w-48 h-3 bg-white/20 rounded" />
-            </div>
-            <div className="text-center z-10">
-              <div className="inline-flex items-center gap-3 bg-white/10 px-6 py-3 rounded-full mb-4">
-                <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse" />
-                <span className="text-white/80 text-sm">Live Simulation</span>
+          <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-8 md:p-12 aspect-video relative overflow-hidden border border-border">
+            {/* Animated simulation visualization */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              {/* Center user node */}
+              <div className="relative">
+                {/* Pulsing rings */}
+                <div className="absolute inset-0 -m-8 border-2 border-dark/10 rounded-full animate-ping" style={{ animationDuration: '3s' }} />
+                <div className="absolute inset-0 -m-16 border border-dark/5 rounded-full animate-ping" style={{ animationDuration: '4s', animationDelay: '0.5s' }} />
+
+                {/* Center avatar */}
+                <div className="w-16 h-16 bg-white rounded-full border-2 border-dark/20 flex items-center justify-center shadow-lg z-10 relative">
+                  <svg className="w-8 h-8 text-dark/60" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0" />
+                  </svg>
+                </div>
+
+                {/* AI Colleague nodes orbiting */}
+                <div className="absolute -top-24 left-1/2 -translate-x-1/2 animate-bounce" style={{ animationDuration: '2s' }}>
+                  <div className="bg-white rounded-xl px-4 py-2 shadow-md border border-border">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 bg-dark/10 rounded-full flex items-center justify-center text-xs">M</div>
+                      <span className="text-sm text-dark/80">Manager</span>
+                    </div>
+                  </div>
+                  <div className="w-px h-8 bg-dark/10 mx-auto" />
+                </div>
+
+                <div className="absolute -left-32 top-1/2 -translate-y-1/2 animate-bounce" style={{ animationDuration: '2.5s', animationDelay: '0.3s' }}>
+                  <div className="bg-white rounded-xl px-4 py-2 shadow-md border border-border">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 bg-dark/10 rounded-full flex items-center justify-center text-xs">P</div>
+                      <span className="text-sm text-dark/80">Peer</span>
+                    </div>
+                  </div>
+                  <div className="w-8 h-px bg-dark/10 absolute -right-8 top-1/2" />
+                </div>
+
+                <div className="absolute -right-32 top-1/2 -translate-y-1/2 animate-bounce" style={{ animationDuration: '2.2s', animationDelay: '0.6s' }}>
+                  <div className="bg-white rounded-xl px-4 py-2 shadow-md border border-border">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 bg-dark/10 rounded-full flex items-center justify-center text-xs">C</div>
+                      <span className="text-sm text-dark/80">Client</span>
+                    </div>
+                  </div>
+                  <div className="w-8 h-px bg-dark/10 absolute -left-8 top-1/2" />
+                </div>
+
+                <div className="absolute -bottom-24 left-1/2 -translate-x-1/2 animate-bounce" style={{ animationDuration: '2.8s', animationDelay: '0.9s' }}>
+                  <div className="w-px h-8 bg-dark/10 mx-auto" />
+                  <div className="bg-white rounded-xl px-4 py-2 shadow-md border border-border">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 bg-dark/10 rounded-full flex items-center justify-center text-xs">R</div>
+                      <span className="text-sm text-dark/80">Report</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <p className="text-white/60 text-sm max-w-md">
-                Navigate workplace scenarios with AI colleagues tailored to your context
-              </p>
+            </div>
+
+            {/* Floating chat bubbles */}
+            <div className="absolute top-8 left-8 bg-white rounded-lg px-4 py-2 shadow-sm border border-border animate-pulse" style={{ animationDuration: '3s' }}>
+              <p className="text-xs text-dark/60">"Can we discuss the deadline?"</p>
+            </div>
+            <div className="absolute bottom-8 right-8 bg-dark text-white rounded-lg px-4 py-2 shadow-sm animate-pulse" style={{ animationDuration: '3s', animationDelay: '1.5s' }}>
+              <p className="text-xs">"I'd like to propose..."</p>
+            </div>
+
+            {/* Label */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
+              <span className="text-xs text-muted">Interactive workplace simulation</span>
             </div>
           </div>
         </div>
@@ -213,7 +265,10 @@ export default function Landing() {
       <footer className="py-12 px-6 border-t border-border">
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2">
-            <Logo className="w-6 h-3.5" />
+            <svg className="w-6 h-3.5" viewBox="0 0 28 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M7 8c0-2.5 2-4.5 4.5-4.5S16 5.5 16 8s-2 4.5-4.5 4.5S7 10.5 7 8z"/>
+              <path d="M12 8c0-2.5 2-4.5 4.5-4.5S21 5.5 21 8s-2 4.5-4.5 4.5S12 10.5 12 8z"/>
+            </svg>
             <span className="text-muted text-sm">WorkSim by cmul8</span>
           </div>
           <div className="flex items-center gap-6 text-sm text-muted">
