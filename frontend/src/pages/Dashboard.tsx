@@ -98,7 +98,7 @@ function formatDate(date: string) {
 type TabType = 'assess' | 'train' | 'history';
 
 export default function Dashboard() {
-  const { token, logout } = useAuth();
+  const { getToken, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('assess');
   const [sessionList, setSessionList] = useState<SessionResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -118,7 +118,11 @@ export default function Dashboard() {
 
   useEffect(() => {
     async function loadData() {
-      if (!token) return;
+      const token = await getToken();
+      if (!token) {
+        setIsLoading(false);
+        return;
+      }
 
       try {
         const [sessionsRes, templatesRes] = await Promise.all([
@@ -139,7 +143,7 @@ export default function Dashboard() {
     }
 
     loadData();
-  }, [token]);
+  }, [getToken]);
 
   // Separate sessions by mode
   const assessSessions = useMemo(() => {
@@ -198,6 +202,7 @@ export default function Dashboard() {
   };
 
   const generateReport = async (sessionId: string) => {
+    const token = await getToken();
     if (!token) return;
     setGeneratingReportId(sessionId);
     try {

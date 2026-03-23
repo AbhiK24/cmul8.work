@@ -9,7 +9,7 @@ const STAGES = ['Seed', 'Series A', 'Series B', 'Scale-up', 'Enterprise'];
 const SIZES = ['1-10', '11-50', '51-200', '201-500', '500+'];
 
 export default function Profile() {
-  const { token } = useAuth();
+  const { getToken, user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
@@ -28,11 +28,20 @@ export default function Profile() {
 
   useEffect(() => {
     async function loadProfile() {
-      if (!token) return;
+      const token = await getToken();
+      if (!token) {
+        setIsLoading(false);
+        return;
+      }
 
       try {
         const data = await profile.get(token);
-        setForm(data);
+        // Map backend 'name' to frontend 'company_name'
+        setForm({
+          ...data,
+          email: user?.email || data.email || '',
+          company_name: (data as { name?: string }).name || data.company_name || '',
+        });
       } catch (err) {
         if (err instanceof ApiError) {
           setError(err.message);
@@ -45,11 +54,15 @@ export default function Profile() {
     }
 
     loadProfile();
-  }, [token]);
+  }, [getToken, user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!token) return;
+    const token = await getToken();
+    if (!token) {
+      setError('Session expired. Please refresh the page.');
+      return;
+    }
 
     setIsSaving(true);
     setError('');
@@ -65,7 +78,12 @@ export default function Profile() {
         website: form.website || undefined,
         hiring_focus: form.hiring_focus || undefined,
       });
-      setForm(updated);
+      // Map backend 'name' to frontend 'company_name'
+      setForm({
+        ...updated,
+        email: user?.email || updated.email || '',
+        company_name: (updated as { name?: string }).name || updated.company_name || '',
+      });
       setSuccess('Profile saved successfully');
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {

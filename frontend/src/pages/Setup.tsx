@@ -23,7 +23,7 @@ const LOADING_STEPS = [
 
 export default function Setup() {
   const navigate = useNavigate();
-  const { token } = useAuth();
+  const { getToken } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
   const [error, setError] = useState<ParsedError | null>(null);
@@ -41,6 +41,7 @@ export default function Setup() {
 
   useEffect(() => {
     async function loadProfile() {
+      const token = await getToken();
       if (!token) return;
       try {
         const data = await profile.get(token);
@@ -50,7 +51,7 @@ export default function Setup() {
       }
     }
     loadProfile();
-  }, [token]);
+  }, [getToken]);
 
   // Combine default roles with saved custom roles
   const customRoles = orgProfile?.custom_roles || [];
@@ -65,7 +66,13 @@ export default function Setup() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isValid || !token) return;
+    if (!isValid) return;
+
+    const token = await getToken();
+    if (!token) {
+      setError({ type: 'error', title: 'Session expired', message: 'Please refresh the page and try again.' });
+      return;
+    }
 
     setIsLoading(true);
     setLoadingStep(0);
