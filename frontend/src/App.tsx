@@ -22,6 +22,7 @@ import AssessmentDetail from './pages/AssessmentDetail';
 import Signup from './pages/Signup';
 import SignInPage from './pages/SignIn';
 import Practice from './pages/Practice';
+import Privacy from './pages/Privacy';
 
 // B2B Protected Route (Employers)
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -64,6 +65,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/privacy" element={<Privacy />} />
 
           {/* B2C Auth routes (Clerk) */}
           <Route path="/signup/*" element={<Signup />} />
