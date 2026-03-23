@@ -85,6 +85,28 @@ async def fix_session_status(session_id: str, status: str = "complete"):
         return {"updated": session_id, "new_status": status}
 
 
+@app.get("/debug/templates")
+async def debug_templates():
+    """Debug: check training templates count."""
+    from .db.pool import get_pool
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        count = await conn.fetchval("SELECT COUNT(*) FROM training_templates")
+        return {"template_count": count}
+
+
+@app.post("/debug/reseed")
+async def debug_reseed():
+    """Debug: reseed training templates."""
+    from .db.pool import get_pool
+    from .db.seeds import seed_training_templates
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        await seed_training_templates(conn)
+        count = await conn.fetchval("SELECT COUNT(*) FROM training_templates")
+        return {"status": "reseeded", "template_count": count}
+
+
 @app.get("/debug/sessions")
 async def debug_sessions():
     """Debug endpoint to check session statuses."""
