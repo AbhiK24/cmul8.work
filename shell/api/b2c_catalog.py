@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 
 from ..db.pool import get_pool
-from ..auth.jwt import decode_access_token, B2CTokenData
+from ..auth.jwt import decode_access_token, TokenData
 from .b2c_auth import get_current_b2c_user
 
 
@@ -124,9 +124,9 @@ SKILL_CATEGORIES = {
 
 
 @router.get("/scenarios", response_model=List[ScenarioSummary])
-async def list_scenarios(current_user: dict = Depends(get_current_b2c_user)):
+async def list_scenarios(current_user: TokenData = Depends(get_current_b2c_user)):
     """List all available practice scenarios for B2C users."""
-    user_id = uuid.UUID(current_user["user_id"])
+    user_id = current_user.user_id
     pool = await get_pool()
 
     async with pool.acquire() as conn:
@@ -174,9 +174,9 @@ async def list_scenarios(current_user: dict = Depends(get_current_b2c_user)):
 
 
 @router.get("/scenarios/{slug}", response_model=ScenarioDetail)
-async def get_scenario(slug: str, current_user: dict = Depends(get_current_b2c_user)):
+async def get_scenario(slug: str, current_user: TokenData = Depends(get_current_b2c_user)):
     """Get detailed information about a practice scenario."""
-    user_id = uuid.UUID(current_user["user_id"])
+    user_id = current_user.user_id
     pool = await get_pool()
 
     async with pool.acquire() as conn:
@@ -220,9 +220,9 @@ async def get_scenario(slug: str, current_user: dict = Depends(get_current_b2c_u
 
 
 @router.get("/categories", response_model=List[SkillCategory])
-async def list_categories(current_user: dict = Depends(get_current_b2c_user)):
+async def list_categories(current_user: TokenData = Depends(get_current_b2c_user)):
     """List all skill categories with their scenarios."""
-    user_id = uuid.UUID(current_user["user_id"])
+    user_id = current_user.user_id
     pool = await get_pool()
 
     async with pool.acquire() as conn:
@@ -284,9 +284,9 @@ async def list_categories(current_user: dict = Depends(get_current_b2c_user)):
 
 
 @router.post("/sessions/{slug}/start", response_model=StartSessionResponse)
-async def start_session(slug: str, current_user: dict = Depends(get_current_b2c_user)):
+async def start_session(slug: str, current_user: TokenData = Depends(get_current_b2c_user)):
     """Start a new practice session for a scenario."""
-    user_id = uuid.UUID(current_user["user_id"])
+    user_id = current_user.user_id
     pool = await get_pool()
 
     async with pool.acquire() as conn:
@@ -344,9 +344,9 @@ async def start_session(slug: str, current_user: dict = Depends(get_current_b2c_
 
 
 @router.get("/sessions", response_model=List[UserSession])
-async def list_b2c_sessions(current_user: dict = Depends(get_current_b2c_user)):
+async def list_b2c_sessions(current_user: TokenData = Depends(get_current_b2c_user)):
     """List all practice sessions for the current user."""
-    user_id = uuid.UUID(current_user["user_id"])
+    user_id = current_user.user_id
     pool = await get_pool()
 
     async with pool.acquire() as conn:
@@ -375,9 +375,9 @@ async def list_b2c_sessions(current_user: dict = Depends(get_current_b2c_user)):
 
 
 @router.get("/sessions/{session_id}", response_model=UserSession)
-async def get_user_session(session_id: str, current_user: dict = Depends(get_current_b2c_user)):
+async def get_user_session(session_id: str, current_user: TokenData = Depends(get_current_b2c_user)):
     """Get details of a specific practice session."""
-    user_id = uuid.UUID(current_user["user_id"])
+    user_id = current_user.user_id
     pool = await get_pool()
 
     async with pool.acquire() as conn:

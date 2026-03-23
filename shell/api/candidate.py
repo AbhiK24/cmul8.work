@@ -43,32 +43,49 @@ class CandidateTraceRequest(BaseModel):
     content: dict = {}
 
 
-async def validate_candidate_token(session_id: str, token: str) -> bool:
-    """Validate candidate token for a session."""
+async def validate_candidate_token(session_id: str, token: str) -> tuple[bool, str]:
+    """Validate candidate token for a session.
+
+    Returns:
+        (is_valid, table_name) - Whether token is valid and which table it's from
+    """
     pool = await get_pool()
 
     async with pool.acquire() as conn:
+        # Check B2B sessions first
         row = await conn.fetchrow(
             "SELECT candidate_token, status FROM b2b_sessions WHERE session_id = $1",
             session_id
         )
 
-        if not row:
-            return False
+        if row:
+            if row["candidate_token"] != token:
+                return False, ""
+            if row["status"] in ("expired", "complete"):
+                return False, ""
+            return True, "b2b_sessions"
 
-        if row["candidate_token"] != token:
-            return False
+        # Check B2C sessions
+        row = await conn.fetchrow(
+            "SELECT candidate_token, status FROM b2c_sessions WHERE session_id = $1",
+            session_id
+        )
 
-        if row["status"] in ("expired", "complete"):
-            return False
+        if row:
+            if row["candidate_token"] != token:
+                return False, ""
+            if row["status"] in ("expired", "completed"):
+                return False, ""
+            return True, "b2c_sessions"
 
-        return True
+        return False, ""
 
 
 @router.post("/message")
 async def send_message(request: CandidateMessageRequest):
     """Send a message to an agent (proxied to engine)."""
-    if not await validate_candidate_token(request.session_id, request.token):
+    is_valid, _ = await validate_candidate_token(request.session_id, request.token)
+    if not is_valid:
         raise HTTPException(status_code=403, detail="Invalid or expired session")
 
     try:
@@ -91,7 +108,8 @@ async def send_message(request: CandidateMessageRequest):
 @router.post("/artifact-comment")
 async def send_artifact_comment(request: CandidateArtifactCommentRequest):
     """Comment on an artifact section (proxied to engine)."""
-    if not await validate_candidate_token(request.session_id, request.token):
+    is_valid, _ = await validate_candidate_token(request.session_id, request.token)
+    if not is_valid:
         raise HTTPException(status_code=403, detail="Invalid or expired session")
 
     try:
@@ -117,7 +135,8 @@ async def send_artifact_comment(request: CandidateArtifactCommentRequest):
 @router.post("/trace")
 async def log_trace(request: CandidateTraceRequest):
     """Log a behavioral trace event (proxied to engine)."""
-    if not await validate_candidate_token(request.session_id, request.token):
+    is_valid, _ = await validate_candidate_token(request.session_id, request.token)
+    if not is_valid:
         raise HTTPException(status_code=403, detail="Invalid or expired session")
 
     try:
@@ -143,26 +162,27 @@ async def log_trace(request: CandidateTraceRequest):
 @router.get("/env/{session_id}")
 async def get_environment(session_id: str, token: str):
     """Get the simulation environment for a session."""
-    if not await validate_candidate_token(session_id, token):
+    is_valid, table_name = await validate_candidate_token(session_id, token)
+    if not is_valid:
         raise HTTPException(status_code=403, detail="Invalid or expired session")
 
     pool = await get_pool()
 
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
-            "SELECT env, status FROM b2b_sessions WHERE session_id = $1",
+            f"SELECT env, status FROM {table_name} WHERE session_id = $1",
             session_id
         )
 
         if not row or not row["env"]:
             raise HTTPException(status_code=404, detail="Environment not ready")
 
-        # Mark session as in_progress if it's pending (candidate started simulation)
-        if row["status"] == "pending":
-            await conn.execute("""
-                UPDATE b2b_sessions
+        # Mark session as in_progress if it's pending/ready (candidate started simulation)
+        if row["status"] in ("pending", "ready"):
+            await conn.execute(f"""
+                UPDATE {table_name}
                 SET status = 'in_progress', started_at = NOW()
-                WHERE session_id = $1 AND status = 'pending'
+                WHERE session_id = $1 AND status IN ('pending', 'ready')
             """, session_id)
 
         return json.loads(row["env"])

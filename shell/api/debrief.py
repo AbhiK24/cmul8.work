@@ -25,13 +25,24 @@ class DebriefRequest(BaseModel):
 async def submit_debrief(session_id: str, request: DebriefRequest):
     """Submit session debrief and trigger scoring."""
     pool = await get_pool()
+    table_name = None
 
     async with pool.acquire() as conn:
-        # Validate token
+        # Check B2B sessions first
         row = await conn.fetchrow(
             "SELECT candidate_token, status FROM b2b_sessions WHERE session_id = $1",
             session_id
         )
+        if row:
+            table_name = "b2b_sessions"
+        else:
+            # Check B2C sessions
+            row = await conn.fetchrow(
+                "SELECT candidate_token, status FROM b2c_sessions WHERE session_id = $1",
+                session_id
+            )
+            if row:
+                table_name = "b2c_sessions"
 
         if not row:
             raise HTTPException(status_code=404, detail="Session not found")
@@ -39,7 +50,7 @@ async def submit_debrief(session_id: str, request: DebriefRequest):
         if row["candidate_token"] != request.token:
             raise HTTPException(status_code=403, detail="Invalid token")
 
-        if row["status"] == "complete":
+        if row["status"] in ("complete", "completed"):
             raise HTTPException(status_code=400, detail="Session already completed")
 
         # Save debrief and mark as complete
@@ -49,9 +60,11 @@ async def submit_debrief(session_id: str, request: DebriefRequest):
             "If you had another hour, what would you do differently?": request.q3
         }
 
-        await conn.execute("""
-            UPDATE b2b_sessions
-            SET debrief = $1, completed_at = NOW(), status = 'complete'
+        # Use 'complete' for b2b, 'completed' for b2c
+        complete_status = "complete" if table_name == "b2b_sessions" else "completed"
+        await conn.execute(f"""
+            UPDATE {table_name}
+            SET debrief = $1, completed_at = NOW(), status = '{complete_status}'
             WHERE session_id = $2
         """, json.dumps(debrief), session_id)
 
