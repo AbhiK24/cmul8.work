@@ -85,6 +85,29 @@ async def fix_session_status(session_id: str, status: str = "complete"):
         return {"updated": session_id, "new_status": status}
 
 
+@app.get("/debug/verify-token")
+async def debug_verify_token(authorization: str = None):
+    """Debug: verify a token."""
+    from fastapi import Header
+    if not authorization:
+        return {"error": "No authorization header"}
+    token = authorization.replace("Bearer ", "")
+
+    # Try our JWT
+    from .auth.jwt import decode_access_token
+    token_data = decode_access_token(token)
+    if token_data:
+        return {"type": "our_jwt", "user_id": str(token_data.user_id), "email": token_data.email}
+
+    # Try Clerk
+    try:
+        from .api.b2c_auth import verify_clerk_token
+        clerk_user = await verify_clerk_token(token)
+        return {"type": "clerk", "clerk_id": clerk_user.clerk_id, "email": clerk_user.email}
+    except Exception as e:
+        return {"error": f"Clerk verification failed: {str(e)}"}
+
+
 @app.get("/debug/templates")
 async def debug_templates():
     """Debug: check training templates count."""
