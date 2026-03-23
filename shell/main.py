@@ -7,6 +7,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .db.pool import init_pool, close_pool
 from .api.auth import router as auth_router
+from .api.b2c_auth import router as b2c_auth_router
+from .api.b2c_catalog import router as b2c_catalog_router
 from .api.sessions import router as sessions_router
 from .api.candidate import router as candidate_router
 from .api.debrief import router as debrief_router
@@ -47,6 +49,8 @@ app.add_middleware(
 
 # Include routers
 app.include_router(auth_router)
+app.include_router(b2c_auth_router)  # B2C social auth
+app.include_router(b2c_catalog_router)  # B2C scenario catalog
 app.include_router(profile_router)
 app.include_router(sessions_router)
 app.include_router(candidate_router)

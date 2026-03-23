@@ -59,6 +59,88 @@ CREATE TABLE IF NOT EXISTS sessions (
 CREATE INDEX IF NOT EXISTS idx_sessions_employer ON sessions(employer_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_status ON sessions(status);
 CREATE INDEX IF NOT EXISTS idx_sessions_candidate_token ON sessions(candidate_token);
+
+-- =====================
+-- B2C TABLES (Separate from B2B)
+-- =====================
+
+-- B2C Users table (individuals practicing for themselves)
+CREATE TABLE IF NOT EXISTS users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email TEXT UNIQUE NOT NULL,
+  name TEXT,
+  avatar_url TEXT,
+  -- Auth provider info (for social auth)
+  auth_provider TEXT NOT NULL DEFAULT 'email',  -- 'email', 'google', 'linkedin'
+  provider_id TEXT,  -- OAuth provider's user ID
+  -- Optional password for email auth (NULL for social-only)
+  password_hash TEXT,
+  -- Profile
+  current_role TEXT,  -- e.g., "Product Manager", "Engineering Manager"
+  experience_level TEXT,  -- "early", "mid", "senior", "executive"
+  goals JSONB DEFAULT '[]'::jsonb,  -- what they want to practice
+  -- Timestamps
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  last_login_at TIMESTAMPTZ,
+  -- Unique constraint for provider auth
+  UNIQUE(auth_provider, provider_id)
+);
+
+-- B2C User Sessions (simulation history for individuals)
+CREATE TABLE IF NOT EXISTS user_sessions (
+  session_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  candidate_token TEXT NOT NULL,  -- Session access token
+  -- Template reference
+  template_slug TEXT NOT NULL,  -- e.g., "difficult-feedback", "pm-interview"
+  template_title TEXT,
+  skill_category TEXT,  -- "interview", "feedback", "negotiation", etc.
+  -- Simulation environment (generated)
+  env JSONB,
+  org_params JSONB,  -- simulated org context
+  -- Simulation state
+  status TEXT DEFAULT 'pending',  -- 'pending', 'in_progress', 'complete', 'abandoned'
+  artifact_html TEXT,
+  agent_histories JSONB DEFAULT '{}'::jsonb,
+  relationship_scores JSONB DEFAULT '{}'::jsonb,
+  -- Traces and results
+  trace JSONB DEFAULT '[]'::jsonb,
+  artifact_trace JSONB DEFAULT '[]'::jsonb,
+  debrief JSONB,
+  report JSONB,
+  report_html TEXT,
+  -- Scores for progress tracking
+  overall_score INTEGER,  -- 0-100
+  skill_scores JSONB,  -- {"communication": 85, "empathy": 72, ...}
+  -- Timestamps
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  started_at TIMESTAMPTZ,
+  completed_at TIMESTAMPTZ,
+  duration_seconds INTEGER  -- how long they spent
+);
+
+-- B2C User skill progress (aggregated from sessions)
+CREATE TABLE IF NOT EXISTS user_skill_progress (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  skill_category TEXT NOT NULL,
+  sessions_completed INTEGER DEFAULT 0,
+  average_score INTEGER,  -- 0-100
+  best_score INTEGER,
+  last_practiced_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, skill_category)
+);
+
+-- Indexes for B2C tables
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_provider ON users(auth_provider, provider_id);
+CREATE INDEX IF NOT EXISTS idx_user_sessions_user ON user_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_sessions_status ON user_sessions(status);
+CREATE INDEX IF NOT EXISTS idx_user_sessions_template ON user_sessions(template_slug);
+CREATE INDEX IF NOT EXISTS idx_user_sessions_token ON user_sessions(candidate_token);
+CREATE INDEX IF NOT EXISTS idx_user_skill_progress_user ON user_skill_progress(user_id);
 """
 
 async def init_db():

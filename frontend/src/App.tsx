@@ -17,7 +17,12 @@ import CandidateReport from './pages/CandidateReport';
 import TrainingDetail from './pages/TrainingDetail';
 import TrainingReport from './pages/TrainingReport';
 import AssessmentDetail from './pages/AssessmentDetail';
+// B2C Pages
+import Signup from './pages/Signup';
+import AuthCallback from './pages/AuthCallback';
+import Practice from './pages/Practice';
 
+// B2B Protected Route (Employers)
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { token, isLoading } = useAuth();
 
@@ -36,6 +41,25 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// B2C Protected Route (Individual Users)
+function B2CProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { b2cToken, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-surface flex items-center justify-center">
+        <div className="animate-spin h-8 w-8 border-2 border-dark border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  if (!b2cToken) {
+    return <Navigate to="/signup" replace />;
+  }
+
+  return <>{children}</>;
+}
+
 function App() {
   return (
     <AuthProvider>
@@ -44,8 +68,20 @@ function App() {
           {/* Public routes */}
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+
+          {/* B2C routes (individual users) */}
+          <Route
+            path="/practice"
+            element={
+              <B2CProtectedRoute>
+                <Practice />
+              </B2CProtectedRoute>
+            }
+          />
 
           {/* Employer routes (protected) */}
           <Route

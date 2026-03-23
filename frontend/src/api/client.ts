@@ -2,10 +2,10 @@
  * API client for WorkSim backend
  */
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://shell-production-7135.up.railway.app';
+export const API_URL = import.meta.env.VITE_API_URL || 'https://shell-production-7135.up.railway.app';
 
 interface ApiOptions {
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: unknown;
   token?: string;
 }
@@ -71,6 +71,39 @@ export const auth = {
       method: 'POST',
       body: { token, password },
     }),
+};
+
+// B2C Auth endpoints (Social OAuth)
+export interface B2CUser {
+  id: string;
+  email: string;
+  name: string | null;
+  avatar_url: string | null;
+  auth_provider: string;
+  current_role: string | null;
+  experience_level: string | null;
+}
+
+export const b2cAuth = {
+  // Get current B2C user
+  me: (token: string) =>
+    apiRequest<B2CUser>('/b2c/me', { token }),
+
+  // Update B2C profile
+  updateProfile: (token: string, data: {
+    name?: string;
+    current_role?: string;
+    experience_level?: string;
+    goals?: string[];
+  }) =>
+    apiRequest<{ message: string }>('/b2c/me', {
+      method: 'PATCH',
+      body: data,
+      token,
+    }),
+
+  // Note: Google/LinkedIn auth are browser redirects, not API calls
+  // Use window.location.href = `${API_URL}/b2c/auth/google`
 };
 
 // Session endpoints
@@ -349,4 +382,95 @@ export const templates = {
       body: data,
       token,
     }),
+};
+
+// B2C Catalog Types
+export interface B2CScenario {
+  template_id: string;
+  slug: string;
+  title: string;
+  skill_category: string;
+  description: string;
+  duration_minutes: number;
+  difficulty: string;
+  learning_objectives: string[];
+  user_completed_count: number;
+  user_best_score: number | null;
+}
+
+export interface B2CScenarioDetail extends B2CScenario {
+  company_context: {
+    company_name: string;
+    company_description: string;
+    scenario_tension: string;
+    candidate_role: string;
+  };
+  agents: {
+    agent_id: string;
+    name: string;
+    role: string;
+    relationship_to_candidate: string;
+    avatar_url?: string;
+  }[];
+  tasks: {
+    task_id: string;
+    title: string;
+    description: string;
+    urgency: string;
+  }[];
+  framework_name?: string;
+  framework_reference?: FrameworkReference;
+}
+
+export interface B2CSkillCategory {
+  id: string;
+  name: string;
+  description: string;
+  scenarios: B2CScenario[];
+}
+
+export interface B2CUserSession {
+  session_id: string;
+  template_slug: string;
+  template_title: string;
+  skill_category: string;
+  status: string;
+  score: number | null;
+  created_at: string;
+  completed_at: string | null;
+}
+
+export interface B2CStartSessionResponse {
+  session_id: string;
+  session_url: string;
+}
+
+// B2C Catalog API
+export const b2cCatalog = {
+  // List all scenarios
+  listScenarios: (token: string) =>
+    apiRequest<B2CScenario[]>('/b2c/catalog/scenarios', { token }),
+
+  // Get scenario details
+  getScenario: (token: string, slug: string) =>
+    apiRequest<B2CScenarioDetail>(`/b2c/catalog/scenarios/${slug}`, { token }),
+
+  // List scenarios grouped by category
+  listCategories: (token: string) =>
+    apiRequest<B2CSkillCategory[]>('/b2c/catalog/categories', { token }),
+
+  // Start a new practice session
+  startSession: (token: string, slug: string) =>
+    apiRequest<B2CStartSessionResponse>(`/b2c/catalog/sessions/${slug}/start`, {
+      method: 'POST',
+      token,
+    }),
+
+  // List user's practice sessions
+  listSessions: (token: string) =>
+    apiRequest<B2CUserSession[]>('/b2c/catalog/sessions', { token }),
+
+  // Get specific session
+  getSession: (token: string, sessionId: string) =>
+    apiRequest<B2CUserSession>(`/b2c/catalog/sessions/${sessionId}`, { token }),
 };
