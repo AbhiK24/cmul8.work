@@ -6,6 +6,15 @@
 - Candidate simulation experience (inbox, tasks, artifact, agents)
 - Report generation with behavioral scoring
 - DiceBear avatars for agents
+- **Training Mode** with 4 skill templates (Difficult Conversations, Stakeholder Management, Priority Management, Giving Feedback)
+- **Assessment Mode** with role-based WorkSims (PM, EM, Designer, Sales)
+- **Unified Detail Pages** - TrainingDetail & AssessmentDetail with:
+  - "Who You'll Meet" (agent previews)
+  - Quick Info sidebar
+  - Stats overview (Completed/In Progress/Ready)
+  - Assigned People tables with copy link & view report
+  - Assign modal for quick team assignment
+- **Session Status Handling** - Complete, In Progress, Pending flows for candidates
 
 ---
 
@@ -36,27 +45,27 @@
 
 ---
 
-## Focus 2: Test vs Train Environments
+## ~~Focus 2: Test vs Train Environments~~ ✅ CORE IMPLEMENTED
 
-### Current: TEST Mode
+### Current: TEST Mode (Assess)
 - Assess existing qualities/skills
 - Score and report on behavioral traits
 - Used for hiring decisions
 
-### New: TRAIN Mode
+### New: TRAIN Mode ✅
 - Impart new micro-skills relevant to org
 - Guided learning within simulation
-- Test acquisition of new skills post-training
+- Framework references for structured learning
 
 ### Implementation Ideas
-- [ ] **Mode selector** when creating WorkSim (test/train/hybrid)
-- [ ] **Learning objectives** - Define what skills to teach
-- [ ] **Coaching agents** - Special agent type that guides/teaches
+- [x] **Mode selector** when creating WorkSim (test/train) - Dashboard has Assess & Train tabs
+- [x] **Learning objectives** - Templates define what_youll_learn skills
+- [x] **Coaching agents** - Framework reference with key principles & examples
 - [ ] **Feedback loops** - Real-time hints when candidate struggles
-- [ ] **Skill modules** - Reusable training content (e.g., "Difficult Conversations", "Prioritization Framework")
+- [x] **Skill modules** - 4 training templates (Difficult Conversations, Stakeholder Management, Priority Management, Giving Feedback)
 - [ ] **Pre/Post assessment** - Measure skill delta
-- [ ] **Scenario library** - Pre-built training scenarios per skill
-- [ ] **Progress tracking** - Multi-session skill development
+- [x] **Scenario library** - Pre-built training scenarios per skill with company contexts
+- [x] **Progress tracking** - Assigned Team Members table with status tracking
 
 ### Use Cases
 - New hire onboarding
@@ -185,10 +194,10 @@ Allow individuals (not via employers) to:
 ## Priority Order (Suggested)
 
 1. ~~**Focus 3: Onboarding**~~ ✅ Done
-2. **Focus 1: Core Experience** - Foundation for everything else
-3. **Focus 4: Analytics** - Differentiation, employer value
-4. **Focus 5: B2C** - New revenue stream, growth
-5. **Focus 2: Train Mode** - Expansion into L&D market
+2. ~~**Focus 2: Train Mode**~~ ✅ Core implemented (templates, assignments, tracking)
+3. **Focus 1: Core Experience** - Foundation for everything else
+4. **Focus 4: Analytics** - Differentiation, employer value
+5. **Focus 5: B2C** - New revenue stream, growth
 
 ---
 
@@ -205,4 +214,4 @@ Allow individuals (not via employers) to:
 
 ---
 
-*Last updated: March 2026*
+*Last updated: March 23, 2026*

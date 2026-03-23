@@ -13,12 +13,15 @@ export default function Landing() {
             </svg>
             <span className="font-semibold text-dark tracking-tight">WorkSim</span>
           </Link>
-          <div className="flex items-center gap-6">
-            <a href="#pricing" className="text-muted hover:text-dark transition-colors text-sm hidden sm:block">
-              Pricing
-            </a>
-            <Link to="/login" className="text-muted hover:text-dark transition-colors text-sm">
-              Enterprise Login
+          <div className="flex items-center gap-4">
+            <Link
+              to="/login"
+              className="flex items-center gap-2 text-sm text-muted hover:text-dark transition-colors border border-border rounded-full px-4 py-2 hover:bg-white"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 0h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z" />
+              </svg>
+              Enterprise
             </Link>
           </div>
         </div>
@@ -27,22 +30,22 @@ export default function Landing() {
       {/* Hero Section */}
       <section className="pt-32 pb-12 px-6">
         <div className="max-w-4xl mx-auto text-center">
-          <p className="text-sm font-medium text-muted uppercase tracking-wider mb-4">Career skills, pressure-tested</p>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-medium text-dark tracking-tight leading-tight mb-6">
-            Nail the satisfactory interview.
+            The workplace is a simulation.<br/>
+            <span className="text-muted">Now you can practice it.</span>
           </h1>
           <p className="text-lg md:text-xl text-muted max-w-2xl mx-auto mb-10">
-            Practice difficult conversations, high-pressure negotiations, and critical feedback—with AI that pushes back. Like the real thing, minus the consequences.
+            Step into realistic work scenarios with AI colleagues who push back, get frustrated, and test your limits. Fail safely. Learn fast.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               to="/signup"
-              className="bg-accent text-white px-8 py-4 rounded-full text-base font-medium hover:opacity-85 transition-all hover:-translate-y-0.5"
+              className="bg-accent text-white px-8 py-4 rounded-full text-base font-medium hover:opacity-85 transition-all hover:-translate-y-0.5 shadow-lg shadow-dark/20"
             >
-              Start Practicing Free
+              Start Practicing Free →
             </Link>
           </div>
-          <p className="text-sm text-muted mt-4">No credit card required. 2 free simulations.</p>
+          <p className="text-sm text-muted mt-4">No credit card required</p>
         </div>
       </section>
 
@@ -139,21 +142,60 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Social Proof - quick stats */}
-      <section className="py-12 px-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex flex-wrap justify-center gap-8 md:gap-16 text-center">
-            <div>
-              <p className="text-3xl font-medium text-dark">10k+</p>
-              <p className="text-sm text-muted">Simulations run</p>
+      {/* Testimonials */}
+      <section className="py-16 px-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="bg-white p-6 rounded-xl border border-border">
+              <div className="flex gap-1 mb-4">
+                {[...Array(5)].map((_, i) => (
+                  <svg key={i} className="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                ))}
+              </div>
+              <p className="text-dark text-sm mb-4 leading-relaxed">"I bombed my first PM interview. After 3 WorkSim sessions, I walked into Google confident. Got the offer."</p>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white text-xs font-medium">AK</div>
+                <div>
+                  <p className="text-sm font-medium text-dark">Arun K.</p>
+                  <p className="text-xs text-muted">PM at Google</p>
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="text-3xl font-medium text-dark">89%</p>
-              <p className="text-sm text-muted">Feel more prepared</p>
+            <div className="bg-white p-6 rounded-xl border border-border">
+              <div className="flex gap-1 mb-4">
+                {[...Array(5)].map((_, i) => (
+                  <svg key={i} className="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                ))}
+              </div>
+              <p className="text-dark text-sm mb-4 leading-relaxed">"The 'difficult conversations' track changed how I give feedback. My team actually thanks me for reviews now."</p>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-medium">SM</div>
+                <div>
+                  <p className="text-sm font-medium text-dark">Sarah M.</p>
+                  <p className="text-xs text-muted">Engineering Manager</p>
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="text-3xl font-medium text-dark">4.8/5</p>
-              <p className="text-sm text-muted">User rating</p>
+            <div className="bg-white p-6 rounded-xl border border-border">
+              <div className="flex gap-1 mb-4">
+                {[...Array(5)].map((_, i) => (
+                  <svg key={i} className="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                ))}
+              </div>
+              <p className="text-dark text-sm mb-4 leading-relaxed">"Practiced negotiating my raise here first. Asked for 20% more than I planned. Got it."</p>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center text-white text-xs font-medium">JL</div>
+                <div>
+                  <p className="text-sm font-medium text-dark">James L.</p>
+                  <p className="text-xs text-muted">Senior Designer</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -235,82 +277,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Pricing */}
-      <section className="py-20 px-6" id="pricing">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-medium text-dark text-center mb-4 tracking-tight">
-            Simple pricing
-          </h2>
-          <p className="text-muted text-center mb-12">Start free. Upgrade when you're ready.</p>
-          <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-            <div className="bg-white p-8 rounded-2xl border border-border">
-              <h3 className="text-lg font-medium text-dark mb-2">Free</h3>
-              <p className="text-3xl font-medium text-dark mb-4">$0<span className="text-base text-muted font-normal">/forever</span></p>
-              <ul className="space-y-3 mb-8">
-                <li className="flex items-center gap-2 text-sm text-muted">
-                  <svg className="w-4 h-4 text-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                  2 practice simulations
-                </li>
-                <li className="flex items-center gap-2 text-sm text-muted">
-                  <svg className="w-4 h-4 text-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                  Basic feedback report
-                </li>
-                <li className="flex items-center gap-2 text-sm text-muted">
-                  <svg className="w-4 h-4 text-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                  All scenario types
-                </li>
-              </ul>
-              <Link to="/signup" className="block w-full text-center border border-border text-dark px-6 py-3 rounded-full font-medium hover:bg-gray-50 transition-colors">
-                Get Started
-              </Link>
-            </div>
-            <div className="bg-dark p-8 rounded-2xl text-white relative">
-              <div className="absolute -top-3 right-6 bg-white text-dark text-xs font-medium px-3 py-1 rounded-full">Popular</div>
-              <h3 className="text-lg font-medium mb-2">Pro</h3>
-              <p className="text-3xl font-medium mb-4">$19<span className="text-base text-white/60 font-normal">/month</span></p>
-              <ul className="space-y-3 mb-8">
-                <li className="flex items-center gap-2 text-sm text-white/80">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                  Unlimited simulations
-                </li>
-                <li className="flex items-center gap-2 text-sm text-white/80">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                  Deep-dive feedback reports
-                </li>
-                <li className="flex items-center gap-2 text-sm text-white/80">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                  Progress tracking
-                </li>
-                <li className="flex items-center gap-2 text-sm text-white/80">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                  Shareable certificates
-                </li>
-              </ul>
-              <Link to="/signup?plan=pro" className="block w-full text-center bg-white text-dark px-6 py-3 rounded-full font-medium hover:opacity-90 transition-opacity">
-                Start Free Trial
-              </Link>
-            </div>
-          </div>
-          <p className="text-center text-sm text-muted mt-8">
-            Enterprise team? <Link to="/login" className="text-dark underline">Contact us</Link> for volume pricing.
-          </p>
-        </div>
-      </section>
-
       {/* Final CTA */}
       <section className="py-20 px-6 bg-gradient-to-b from-surface to-gray-100">
         <div className="max-w-3xl mx-auto text-center">
@@ -337,10 +303,36 @@ export default function Landing() {
             </svg>
             <span className="text-muted text-sm">WorkSim by cmul8</span>
           </div>
-          <div className="flex items-center gap-6 text-sm text-muted">
-            <a href="https://www.cmul8.com" className="hover:text-dark transition-colors">cmul8.com</a>
-            <Link to="/login" className="hover:text-dark transition-colors">Enterprise</Link>
-            <a href="mailto:hello@cmul8.com" className="hover:text-dark transition-colors">Contact</a>
+          <div className="flex items-center gap-3">
+            <a
+              href="https://www.cmul8.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-sm text-muted border border-border rounded-full px-4 py-2 hover:text-dark hover:bg-gray-50 transition-all"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+              </svg>
+              cmul8.com
+            </a>
+            <Link
+              to="/login"
+              className="flex items-center gap-2 text-sm text-muted border border-border rounded-full px-4 py-2 hover:text-dark hover:bg-gray-50 transition-all"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 0h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z" />
+              </svg>
+              Enterprise
+            </Link>
+            <a
+              href="mailto:hello@cmul8.com"
+              className="flex items-center gap-2 text-sm text-muted border border-border rounded-full px-4 py-2 hover:text-dark hover:bg-gray-50 transition-all"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+              </svg>
+              Contact
+            </a>
           </div>
         </div>
       </footer>
