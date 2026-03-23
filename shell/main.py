@@ -72,13 +72,13 @@ async def fix_session_status(session_id: str, status: str = "complete"):
     async with pool.acquire() as conn:
         if status == "complete":
             await conn.execute("""
-                UPDATE sessions
+                UPDATE b2b_sessions
                 SET status = 'complete', completed_at = COALESCE(completed_at, NOW())
                 WHERE session_id = $1
             """, session_id)
         elif status == "in_progress":
             await conn.execute("""
-                UPDATE sessions
+                UPDATE b2b_sessions
                 SET status = 'in_progress', started_at = COALESCE(started_at, NOW())
                 WHERE session_id = $1
             """, session_id)
@@ -98,7 +98,7 @@ async def debug_sessions():
                    trace IS NOT NULL as has_trace,
                    report IS NOT NULL as has_report,
                    agent_histories
-            FROM sessions
+            FROM b2b_sessions
             ORDER BY created_at DESC
             LIMIT 10
         """)

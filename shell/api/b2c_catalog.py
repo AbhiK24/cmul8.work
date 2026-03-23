@@ -143,7 +143,7 @@ async def list_scenarios(current_user: dict = Depends(get_current_b2c_user)):
         # Get user's completion stats
         user_stats = await conn.fetch("""
             SELECT template_slug, COUNT(*) as completed, MAX(score) as best_score
-            FROM user_sessions
+            FROM b2c_sessions
             WHERE user_id = $1 AND status = 'completed'
             GROUP BY template_slug
         """, user_id)
@@ -196,7 +196,7 @@ async def get_scenario(slug: str, current_user: dict = Depends(get_current_b2c_u
         # Get user's stats for this scenario
         user_stat = await conn.fetchrow("""
             SELECT COUNT(*) as completed, MAX(score) as best_score
-            FROM user_sessions
+            FROM b2c_sessions
             WHERE user_id = $1 AND template_slug = $2 AND status = 'completed'
         """, user_id, slug)
 
@@ -239,7 +239,7 @@ async def list_categories(current_user: dict = Depends(get_current_b2c_user)):
         # Get user's completion stats
         user_stats = await conn.fetch("""
             SELECT template_slug, COUNT(*) as completed, MAX(score) as best_score
-            FROM user_sessions
+            FROM b2c_sessions
             WHERE user_id = $1 AND status = 'completed'
             GROUP BY template_slug
         """, user_id)
@@ -318,7 +318,7 @@ async def start_session(slug: str, current_user: dict = Depends(get_current_b2c_
         org_params = parse_json_field(template["company_context"], {})
 
         await conn.execute("""
-            INSERT INTO user_sessions (
+            INSERT INTO b2c_sessions (
                 session_id, user_id, template_slug, template_title,
                 skill_category, env, org_params, candidate_token, status
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'ready')
@@ -344,7 +344,7 @@ async def start_session(slug: str, current_user: dict = Depends(get_current_b2c_
 
 
 @router.get("/sessions", response_model=List[UserSession])
-async def list_user_sessions(current_user: dict = Depends(get_current_b2c_user)):
+async def list_b2c_sessions(current_user: dict = Depends(get_current_b2c_user)):
     """List all practice sessions for the current user."""
     user_id = uuid.UUID(current_user["user_id"])
     pool = await get_pool()
@@ -353,7 +353,7 @@ async def list_user_sessions(current_user: dict = Depends(get_current_b2c_user))
         rows = await conn.fetch("""
             SELECT session_id, template_slug, template_title, skill_category,
                    status, overall_score, created_at, completed_at
-            FROM user_sessions
+            FROM b2c_sessions
             WHERE user_id = $1
             ORDER BY created_at DESC
             LIMIT 50
@@ -384,7 +384,7 @@ async def get_user_session(session_id: str, current_user: dict = Depends(get_cur
         row = await conn.fetchrow("""
             SELECT session_id, template_slug, template_title, skill_category,
                    status, overall_score, created_at, completed_at
-            FROM user_sessions
+            FROM b2c_sessions
             WHERE session_id = $1 AND user_id = $2
         """, uuid.UUID(session_id), user_id)
 

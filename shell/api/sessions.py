@@ -103,7 +103,7 @@ async def _create_session_internal(
     async with pool.acquire() as conn:
         # Create session record
         row = await conn.fetchrow("""
-            INSERT INTO sessions (
+            INSERT INTO b2b_sessions (
                 employer_id, candidate_token, candidate_name, candidate_email,
                 candidate_link, candidate_type, org_params, status
             )
@@ -136,7 +136,7 @@ async def _create_session_internal(
 
         # Update with candidate link
         await conn.execute("""
-            UPDATE sessions SET candidate_link = $1 WHERE session_id = $2
+            UPDATE b2b_sessions SET candidate_link = $1 WHERE session_id = $2
         """, candidate_link, session_id)
 
     # Fetch full org profile for richer context
@@ -221,7 +221,7 @@ async def create_training_session(
 
         # Create session record with template data
         row = await conn.fetchrow("""
-            INSERT INTO sessions (
+            INSERT INTO b2b_sessions (
                 employer_id, candidate_token, candidate_name, candidate_email,
                 candidate_link, candidate_type, org_params, status, mode, template_id, env
             )
@@ -268,7 +268,7 @@ async def create_training_session(
 
         # Update with candidate link
         await conn.execute("""
-            UPDATE sessions SET candidate_link = $1 WHERE session_id = $2
+            UPDATE b2b_sessions SET candidate_link = $1 WHERE session_id = $2
         """, candidate_link, session_id)
 
     return SessionResponse(
@@ -329,7 +329,7 @@ async def list_sessions(current_user: TokenData = Depends(get_current_user)):
             SELECT session_id, candidate_name, candidate_email, candidate_link,
                    candidate_type, status, created_at, org_params, mode,
                    report IS NOT NULL as has_report
-            FROM sessions
+            FROM b2b_sessions
             WHERE employer_id = $1
             ORDER BY created_at DESC
         """, current_user.employer_id)
@@ -366,7 +366,7 @@ async def get_session(
         row = await conn.fetchrow("""
             SELECT session_id, candidate_name, candidate_email, candidate_link,
                    status, created_at, started_at, completed_at, org_params, env, report
-            FROM sessions
+            FROM b2b_sessions
             WHERE session_id = $1 AND employer_id = $2
         """, session_id, current_user.employer_id)
 
@@ -396,7 +396,7 @@ async def get_session_context(session_id: str, token: str):
     async with pool.acquire() as conn:
         row = await conn.fetchrow("""
             SELECT candidate_name, candidate_token, org_params, env, status, mode
-            FROM sessions
+            FROM b2b_sessions
             WHERE session_id = $1
         """, session_id)
 
@@ -440,7 +440,7 @@ async def get_candidate_report(session_id: str):
     async with pool.acquire() as conn:
         row = await conn.fetchrow("""
             SELECT candidate_name, org_params, env, report, report_html_candidate, status
-            FROM sessions
+            FROM b2b_sessions
             WHERE session_id = $1
         """, session_id)
 
@@ -489,7 +489,7 @@ async def trigger_scoring(
 
     async with pool.acquire() as conn:
         row = await conn.fetchrow("""
-            SELECT status, report FROM sessions
+            SELECT status, report FROM b2b_sessions
             WHERE session_id = $1 AND employer_id = $2
         """, session_id, current_user.employer_id)
 

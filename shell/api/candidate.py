@@ -49,7 +49,7 @@ async def validate_candidate_token(session_id: str, token: str) -> bool:
 
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
-            "SELECT candidate_token, status FROM sessions WHERE session_id = $1",
+            "SELECT candidate_token, status FROM b2b_sessions WHERE session_id = $1",
             session_id
         )
 
@@ -150,7 +150,7 @@ async def get_environment(session_id: str, token: str):
 
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
-            "SELECT env, status FROM sessions WHERE session_id = $1",
+            "SELECT env, status FROM b2b_sessions WHERE session_id = $1",
             session_id
         )
 
@@ -160,7 +160,7 @@ async def get_environment(session_id: str, token: str):
         # Mark session as in_progress if it's pending (candidate started simulation)
         if row["status"] == "pending":
             await conn.execute("""
-                UPDATE sessions
+                UPDATE b2b_sessions
                 SET status = 'in_progress', started_at = NOW()
                 WHERE session_id = $1 AND status = 'pending'
             """, session_id)

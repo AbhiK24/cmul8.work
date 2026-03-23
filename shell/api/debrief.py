@@ -29,7 +29,7 @@ async def submit_debrief(session_id: str, request: DebriefRequest):
     async with pool.acquire() as conn:
         # Validate token
         row = await conn.fetchrow(
-            "SELECT candidate_token, status FROM sessions WHERE session_id = $1",
+            "SELECT candidate_token, status FROM b2b_sessions WHERE session_id = $1",
             session_id
         )
 
@@ -50,7 +50,7 @@ async def submit_debrief(session_id: str, request: DebriefRequest):
         }
 
         await conn.execute("""
-            UPDATE sessions
+            UPDATE b2b_sessions
             SET debrief = $1, completed_at = NOW(), status = 'complete'
             WHERE session_id = $2
         """, json.dumps(debrief), session_id)

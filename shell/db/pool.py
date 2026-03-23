@@ -40,9 +40,9 @@ async def init_pool():
             )
         """)
 
-        # Sessions table - B2B assessment/training sessions
+        # B2B Sessions table - enterprise assessment/training sessions
         await conn.execute("""
-            CREATE TABLE IF NOT EXISTS sessions (
+            CREATE TABLE IF NOT EXISTS b2b_sessions (
                 session_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 employer_id UUID REFERENCES employers(id),
                 candidate_token TEXT NOT NULL,
@@ -107,9 +107,9 @@ async def init_pool():
             )
         """)
 
-        # User sessions table - B2C practice sessions
+        # B2C Sessions table - individual practice sessions
         await conn.execute("""
-            CREATE TABLE IF NOT EXISTS user_sessions (
+            CREATE TABLE IF NOT EXISTS b2c_sessions (
                 session_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 user_id UUID NOT NULL REFERENCES users(id),
                 template_slug TEXT NOT NULL,
@@ -165,16 +165,16 @@ async def init_pool():
         # MIGRATIONS - Add columns to existing tables
         # ============================================
 
-        # Add foreign key for sessions.template_id if not exists
+        # Add foreign key for b2b_sessions.template_id if not exists
         await conn.execute("""
             DO $$
             BEGIN
                 IF NOT EXISTS (
                     SELECT 1 FROM information_schema.table_constraints
-                    WHERE constraint_name = 'sessions_template_id_fkey'
+                    WHERE constraint_name = 'b2b_sessions_template_id_fkey'
                 ) THEN
-                    ALTER TABLE sessions
-                    ADD CONSTRAINT sessions_template_id_fkey
+                    ALTER TABLE b2b_sessions
+                    ADD CONSTRAINT b2b_sessions_template_id_fkey
                     FOREIGN KEY (template_id) REFERENCES training_templates(template_id);
                 END IF;
             EXCEPTION WHEN others THEN
@@ -184,13 +184,13 @@ async def init_pool():
 
         # Fix retroactive session statuses based on timestamps
         await conn.execute("""
-            UPDATE sessions
+            UPDATE b2b_sessions
             SET status = 'complete'
             WHERE completed_at IS NOT NULL AND status != 'complete'
         """)
 
         await conn.execute("""
-            UPDATE sessions
+            UPDATE b2b_sessions
             SET status = 'in_progress'
             WHERE started_at IS NOT NULL AND completed_at IS NULL AND status NOT IN ('in_progress', 'complete')
         """)
