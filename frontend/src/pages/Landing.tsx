@@ -240,10 +240,20 @@ export default function Landing() {
             <div className="hidden sm:block w-px h-8 bg-gray-200" />
             <div className="flex items-center gap-3">
               <span>Practiced by people at</span>
-              <div className="flex items-center gap-3">
-                <svg className="h-5 text-gray-400" viewBox="0 0 24 24" fill="currentColor"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/></svg>
-                <svg className="h-4 text-gray-400" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                <svg className="h-5 text-gray-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c5.51 0 10-4.48 10-10S17.51 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
+              <div className="flex items-center gap-4">
+                {/* Google - Full color */}
+                <svg className="h-5" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                {/* Meta - Blue */}
+                <svg className="h-5" viewBox="0 0 24 24" fill="#1877F2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                {/* Amazon - Orange */}
+                <svg className="h-5" viewBox="0 0 24 24" fill="#FF9900"><path d="M.045 18.02c.072-.116.187-.124.348-.022 3.636 2.11 7.594 3.166 11.87 3.166 2.852 0 5.668-.533 8.447-1.595l.315-.14c.138-.06.234-.1.293-.13.226-.088.39-.046.525.13.12.174.09.336-.12.48-.256.19-.6.41-1.006.654-1.244.743-2.64 1.316-4.185 1.726a17.617 17.617 0 01-10.951-.577 17.88 17.88 0 01-5.43-3.35c-.1-.074-.151-.15-.151-.22 0-.047.021-.09.045-.122zm6.22-5.763c0-1.027.26-1.885.782-2.574.522-.69 1.19-1.18 2.006-1.47a7.375 7.375 0 012.17-.478l1.227-.074V6.617c0-.56-.08-.97-.243-1.226-.202-.32-.528-.482-.976-.482h-.105c-.328.023-.616.135-.862.334-.247.2-.392.478-.437.833l-2.608-.238c.1-.895.53-1.62 1.287-2.168.756-.55 1.755-.826 2.996-.826 1.39 0 2.47.387 3.237 1.16.767.773 1.15 1.78 1.15 3.022v5.446c0 .39.017.782.05 1.174.036.392.092.71.17.956l.142.392H13.86l-.244-.61a4.04 4.04 0 01-.122-.447 4.526 4.526 0 01-1.416 1.003 4.114 4.114 0 01-1.736.392c-1.04 0-1.878-.313-2.518-.94-.64-.627-.96-1.448-.96-2.462zm3.61.58c.38 0 .747-.1 1.1-.305a2.197 2.197 0 00.814-.784v-1.63l-.96.055c-.753.042-1.32.204-1.702.488-.382.283-.573.68-.573 1.187 0 .37.117.666.35.887.236.22.548.33.94.33l.03-.228z"/></svg>
+                {/* Stripe - Purple */}
+                <svg className="h-5" viewBox="0 0 24 24" fill="#635BFF"><path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z"/></svg>
               </div>
             </div>
           </div>
@@ -344,50 +354,64 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Testimonials - Featured Quote */}
+      {/* Testimonials - Pyramid Layout */}
       <section className="py-20 px-6 bg-gradient-to-b from-gray-50 to-white">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
             <p className="text-sm font-medium text-muted uppercase tracking-wider mb-3">Results that matter</p>
+            <h2 className="text-3xl md:text-4xl font-medium text-dark tracking-tight">Skills that changed careers</h2>
           </div>
 
-          {/* Featured large quote */}
-          <div className="relative mb-16">
-            <div className="text-8xl text-gray-100 font-serif absolute -top-8 left-0">"</div>
-            <blockquote className="relative z-10 text-2xl md:text-3xl font-medium text-dark leading-relaxed pl-8 md:pl-12">
-              I bombed my first PM interview. After 3 WorkSim sessions, I walked into Google confident.
-              <span className="text-accent"> Got the offer.</span>
-            </blockquote>
-            <div className="flex items-center gap-4 mt-8 pl-8 md:pl-12">
-              <img src="https://api.dicebear.com/7.x/notionists/svg?seed=arun&backgroundColor=c0aede" className="w-14 h-14 rounded-full border-2 border-white shadow-md" alt="" />
-              <div>
-                <p className="font-medium text-dark">Arun K.</p>
-                <p className="text-sm text-muted">Product Manager at Google</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Smaller testimonials */}
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-              <p className="text-dark mb-4">"The difficult conversations track changed how I give feedback. <span className="font-medium">My team actually thanks me for reviews now.</span>"</p>
-              <div className="flex items-center gap-3">
-                <img src="https://api.dicebear.com/7.x/notionists/svg?seed=sarah-eng&backgroundColor=b6e3f4" className="w-10 h-10 rounded-full" alt="" />
-                <div>
-                  <p className="text-sm font-medium text-dark">Sarah M.</p>
-                  <p className="text-xs text-muted">Engineering Manager, Amazon</p>
+          {/* Pyramid: 1 on top, 2 below */}
+          <div className="flex flex-col items-center gap-6">
+            {/* Top card - centered */}
+            <div className="w-full max-w-md">
+              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-3 mb-4">
+                  <img src="https://api.dicebear.com/7.x/notionists/svg?seed=arun&backgroundColor=c0aede" className="w-12 h-12 rounded-full border-2 border-white shadow-sm" alt="" />
+                  <div>
+                    <p className="font-medium text-dark">Arun K.</p>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm text-muted">Product Manager</span>
+                      <span className="text-muted">·</span>
+                      <svg className="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                    </div>
+                  </div>
                 </div>
+                <p className="text-dark leading-relaxed">"I bombed my first PM interview. After 3 WorkSim sessions, I walked into Google confident. <span className="font-semibold">Got the offer.</span>"</p>
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-              <p className="text-dark mb-4">"Practiced negotiating my raise here first. Asked for 20% more than I planned. <span className="font-medium">Got it.</span>"</p>
-              <div className="flex items-center gap-3">
-                <img src="https://api.dicebear.com/7.x/notionists/svg?seed=james-design&backgroundColor=d1d4f9" className="w-10 h-10 rounded-full" alt="" />
-                <div>
-                  <p className="text-sm font-medium text-dark">James L.</p>
-                  <p className="text-xs text-muted">Senior Designer, Meta</p>
+            {/* Bottom row - 2 cards */}
+            <div className="grid md:grid-cols-2 gap-6 w-full max-w-3xl">
+              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-3 mb-4">
+                  <img src="https://api.dicebear.com/7.x/notionists/svg?seed=sarah-eng&backgroundColor=b6e3f4" className="w-12 h-12 rounded-full border-2 border-white shadow-sm" alt="" />
+                  <div>
+                    <p className="font-medium text-dark">Sarah M.</p>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm text-muted">Engineering Manager</span>
+                      <span className="text-muted">·</span>
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#FF9900"><path d="M.045 18.02c.072-.116.187-.124.348-.022 3.636 2.11 7.594 3.166 11.87 3.166 2.852 0 5.668-.533 8.447-1.595l.315-.14c.138-.06.234-.1.293-.13.226-.088.39-.046.525.13.12.174.09.336-.12.48-.256.19-.6.41-1.006.654-1.244.743-2.64 1.316-4.185 1.726a17.617 17.617 0 01-10.951-.577 17.88 17.88 0 01-5.43-3.35c-.1-.074-.151-.15-.151-.22 0-.047.021-.09.045-.122zm6.22-5.763c0-1.027.26-1.885.782-2.574.522-.69 1.19-1.18 2.006-1.47a7.375 7.375 0 012.17-.478l1.227-.074V6.617c0-.56-.08-.97-.243-1.226-.202-.32-.528-.482-.976-.482h-.105c-.328.023-.616.135-.862.334-.247.2-.392.478-.437.833l-2.608-.238c.1-.895.53-1.62 1.287-2.168.756-.55 1.755-.826 2.996-.826 1.39 0 2.47.387 3.237 1.16.767.773 1.15 1.78 1.15 3.022v5.446c0 .39.017.782.05 1.174.036.392.092.71.17.956l.142.392H13.86l-.244-.61a4.04 4.04 0 01-.122-.447 4.526 4.526 0 01-1.416 1.003 4.114 4.114 0 01-1.736.392c-1.04 0-1.878-.313-2.518-.94-.64-.627-.96-1.448-.96-2.462zm3.61.58c.38 0 .747-.1 1.1-.305a2.197 2.197 0 00.814-.784v-1.63l-.96.055c-.753.042-1.32.204-1.702.488-.382.283-.573.68-.573 1.187 0 .37.117.666.35.887.236.22.548.33.94.33l.03-.228z"/></svg>
+                    </div>
+                  </div>
                 </div>
+                <p className="text-dark leading-relaxed">"The difficult conversations track changed how I give feedback. <span className="font-semibold">My team actually thanks me for reviews now.</span>"</p>
+              </div>
+
+              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-3 mb-4">
+                  <img src="https://api.dicebear.com/7.x/notionists/svg?seed=james-design&backgroundColor=d1d4f9" className="w-12 h-12 rounded-full border-2 border-white shadow-sm" alt="" />
+                  <div>
+                    <p className="font-medium text-dark">James L.</p>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm text-muted">Senior Designer</span>
+                      <span className="text-muted">·</span>
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#1877F2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-dark leading-relaxed">"Practiced negotiating my raise here first. Asked for 20% more than I planned. <span className="font-semibold">Got it.</span>"</p>
               </div>
             </div>
           </div>
