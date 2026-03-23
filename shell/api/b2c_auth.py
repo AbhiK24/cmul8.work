@@ -35,7 +35,7 @@ class B2CUserResponse(BaseModel):
     name: str | None
     avatar_url: str | None
     auth_provider: str
-    current_role: str | None
+    job_role: str | None
     experience_level: str | None
 
 
@@ -335,7 +335,7 @@ async def get_b2c_me(current_user: B2CTokenData = Depends(get_current_b2c_user))
 
     async with pool.acquire() as conn:
         user = await conn.fetchrow("""
-            SELECT id, email, name, avatar_url, auth_provider, current_role, experience_level
+            SELECT id, email, name, avatar_url, auth_provider, job_role, experience_level
             FROM users WHERE id = $1
         """, uuid.UUID(current_user.user_id))
 
@@ -348,7 +348,7 @@ async def get_b2c_me(current_user: B2CTokenData = Depends(get_current_b2c_user))
             name=user["name"],
             avatar_url=user["avatar_url"],
             auth_provider=user["auth_provider"],
-            current_role=user["current_role"],
+            job_role=user["job_role"],
             experience_level=user["experience_level"]
         )
 
@@ -362,7 +362,7 @@ async def b2c_logout():
 class UpdateProfileRequest(BaseModel):
     """Update profile request."""
     name: str | None = None
-    current_role: str | None = None
+    job_role: str | None = None
     experience_level: str | None = None
     goals: list[str] | None = None
 
@@ -385,9 +385,9 @@ async def update_b2c_profile(
             values.append(request.name)
             param_count += 1
 
-        if request.current_role is not None:
-            updates.append(f"current_role = ${param_count}")
-            values.append(request.current_role)
+        if request.job_role is not None:
+            updates.append(f"job_role = ${param_count}")
+            values.append(request.job_role)
             param_count += 1
 
         if request.experience_level is not None:

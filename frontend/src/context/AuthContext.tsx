@@ -14,7 +14,7 @@ interface B2CUser {
   name: string | null;
   avatar_url: string | null;
   auth_provider: string;
-  current_role: string | null;
+  job_role: string | null;
   experience_level: string | null;
 }
 

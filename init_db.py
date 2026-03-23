@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS users (
   -- Optional password for email auth (NULL for social-only)
   password_hash TEXT,
   -- Profile
-  current_role TEXT,  -- e.g., "Product Manager", "Engineering Manager"
+  job_role TEXT,  -- e.g., "Product Manager", "Engineering Manager"
   experience_level TEXT,  -- "early", "mid", "senior", "executive"
   goals JSONB DEFAULT '[]'::jsonb,  -- what they want to practice
   -- Timestamps

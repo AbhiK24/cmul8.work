@@ -80,7 +80,7 @@ export interface B2CUser {
   name: string | null;
   avatar_url: string | null;
   auth_provider: string;
-  current_role: string | null;
+  job_role: string | null;
   experience_level: string | null;
 }
 
@@ -92,7 +92,7 @@ export const b2cAuth = {
   // Update B2C profile
   updateProfile: (token: string, data: {
     name?: string;
-    current_role?: string;
+    job_role?: string;
     experience_level?: string;
     goals?: string[];
   }) =>
