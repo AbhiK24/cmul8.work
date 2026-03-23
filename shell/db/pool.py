@@ -189,6 +189,16 @@ async def init_pool():
             )
         """)
 
+        # Add template_id column as alias for id (for backwards compatibility with queries)
+        await conn.execute("""
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'training_templates' AND column_name = 'template_id') THEN
+                    ALTER TABLE training_templates ADD COLUMN template_id UUID GENERATED ALWAYS AS (id) STORED;
+                END IF;
+            END $$;
+        """)
+
         # ============================================
         # B2B SESSIONS (Enterprise assess + train)
         # ============================================

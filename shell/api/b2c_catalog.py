@@ -142,9 +142,9 @@ async def list_scenarios(current_user: TokenData = Depends(get_current_b2c_user)
 
         # Get user's completion stats
         user_stats = await conn.fetch("""
-            SELECT template_slug, COUNT(*) as completed, MAX(score) as best_score
+            SELECT template_slug, COUNT(*) as completed, MAX(overall_score) as best_score
             FROM b2c_sessions
-            WHERE user_id = $1 AND status = 'completed'
+            WHERE user_id = $1 AND status = 'complete'
             GROUP BY template_slug
         """, user_id)
 
@@ -195,9 +195,9 @@ async def get_scenario(slug: str, current_user: TokenData = Depends(get_current_
 
         # Get user's stats for this scenario
         user_stat = await conn.fetchrow("""
-            SELECT COUNT(*) as completed, MAX(score) as best_score
+            SELECT COUNT(*) as completed, MAX(overall_score) as best_score
             FROM b2c_sessions
-            WHERE user_id = $1 AND template_slug = $2 AND status = 'completed'
+            WHERE user_id = $1 AND template_slug = $2 AND status = 'complete'
         """, user_id, slug)
 
         return ScenarioDetail(
@@ -238,9 +238,9 @@ async def list_categories(current_user: TokenData = Depends(get_current_b2c_user
 
         # Get user's completion stats
         user_stats = await conn.fetch("""
-            SELECT template_slug, COUNT(*) as completed, MAX(score) as best_score
+            SELECT template_slug, COUNT(*) as completed, MAX(overall_score) as best_score
             FROM b2c_sessions
-            WHERE user_id = $1 AND status = 'completed'
+            WHERE user_id = $1 AND status = 'complete'
             GROUP BY template_slug
         """, user_id)
 
