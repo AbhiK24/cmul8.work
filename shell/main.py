@@ -85,6 +85,21 @@ async def fix_session_status(session_id: str, status: str = "complete"):
         return {"updated": session_id, "new_status": status}
 
 
+@app.post("/debug/clean-db")
+async def clean_database():
+    """Debug: Clean all user data from database."""
+    from .db.pool import get_pool
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        tables = [
+            "b2b_sessions", "b2c_sessions", "org_invitations", "org_members",
+            "password_reset_tokens", "assessment_templates", "organizations", "users"
+        ]
+        for t in tables:
+            await conn.execute(f"TRUNCATE TABLE {t} CASCADE")
+        return {"status": "cleaned", "tables": tables}
+
+
 @app.get("/debug/sessions")
 async def debug_sessions():
     """Debug endpoint to check session statuses."""
