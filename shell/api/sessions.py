@@ -383,11 +383,22 @@ async def get_session_context(session_id: str, token: str):
     pool = await get_pool()
 
     async with pool.acquire() as conn:
+        # Try B2B sessions first
         row = await conn.fetchrow("""
             SELECT candidate_name, candidate_token, org_params, env, status, mode
             FROM b2b_sessions
             WHERE session_id = $1
         """, session_id)
+
+        is_b2c = False
+        if not row:
+            # Try B2C sessions
+            row = await conn.fetchrow("""
+                SELECT 'Practice User' as candidate_name, candidate_token, org_params, env, status, 'train' as mode
+                FROM b2c_sessions
+                WHERE session_id = $1
+            """, session_id)
+            is_b2c = True
 
         if not row:
             raise HTTPException(status_code=404, detail="Session not found")
