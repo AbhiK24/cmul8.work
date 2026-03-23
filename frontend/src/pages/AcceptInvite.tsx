@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { SignIn, SignUp, useUser, useAuth as useClerkAuth } from '@clerk/clerk-react';
-import { auth, InviteInfo } from '../api/client';
+import { auth } from '../api/client';
+import type { InviteInfo } from '../api/client';
 import Logo from '../components/Logo';
 
 export default function AcceptInvite() {
