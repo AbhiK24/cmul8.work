@@ -40,6 +40,40 @@ async def init_pool():
             )
         """)
 
+        # Add missing columns to users table (for existing installations)
+        await conn.execute("""
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'type') THEN
+                    ALTER TABLE users ADD COLUMN type TEXT NOT NULL DEFAULT 'b2c';
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'password_hash') THEN
+                    ALTER TABLE users ADD COLUMN password_hash TEXT;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'clerk_id') THEN
+                    ALTER TABLE users ADD COLUMN clerk_id TEXT;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'name') THEN
+                    ALTER TABLE users ADD COLUMN name TEXT;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'avatar_url') THEN
+                    ALTER TABLE users ADD COLUMN avatar_url TEXT;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'job_role') THEN
+                    ALTER TABLE users ADD COLUMN job_role TEXT;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'experience_level') THEN
+                    ALTER TABLE users ADD COLUMN experience_level TEXT;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'goals') THEN
+                    ALTER TABLE users ADD COLUMN goals JSONB DEFAULT '[]'::jsonb;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'last_login_at') THEN
+                    ALTER TABLE users ADD COLUMN last_login_at TIMESTAMPTZ DEFAULT NOW();
+                END IF;
+            END $$;
+        """)
+
         # ============================================
         # ORGANIZATIONS (B2B Multi-tenant)
         # ============================================
@@ -54,8 +88,31 @@ async def init_pool():
                 company_size TEXT,
                 description TEXT,
                 logo_url TEXT,
-                created_at TIMESTAMPTZ DEFAULT NOW()
+                website TEXT,
+                hiring_focus TEXT,
+                custom_roles JSONB DEFAULT '[]'::jsonb,
+                created_at TIMESTAMPTZ DEFAULT NOW(),
+                updated_at TIMESTAMPTZ DEFAULT NOW()
             )
+        """)
+
+        # Add missing columns to organizations table
+        await conn.execute("""
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'organizations' AND column_name = 'website') THEN
+                    ALTER TABLE organizations ADD COLUMN website TEXT;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'organizations' AND column_name = 'hiring_focus') THEN
+                    ALTER TABLE organizations ADD COLUMN hiring_focus TEXT;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'organizations' AND column_name = 'custom_roles') THEN
+                    ALTER TABLE organizations ADD COLUMN custom_roles JSONB DEFAULT '[]'::jsonb;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'organizations' AND column_name = 'updated_at') THEN
+                    ALTER TABLE organizations ADD COLUMN updated_at TIMESTAMPTZ DEFAULT NOW();
+                END IF;
+            END $$;
         """)
 
         # ============================================
@@ -180,6 +237,37 @@ async def init_pool():
             )
         """)
 
+        # Add missing columns to b2b_sessions table (renamed from sessions)
+        await conn.execute("""
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'b2b_sessions' AND column_name = 'mode') THEN
+                    ALTER TABLE b2b_sessions ADD COLUMN mode TEXT NOT NULL DEFAULT 'assess';
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'b2b_sessions' AND column_name = 'assessment_template_id') THEN
+                    ALTER TABLE b2b_sessions ADD COLUMN assessment_template_id UUID;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'b2b_sessions' AND column_name = 'training_template_id') THEN
+                    ALTER TABLE b2b_sessions ADD COLUMN training_template_id UUID;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'b2b_sessions' AND column_name = 'candidate_user_id') THEN
+                    ALTER TABLE b2b_sessions ADD COLUMN candidate_user_id UUID;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'b2b_sessions' AND column_name = 'candidate_type') THEN
+                    ALTER TABLE b2b_sessions ADD COLUMN candidate_type TEXT DEFAULT 'external';
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'b2b_sessions' AND column_name = 'framework_score') THEN
+                    ALTER TABLE b2b_sessions ADD COLUMN framework_score FLOAT;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'b2b_sessions' AND column_name = 'coaching_notes') THEN
+                    ALTER TABLE b2b_sessions ADD COLUMN coaching_notes JSONB DEFAULT '[]'::jsonb;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'b2b_sessions' AND column_name = 'created_by') THEN
+                    ALTER TABLE b2b_sessions ADD COLUMN created_by UUID;
+                END IF;
+            END $$;
+        """)
+
         # ============================================
         # B2C SESSIONS (Individual practice)
         # ============================================
@@ -199,10 +287,25 @@ async def init_pool():
                 overall_score INT,
                 agent_histories JSONB DEFAULT '{}'::jsonb,
                 trace JSONB DEFAULT '[]'::jsonb,
+                debrief JSONB,
+                report JSONB,
                 created_at TIMESTAMPTZ DEFAULT NOW(),
                 started_at TIMESTAMPTZ,
                 completed_at TIMESTAMPTZ
             )
+        """)
+
+        # Add missing columns to b2c_sessions table
+        await conn.execute("""
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'b2c_sessions' AND column_name = 'debrief') THEN
+                    ALTER TABLE b2c_sessions ADD COLUMN debrief JSONB;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'b2c_sessions' AND column_name = 'report') THEN
+                    ALTER TABLE b2c_sessions ADD COLUMN report JSONB;
+                END IF;
+            END $$;
         """)
 
         # ============================================
