@@ -66,9 +66,9 @@ class InviteMemberRequest(BaseModel):
 
 class AcceptInviteRequest(BaseModel):
     """Accept an org invitation."""
-    token: str
+    invite_token: str
     name: Optional[str] = None
-    password: Optional[str] = None  # Required if new user
+    password: Optional[str] = None  # Required if new user without Clerk
 
 
 class ForgotPasswordRequest(BaseModel):
@@ -400,7 +400,7 @@ async def login(request: LoginRequest):
 
 @router.get("/me")
 async def get_me(current_user: TokenData = Depends(get_current_user)):
-    """Get current user info with org memberships."""
+    """Get current user info with org context."""
     pool = await get_pool()
 
     async with pool.acquire() as conn:
@@ -412,35 +412,31 @@ async def get_me(current_user: TokenData = Depends(get_current_user)):
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
-        # Get all org memberships
-        memberships = await conn.fetch("""
-            SELECT o.id, o.name, o.slug, m.role, m.status
-            FROM org_members m
-            JOIN organizations o ON o.id = m.org_id
-            WHERE m.user_id = $1
-            ORDER BY m.joined_at ASC
-        """, current_user.user_id)
+        # Get current org membership (the one in the token)
+        org_info = None
+        if current_user.org_id:
+            membership = await conn.fetchrow("""
+                SELECT o.id, o.name, o.slug, m.role
+                FROM org_members m
+                JOIN organizations o ON o.id = m.org_id
+                WHERE m.user_id = $1 AND m.org_id = $2 AND m.status = 'active'
+            """, current_user.user_id, current_user.org_id)
+
+            if membership:
+                org_info = {
+                    "org_id": str(membership["id"]),
+                    "name": membership["name"],
+                    "slug": membership["slug"],
+                    "role": membership["role"]
+                }
 
         return {
-            "user": {
-                "id": str(user["id"]),
-                "email": user["email"],
-                "name": user["name"],
-                "type": user["type"],
-                "avatar_url": user["avatar_url"],
-                "created_at": user["created_at"].isoformat()
-            },
-            "organizations": [
-                {
-                    "id": str(m["id"]),
-                    "name": m["name"],
-                    "slug": m["slug"],
-                    "role": m["role"],
-                    "status": m["status"]
-                }
-                for m in memberships
-            ],
-            "current_org_id": str(current_user.org_id) if current_user.org_id else None
+            "user_id": str(user["id"]),
+            "email": user["email"],
+            "name": user["name"],
+            "user_type": user["type"] or "b2b",
+            "avatar_url": user["avatar_url"],
+            "org": org_info
         }
 
 
@@ -611,11 +607,15 @@ async def get_invite_info(token: str):
 
 
 @router.post("/invite/accept", response_model=AuthResponse)
-async def accept_invite(request: AcceptInviteRequest):
+async def accept_invite(
+    request: AcceptInviteRequest,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False))
+):
     """
     Accept an org invitation.
-    - If user exists: just add to org
-    - If new user: create account (requires password)
+    - If authenticated (Clerk): verify email matches, add to org
+    - If user exists (by email): add to org
+    - If new user without auth: create account (requires password)
     """
     pool = await get_pool()
 
@@ -624,7 +624,7 @@ async def accept_invite(request: AcceptInviteRequest):
         invite = await conn.fetchrow("""
             SELECT id, org_id, email, role, expires_at, accepted_at
             FROM org_invitations WHERE token = $1
-        """, request.token)
+        """, request.invite_token)
 
         if not invite:
             raise HTTPException(status_code=404, detail="Invitation not found")
@@ -635,27 +635,67 @@ async def accept_invite(request: AcceptInviteRequest):
         if invite["expires_at"] < datetime.now(timezone.utc):
             raise HTTPException(status_code=400, detail="Invitation expired")
 
-        # Check if user exists
-        user = await conn.fetchrow(
-            "SELECT id, email, name, type FROM users WHERE email = $1",
-            invite["email"]
-        )
+        user_id = None
+        user_name = request.name
 
-        if user:
-            user_id = user["id"]
-            user_name = user["name"]
-        else:
-            # New user - password required
-            if not request.password:
-                raise HTTPException(status_code=400, detail="Password required for new users")
+        # If authenticated with Clerk, use that user
+        if credentials:
+            try:
+                clerk_user = await verify_clerk_token(credentials.credentials)
 
-            # Create user
-            user_id = await conn.fetchval("""
-                INSERT INTO users (email, password_hash, name, type)
-                VALUES ($1, $2, $3, 'b2b')
-                RETURNING id
-            """, invite["email"], get_password_hash(request.password), request.name)
-            user_name = request.name
+                # Verify email matches invitation
+                if clerk_user.email.lower() != invite["email"].lower():
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Signed in as {clerk_user.email}, but invitation is for {invite['email']}"
+                    )
+
+                # Get or create user from Clerk
+                user = await conn.fetchrow(
+                    "SELECT id, name FROM users WHERE email = $1",
+                    clerk_user.email
+                )
+
+                if user:
+                    user_id = user["id"]
+                    user_name = user["name"] or request.name or clerk_user.name
+                else:
+                    # Create user from Clerk data
+                    user_id = await conn.fetchval("""
+                        INSERT INTO users (email, clerk_id, name, avatar_url, type)
+                        VALUES ($1, $2, $3, $4, 'b2b')
+                        RETURNING id
+                    """, clerk_user.email, clerk_user.clerk_id,
+                        request.name or clerk_user.name, clerk_user.avatar_url)
+                    user_name = request.name or clerk_user.name
+
+            except HTTPException:
+                raise
+            except Exception:
+                pass  # Fall through to email-based lookup
+
+        # If no Clerk auth, check if user exists by email
+        if user_id is None:
+            user = await conn.fetchrow(
+                "SELECT id, email, name, type FROM users WHERE email = $1",
+                invite["email"]
+            )
+
+            if user:
+                user_id = user["id"]
+                user_name = user["name"] or request.name
+            else:
+                # New user - password required
+                if not request.password:
+                    raise HTTPException(status_code=400, detail="Password required for new users")
+
+                # Create user
+                user_id = await conn.fetchval("""
+                    INSERT INTO users (email, password_hash, name, type)
+                    VALUES ($1, $2, $3, 'b2b')
+                    RETURNING id
+                """, invite["email"], get_password_hash(request.password), request.name)
+                user_name = request.name
 
         # Add to org
         await conn.execute("""
@@ -794,3 +834,229 @@ async def reset_password(request: ResetPasswordRequest):
 async def logout():
     """Logout (client should discard the token)."""
     return {"message": "Logged out successfully"}
+
+
+# ============================================
+# CLERK-BASED SIGNUP (Create org for Clerk users)
+# ============================================
+
+class ClerkSignupRequest(BaseModel):
+    """Clerk-based signup - creates org for existing Clerk user."""
+    org_name: str
+    industry: Optional[str] = None
+    company_size: Optional[str] = None
+
+
+@router.post("/create-org", response_model=AuthResponse)
+async def clerk_signup(
+    request: ClerkSignupRequest,
+    current_user: TokenData = Depends(get_current_user)
+):
+    """
+    Clerk-based B2B Signup Flow:
+    1. User already exists (created by Clerk auth)
+    2. Create organization
+    3. Add user as org admin
+    4. Return token with org context
+    """
+    pool = await get_pool()
+
+    async with pool.acquire() as conn:
+        # Check if user already has an org
+        existing_membership = await conn.fetchrow("""
+            SELECT org_id FROM org_members
+            WHERE user_id = $1 AND status = 'active'
+        """, current_user.user_id)
+
+        if existing_membership:
+            raise HTTPException(status_code=400, detail="User already belongs to an organization")
+
+        # Create organization
+        org_slug = generate_slug(request.org_name)
+        org_id = await conn.fetchval("""
+            INSERT INTO organizations (name, slug, industry, company_size)
+            VALUES ($1, $2, $3, $4)
+            RETURNING id
+        """, request.org_name, org_slug, request.industry, request.company_size)
+
+        # Add user as org admin
+        await conn.execute("""
+            INSERT INTO org_members (org_id, user_id, role, status, joined_at)
+            VALUES ($1, $2, 'admin', 'active', NOW())
+        """, org_id, current_user.user_id)
+
+        # Get user info
+        user = await conn.fetchrow(
+            "SELECT id, email, name, type FROM users WHERE id = $1",
+            current_user.user_id
+        )
+
+    # Create token with org context
+    token = create_access_token(
+        user_id=str(current_user.user_id),
+        email=current_user.email,
+        org_id=str(org_id),
+        user_type="b2b"
+    )
+
+    return AuthResponse(
+        access_token=token,
+        user={
+            "id": str(user["id"]),
+            "email": user["email"],
+            "name": user["name"],
+            "type": user["type"] or "b2b"
+        },
+        org={
+            "id": str(org_id),
+            "name": request.org_name,
+            "slug": org_slug,
+            "role": "admin"
+        }
+    )
+
+
+# ============================================
+# MEMBER MANAGEMENT ENDPOINTS
+# ============================================
+
+@router.get("/members")
+async def list_members(current_user: TokenData = Depends(get_current_user)):
+    """List all members and pending invitations for the current org."""
+    if not current_user.org_id:
+        raise HTTPException(status_code=403, detail="No organization context")
+
+    pool = await get_pool()
+
+    async with pool.acquire() as conn:
+        # Get active members
+        members = await conn.fetch("""
+            SELECT u.id, u.email, u.name, m.role, m.status, m.joined_at
+            FROM org_members m
+            JOIN users u ON u.id = m.user_id
+            WHERE m.org_id = $1
+            ORDER BY m.joined_at ASC
+        """, current_user.org_id)
+
+        # Get pending invitations
+        invitations = await conn.fetch("""
+            SELECT id, email, role, created_at, expires_at
+            FROM org_invitations
+            WHERE org_id = $1 AND accepted_at IS NULL AND expires_at > NOW()
+            ORDER BY created_at DESC
+        """, current_user.org_id)
+
+    return {
+        "members": [
+            {
+                "user_id": str(m["id"]),
+                "email": m["email"],
+                "name": m["name"],
+                "role": m["role"],
+                "status": m["status"],
+                "joined_at": m["joined_at"].isoformat() if m["joined_at"] else None
+            }
+            for m in members
+        ],
+        "invitations": [
+            {
+                "id": str(i["id"]),
+                "email": i["email"],
+                "role": i["role"],
+                "created_at": i["created_at"].isoformat(),
+                "expires_at": i["expires_at"].isoformat()
+            }
+            for i in invitations
+        ]
+    }
+
+
+@router.delete("/members/{user_id}")
+async def remove_member(
+    user_id: str,
+    current_user: TokenData = Depends(require_org_admin)
+):
+    """Remove a member from the org (admin only)."""
+    target_user_id = uuid.UUID(user_id)
+
+    # Cannot remove yourself
+    if target_user_id == current_user.user_id:
+        raise HTTPException(status_code=400, detail="Cannot remove yourself")
+
+    pool = await get_pool()
+
+    async with pool.acquire() as conn:
+        # Verify the target is a member
+        member = await conn.fetchrow("""
+            SELECT id FROM org_members
+            WHERE org_id = $1 AND user_id = $2
+        """, current_user.org_id, target_user_id)
+
+        if not member:
+            raise HTTPException(status_code=404, detail="Member not found")
+
+        # Remove member
+        await conn.execute("""
+            DELETE FROM org_members
+            WHERE org_id = $1 AND user_id = $2
+        """, current_user.org_id, target_user_id)
+
+    return {"message": "Member removed successfully"}
+
+
+class UpdateRoleRequest(BaseModel):
+    role: str  # 'admin' or 'member'
+
+
+@router.patch("/members/{user_id}/role")
+async def update_member_role(
+    user_id: str,
+    request: UpdateRoleRequest,
+    current_user: TokenData = Depends(require_org_admin)
+):
+    """Update a member's role (admin only)."""
+    target_user_id = uuid.UUID(user_id)
+
+    if request.role not in ("admin", "member"):
+        raise HTTPException(status_code=400, detail="Invalid role")
+
+    # Cannot demote yourself
+    if target_user_id == current_user.user_id and request.role != "admin":
+        raise HTTPException(status_code=400, detail="Cannot demote yourself")
+
+    pool = await get_pool()
+
+    async with pool.acquire() as conn:
+        # Update role
+        result = await conn.execute("""
+            UPDATE org_members
+            SET role = $1
+            WHERE org_id = $2 AND user_id = $3
+        """, request.role, current_user.org_id, target_user_id)
+
+        if result == "UPDATE 0":
+            raise HTTPException(status_code=404, detail="Member not found")
+
+    return {"message": "Role updated successfully"}
+
+
+@router.delete("/invitations/{invitation_id}")
+async def revoke_invitation(
+    invitation_id: str,
+    current_user: TokenData = Depends(require_org_admin)
+):
+    """Revoke a pending invitation (admin only)."""
+    invite_uuid = uuid.UUID(invitation_id)
+
+    pool = await get_pool()
+
+    async with pool.acquire() as conn:
+        result = await conn.execute("""
+            DELETE FROM org_invitations
+            WHERE id = $1 AND org_id = $2 AND accepted_at IS NULL
+        """, invite_uuid, current_user.org_id)
+
+        if result == "DELETE 0":
+            raise HTTPException(status_code=404, detail="Invitation not found")
+
+    return {"message": "Invitation revoked successfully"}

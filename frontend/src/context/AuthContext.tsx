@@ -35,6 +35,13 @@ interface ClerkUser {
   avatar_url: string | null;
 }
 
+interface OrgInfo {
+  org_id: string;
+  name: string;
+  slug: string;
+  role: 'admin' | 'member';
+}
+
 type UserType = 'b2b' | 'b2c' | null;
 
 interface AuthContextType {
@@ -44,6 +51,9 @@ interface AuthContextType {
   userType: UserType;
   // Clerk token for API calls
   token: string | null;
+  // Organization info (for B2B users)
+  org: OrgInfo | null;
+  hasOrg: boolean;
   // Loading states
   isLoading: boolean;
   isClerkLoaded: boolean;
@@ -53,6 +63,7 @@ interface AuthContextType {
   // Methods
   logout: () => Promise<void>;
   getToken: () => Promise<string | null>;
+  refreshOrg: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -63,6 +74,7 @@ function ClerkAuthProvider({ children }: { children: ReactNode }) {
   const { getToken: getClerkToken, signOut: clerkSignOut } = useClerkAuth();
 
   const [token, setToken] = useState<string | null>(null);
+  const [org, setOrg] = useState<OrgInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Convert Clerk user to our user format
@@ -78,13 +90,38 @@ function ClerkAuthProvider({ children }: { children: ReactNode }) {
     ? (isConsumerEmail(user.email) ? 'b2c' : 'b2b')
     : null;
 
-  // Load token from Clerk
+  // Fetch org info from backend
+  const fetchOrgInfo = async (clerkToken: string) => {
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'https://shell-production-7135.up.railway.app';
+      const response = await fetch(`${API_URL}/auth/me`, {
+        headers: { 'Authorization': `Bearer ${clerkToken}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.org) {
+          setOrg(data.org);
+        } else {
+          setOrg(null);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to fetch org info:', e);
+    }
+  };
+
+  // Load token from Clerk and fetch org info
   useEffect(() => {
     async function loadToken() {
       if (clerkUser && isClerkLoaded) {
         try {
           const clerkToken = await getClerkToken();
           setToken(clerkToken);
+          // Fetch org info for B2B users
+          const email = clerkUser.primaryEmailAddress?.emailAddress || '';
+          if (!isConsumerEmail(email) && clerkToken) {
+            await fetchOrgInfo(clerkToken);
+          }
         } catch (e) {
           console.error('Failed to get Clerk token:', e);
         }
@@ -106,10 +143,19 @@ function ClerkAuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Refresh org info
+  const refreshOrg = async () => {
+    const clerkToken = await getToken();
+    if (clerkToken) {
+      await fetchOrgInfo(clerkToken);
+    }
+  };
+
   // Logout
   const logout = async () => {
     await clerkSignOut();
     setToken(null);
+    setOrg(null);
   };
 
   return (
@@ -117,6 +163,8 @@ function ClerkAuthProvider({ children }: { children: ReactNode }) {
       user,
       userType,
       token,
+      org,
+      hasOrg: !!org,
       isLoading,
       isClerkLoaded,
       // Backwards compatibility
@@ -125,6 +173,7 @@ function ClerkAuthProvider({ children }: { children: ReactNode }) {
       // Methods
       logout,
       getToken,
+      refreshOrg,
     }}>
       {children}
     </AuthContext.Provider>
@@ -138,12 +187,15 @@ function FallbackAuthProvider({ children }: { children: ReactNode }) {
       user: null,
       userType: null,
       token: null,
+      org: null,
+      hasOrg: false,
       isLoading: false,
       isClerkLoaded: false,
       b2cUser: null,
       b2cToken: null,
       logout: async () => {},
       getToken: async () => null,
+      refreshOrg: async () => {},
     }}>
       {children}
     </AuthContext.Provider>

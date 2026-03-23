@@ -43,6 +43,43 @@ export async function apiRequest<T>(endpoint: string, options: ApiOptions = {}):
   return response.json();
 }
 
+// Auth types
+export interface UserInfo {
+  user_id: string;
+  email: string;
+  name: string | null;
+  user_type: 'b2b' | 'b2c';
+  org?: {
+    org_id: string;
+    name: string;
+    slug: string;
+    role: 'admin' | 'member';
+  };
+}
+
+export interface OrgMember {
+  user_id: string;
+  email: string;
+  name: string | null;
+  role: 'admin' | 'member';
+  status: 'pending' | 'active' | 'inactive';
+  joined_at: string | null;
+}
+
+export interface OrgInvitation {
+  id: string;
+  email: string;
+  role: 'admin' | 'member';
+  created_at: string;
+  expires_at: string;
+}
+
+export interface InviteInfo {
+  org_name: string;
+  inviter_email: string;
+  role: 'admin' | 'member';
+}
+
 // Auth endpoints
 export const auth = {
   register: (email: string, password: string) =>
@@ -65,7 +102,7 @@ export const auth = {
     }),
 
   me: (token: string) =>
-    apiRequest<{ id: string; email: string }>('/auth/me', { token }),
+    apiRequest<UserInfo>('/auth/me', { token }),
 
   forgotPassword: (email: string) =>
     apiRequest<{ message: string }>('/auth/forgot-password', {
@@ -77,6 +114,60 @@ export const auth = {
     apiRequest<{ message: string }>('/auth/reset-password', {
       method: 'POST',
       body: { token, password },
+    }),
+
+  // B2B Create Org - creates org for Clerk-authenticated user
+  createOrg: (token: string, data: { org_name: string; industry?: string; company_size?: string }) =>
+    apiRequest<{ access_token: string; user: UserInfo; org: { id: string; name: string; slug: string; role: string } }>('/auth/create-org', {
+      method: 'POST',
+      body: data,
+      token,
+    }),
+
+  // Invite a member to org
+  inviteMember: (token: string, email: string, role: 'admin' | 'member' = 'member') =>
+    apiRequest<{ message: string; invitation_id: string }>('/auth/invite', {
+      method: 'POST',
+      body: { email, role },
+      token,
+    }),
+
+  // List org members
+  listMembers: (token: string) =>
+    apiRequest<{ members: OrgMember[]; invitations: OrgInvitation[] }>('/auth/members', { token }),
+
+  // Get invite info (public - no auth)
+  getInviteInfo: (inviteToken: string) =>
+    apiRequest<InviteInfo>(`/auth/invite/${inviteToken}`),
+
+  // Accept an invitation
+  acceptInvite: (token: string, inviteToken: string, name?: string, password?: string) =>
+    apiRequest<{ access_token: string; user: UserInfo }>('/auth/invite/accept', {
+      method: 'POST',
+      body: { invite_token: inviteToken, name, password },
+      token,
+    }),
+
+  // Remove a member from org (admin only)
+  removeMember: (token: string, userId: string) =>
+    apiRequest<{ message: string }>(`/auth/members/${userId}`, {
+      method: 'DELETE',
+      token,
+    }),
+
+  // Update member role (admin only)
+  updateMemberRole: (token: string, userId: string, role: 'admin' | 'member') =>
+    apiRequest<{ message: string }>(`/auth/members/${userId}/role`, {
+      method: 'PATCH',
+      body: { role },
+      token,
+    }),
+
+  // Revoke invitation (admin only)
+  revokeInvitation: (token: string, invitationId: string) =>
+    apiRequest<{ message: string }>(`/auth/invitations/${invitationId}`, {
+      method: 'DELETE',
+      token,
     }),
 };
 

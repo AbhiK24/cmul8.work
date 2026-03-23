@@ -23,10 +23,14 @@ import Signup from './pages/Signup';
 import SignInPage from './pages/SignIn';
 import Practice from './pages/Practice';
 import Privacy from './pages/Privacy';
+// B2B Org Management
+import OrgOnboarding from './pages/OrgOnboarding';
+import Team from './pages/Team';
+import AcceptInvite from './pages/AcceptInvite';
 
 // B2B Protected Route (Employers)
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { token, isLoading } = useAuth();
+function ProtectedRoute({ children, requireOrg = true }: { children: React.ReactNode; requireOrg?: boolean }) {
+  const { token, isLoading, userType, hasOrg } = useAuth();
 
   if (isLoading) {
     return (
@@ -38,6 +42,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   if (!token) {
     return <Navigate to="/login" replace />;
+  }
+
+  // B2B users without an org should go to onboarding (unless on onboarding page)
+  if (requireOrg && userType === 'b2b' && !hasOrg) {
+    return <Navigate to="/onboarding" replace />;
   }
 
   return <>{children}</>;
@@ -71,6 +80,9 @@ function App() {
           <Route path="/signup/*" element={<Signup />} />
           <Route path="/signin/*" element={<SignInPage />} />
 
+          {/* Invitation acceptance (public) */}
+          <Route path="/invite/:token" element={<AcceptInvite />} />
+
           {/* B2C routes (individual users) */}
           <Route
             path="/practice"
@@ -78,6 +90,16 @@ function App() {
               <B2CProtectedRoute>
                 <Practice />
               </B2CProtectedRoute>
+            }
+          />
+
+          {/* B2B Org Onboarding (protected, but doesn't require org) */}
+          <Route
+            path="/onboarding"
+            element={
+              <ProtectedRoute requireOrg={false}>
+                <OrgOnboarding />
+              </ProtectedRoute>
             }
           />
 
@@ -103,6 +125,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/team"
+            element={
+              <ProtectedRoute>
+                <Team />
               </ProtectedRoute>
             }
           />
