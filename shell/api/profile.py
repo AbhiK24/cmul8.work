@@ -34,6 +34,7 @@ class OrgProfileResponse(OrgProfile):
 class UpdateProfileRequest(BaseModel):
     """Update profile request."""
     name: Optional[str] = None
+    company_name: Optional[str] = None  # Alias for name (frontend uses this)
     industry: Optional[str] = None
     stage: Optional[str] = None
     company_size: Optional[str] = None
@@ -103,6 +104,9 @@ async def update_profile(
 
     pool = await get_pool()
 
+    # Use company_name if provided, otherwise fall back to name
+    org_name = request.company_name or request.name
+
     async with pool.acquire() as conn:
         row = await conn.fetchrow("""
             UPDATE organizations
@@ -119,7 +123,7 @@ async def update_profile(
                       description, website, hiring_focus, custom_roles
         """,
             current_user.org_id,
-            request.name,
+            org_name,
             request.industry,
             request.stage,
             request.company_size,
