@@ -83,6 +83,8 @@ export default function Landing() {
               @keyframes orbit8 { from { transform: rotate(150deg) translateX(110px) rotate(-150deg); } to { transform: rotate(510deg) translateX(110px) rotate(-510deg); } }
               @keyframes float { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-4px) scale(1.02); } }
               @keyframes pulse-border { 0%, 100% { border-color: rgba(239, 68, 68, 0.3); } 50% { border-color: rgba(239, 68, 68, 0.6); } }
+              @keyframes float-around { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(4px, -3px); } 50% { transform: translate(-2px, 4px); } 75% { transform: translate(-4px, -2px); } }
+              @keyframes float-around-reverse { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(-3px, 4px); } 50% { transform: translate(4px, -2px); } 75% { transform: translate(2px, 3px); } }
             `}</style>
 
             {/* Stress indicators */}
@@ -169,8 +171,8 @@ export default function Landing() {
               </div>
             </div>
 
-            {/* Compact floating messages */}
-            <div className="absolute top-10 left-3 bg-white rounded-lg px-3 py-2 shadow-md border border-border max-w-36" style={{ animation: 'float 2s ease-in-out infinite' }}>
+            {/* Compact floating messages - positioned closer to center */}
+            <div className="absolute top-[15%] left-[8%] bg-white rounded-lg px-3 py-2 shadow-md border border-border max-w-36" style={{ animation: 'float-around 4s ease-in-out infinite' }}>
               <div className="flex items-center gap-1.5 mb-0.5">
                 <img src="https://api.dicebear.com/7.x/notionists/svg?seed=sarah" className="w-5 h-5 rounded-full bg-gray-100" alt="" />
                 <span className="text-[10px] font-medium text-dark">Sarah</span>
@@ -179,7 +181,7 @@ export default function Landing() {
               <p className="text-[10px] text-dark/70">"EOD. No exceptions."</p>
             </div>
 
-            <div className="absolute top-8 right-3 bg-white rounded-lg px-3 py-2 shadow-md border border-border max-w-32" style={{ animation: 'float 2.5s ease-in-out infinite', animationDelay: '0.3s' }}>
+            <div className="absolute top-[12%] right-[8%] bg-white rounded-lg px-3 py-2 shadow-md border border-border max-w-32" style={{ animation: 'float-around-reverse 5s ease-in-out infinite', animationDelay: '0.5s' }}>
               <div className="flex items-center gap-1.5 mb-0.5">
                 <img src="https://api.dicebear.com/7.x/notionists/svg?seed=mike" className="w-5 h-5 rounded-full bg-gray-100" alt="" />
                 <span className="text-[10px] font-medium text-dark">Mike</span>
@@ -187,7 +189,7 @@ export default function Landing() {
               <p className="text-[10px] text-dark/70">"Blocking launch"</p>
             </div>
 
-            <div className="absolute bottom-14 left-3 bg-white rounded-lg px-3 py-2 shadow-md border-2" style={{ animation: 'float 1.8s ease-in-out infinite, pulse-border 2s ease-in-out infinite', animationDelay: '0.1s' }}>
+            <div className="absolute bottom-[22%] left-[10%] bg-white rounded-lg px-3 py-2 shadow-md border-2" style={{ animation: 'float-around 3.5s ease-in-out infinite, pulse-border 2s ease-in-out infinite', animationDelay: '0.2s' }}>
               <div className="flex items-center gap-1.5 mb-0.5">
                 <img src="https://api.dicebear.com/7.x/notionists/svg?seed=priya" className="w-5 h-5 rounded-full bg-gray-100" alt="" />
                 <span className="text-[10px] font-medium text-dark">Priya</span>
@@ -196,7 +198,7 @@ export default function Landing() {
               <p className="text-[10px] text-dark/70">"Still waiting..."</p>
             </div>
 
-            <div className="absolute bottom-12 right-3 bg-white rounded-lg px-3 py-2 shadow-md border border-border max-w-32" style={{ animation: 'float 2.2s ease-in-out infinite', animationDelay: '0.6s' }}>
+            <div className="absolute bottom-[18%] right-[8%] bg-white rounded-lg px-3 py-2 shadow-md border border-border max-w-32" style={{ animation: 'float-around-reverse 4.5s ease-in-out infinite', animationDelay: '0.8s' }}>
               <div className="flex items-center gap-1.5 mb-0.5">
                 <img src="https://api.dicebear.com/7.x/notionists/svg?seed=client" className="w-5 h-5 rounded-full bg-gray-100" alt="" />
                 <span className="text-[10px] font-medium text-dark">Client</span>
