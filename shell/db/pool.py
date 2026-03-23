@@ -241,6 +241,14 @@ async def init_pool():
         await conn.execute("""
             DO $$
             BEGIN
+                -- Rename employer_id to org_id if it exists
+                IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'b2b_sessions' AND column_name = 'employer_id') THEN
+                    ALTER TABLE b2b_sessions RENAME COLUMN employer_id TO org_id;
+                END IF;
+                -- Add org_id if neither exists
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'b2b_sessions' AND column_name = 'org_id') THEN
+                    ALTER TABLE b2b_sessions ADD COLUMN org_id UUID;
+                END IF;
                 IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'b2b_sessions' AND column_name = 'mode') THEN
                     ALTER TABLE b2b_sessions ADD COLUMN mode TEXT NOT NULL DEFAULT 'assess';
                 END IF;
