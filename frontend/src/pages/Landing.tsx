@@ -28,14 +28,14 @@ export default function Landing() {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-12 px-6">
+      <section className="pt-28 pb-8 px-6">
         <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-medium text-dark tracking-tight leading-tight mb-6">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-medium text-dark tracking-tight leading-tight mb-5">
             Soft skills separate leaders from everyone else.<br/>
             <span className="text-muted">You can't learn them from a book.</span>
           </h1>
-          <p className="text-lg md:text-xl text-muted max-w-2xl mx-auto mb-10">
-            Step into high-stakes work scenarios that test how you handle pressure, conflict, and ambiguity. Get real feedback. Build real skills.
+          <p className="text-lg text-muted max-w-xl mx-auto mb-8">
+            High-stakes scenarios. Real feedback. Skills that stick.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
@@ -50,141 +50,156 @@ export default function Landing() {
       </section>
 
       {/* Chaotic Simulation Demo */}
-      <section className="py-8 px-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="bg-gradient-to-br from-gray-100 via-gray-50 to-gray-100 rounded-2xl p-6 md:p-10 aspect-[16/10] relative overflow-hidden border border-border">
+      <section className="py-4 px-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-gradient-to-br from-gray-100 via-gray-50 to-gray-100 rounded-2xl p-4 md:p-6 aspect-[16/9] relative overflow-hidden border border-border">
 
-            {/* Orbiting work artifacts */}
+            {/* Orbiting work artifacts - tighter, faster */}
             <style>{`
-              @keyframes orbit1 { from { transform: rotate(0deg) translateX(140px) rotate(0deg); } to { transform: rotate(360deg) translateX(140px) rotate(-360deg); } }
-              @keyframes orbit2 { from { transform: rotate(120deg) translateX(160px) rotate(-120deg); } to { transform: rotate(480deg) translateX(160px) rotate(-480deg); } }
-              @keyframes orbit3 { from { transform: rotate(240deg) translateX(130px) rotate(-240deg); } to { transform: rotate(600deg) translateX(130px) rotate(-600deg); } }
-              @keyframes orbit4 { from { transform: rotate(60deg) translateX(180px) rotate(-60deg); } to { transform: rotate(420deg) translateX(180px) rotate(-420deg); } }
-              @keyframes orbit5 { from { transform: rotate(180deg) translateX(150px) rotate(-180deg); } to { transform: rotate(540deg) translateX(150px) rotate(-540deg); } }
-              @keyframes orbit6 { from { transform: rotate(300deg) translateX(170px) rotate(-300deg); } to { transform: rotate(660deg) translateX(170px) rotate(-660deg); } }
-              @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+              @keyframes orbit1 { from { transform: rotate(0deg) translateX(85px) rotate(0deg); } to { transform: rotate(360deg) translateX(85px) rotate(-360deg); } }
+              @keyframes orbit2 { from { transform: rotate(60deg) translateX(95px) rotate(-60deg); } to { transform: rotate(420deg) translateX(95px) rotate(-420deg); } }
+              @keyframes orbit3 { from { transform: rotate(120deg) translateX(80px) rotate(-120deg); } to { transform: rotate(480deg) translateX(80px) rotate(-480deg); } }
+              @keyframes orbit4 { from { transform: rotate(180deg) translateX(100px) rotate(-180deg); } to { transform: rotate(540deg) translateX(100px) rotate(-540deg); } }
+              @keyframes orbit5 { from { transform: rotate(240deg) translateX(90px) rotate(-240deg); } to { transform: rotate(600deg) translateX(90px) rotate(-600deg); } }
+              @keyframes orbit6 { from { transform: rotate(300deg) translateX(105px) rotate(-300deg); } to { transform: rotate(660deg) translateX(105px) rotate(-660deg); } }
+              @keyframes orbit7 { from { transform: rotate(30deg) translateX(75px) rotate(-30deg); } to { transform: rotate(390deg) translateX(75px) rotate(-390deg); } }
+              @keyframes orbit8 { from { transform: rotate(150deg) translateX(110px) rotate(-150deg); } to { transform: rotate(510deg) translateX(110px) rotate(-510deg); } }
+              @keyframes float { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-4px) scale(1.02); } }
+              @keyframes pulse-border { 0%, 100% { border-color: rgba(239, 68, 68, 0.3); } 50% { border-color: rgba(239, 68, 68, 0.6); } }
             `}</style>
 
-            {/* Stress indicators - red pulses */}
-            <div className="absolute top-4 right-4 flex items-center gap-2 bg-red-50 border border-red-200 px-3 py-1.5 rounded-full animate-pulse">
-              <div className="w-2 h-2 bg-red-500 rounded-full" />
-              <span className="text-xs text-red-600 font-medium">3 urgent</span>
+            {/* Stress indicators */}
+            <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-red-50 border border-red-200 px-2 py-1 rounded-full animate-pulse">
+              <div className="w-1.5 h-1.5 bg-red-500 rounded-full" />
+              <span className="text-[10px] text-red-600 font-medium">5 urgent</span>
             </div>
 
-            {/* Timer pressure */}
-            <div className="absolute top-4 left-4 flex items-center gap-2 bg-white border border-border px-3 py-1.5 rounded-full shadow-sm">
-              <svg className="w-4 h-4 text-dark/60" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+            {/* Timer */}
+            <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-white border border-border px-2 py-1 rounded-full shadow-sm">
+              <svg className="w-3 h-3 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span className="text-xs text-dark/80 font-mono">14:32</span>
+              <span className="text-[10px] text-red-600 font-mono font-medium">02:47</span>
             </div>
 
             {/* Central user */}
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+            <div className="absolute left-1/2 top-[45%] -translate-x-1/2 -translate-y-1/2">
               <div className="relative">
+                {/* Stress ring */}
+                <div className="absolute inset-0 -m-3 border-2 border-red-300/40 rounded-full animate-ping" style={{ animationDuration: '1.5s' }} />
+
                 {/* User */}
-                <div className="w-16 h-16 bg-white rounded-full border-2 border-dark/20 flex items-center justify-center shadow-xl relative z-10">
-                  <span className="text-base font-medium text-dark">You</span>
+                <div className="w-12 h-12 bg-white rounded-full border-2 border-dark/20 flex items-center justify-center shadow-lg relative z-10">
+                  <span className="text-sm font-medium text-dark">You</span>
                 </div>
 
-                {/* Orbiting Slack ping */}
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ animation: 'orbit1 12s linear infinite' }}>
-                  <div className="bg-[#4A154B] text-white px-2.5 py-1.5 rounded-lg shadow-lg flex items-center gap-1.5">
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/></svg>
-                    <span className="text-[10px] font-medium">@you</span>
+                {/* Orbiting artifacts - faster, tighter */}
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ animation: 'orbit1 6s linear infinite' }}>
+                  <div className="bg-[#4A154B] text-white px-2 py-1 rounded shadow-md flex items-center gap-1">
+                    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313z"/></svg>
+                    <span className="text-[9px] font-medium">@you</span>
                   </div>
                 </div>
 
-                {/* Orbiting calendar invite */}
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ animation: 'orbit2 15s linear infinite' }}>
-                  <div className="bg-blue-500 text-white px-2.5 py-1.5 rounded-lg shadow-lg flex items-center gap-1.5">
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>
-                    <span className="text-[10px] font-medium">in 5 min</span>
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ animation: 'orbit2 7s linear infinite' }}>
+                  <div className="bg-blue-500 text-white px-2 py-1 rounded shadow-md flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25" /></svg>
+                    <span className="text-[9px] font-medium">NOW</span>
                   </div>
                 </div>
 
-                {/* Orbiting doc */}
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ animation: 'orbit3 18s linear infinite' }}>
-                  <div className="bg-white border border-border px-2.5 py-1.5 rounded-lg shadow-lg flex items-center gap-1.5">
-                    <svg className="w-3.5 h-3.5 text-blue-600" viewBox="0 0 24 24" fill="currentColor"><path d="M14.2 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V7.8L14.2 2zM6 20V4h7v4h5v12H6z"/></svg>
-                    <span className="text-[10px] font-medium text-dark">Review</span>
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ animation: 'orbit3 5s linear infinite' }}>
+                  <div className="bg-white border border-gray-200 px-2 py-1 rounded shadow-md flex items-center gap-1">
+                    <svg className="w-3 h-3 text-blue-600" viewBox="0 0 24 24" fill="currentColor"><path d="M14.2 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V7.8L14.2 2z"/></svg>
+                    <span className="text-[9px] font-medium text-dark">Doc</span>
                   </div>
                 </div>
 
-                {/* Orbiting reminder */}
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ animation: 'orbit4 14s linear infinite' }}>
-                  <div className="bg-amber-500 text-white px-2.5 py-1.5 rounded-lg shadow-lg flex items-center gap-1.5">
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" /></svg>
-                    <span className="text-[10px] font-medium">Overdue</span>
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ animation: 'orbit4 8s linear infinite' }}>
+                  <div className="bg-amber-500 text-white px-2 py-1 rounded shadow-md flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022" /></svg>
+                    <span className="text-[9px] font-medium">Late</span>
                   </div>
                 </div>
 
-                {/* Orbiting email */}
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ animation: 'orbit5 16s linear infinite' }}>
-                  <div className="bg-red-500 text-white px-2.5 py-1.5 rounded-lg shadow-lg flex items-center gap-1.5">
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" /></svg>
-                    <span className="text-[10px] font-medium">Re: URGENT</span>
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ animation: 'orbit5 6.5s linear infinite' }}>
+                  <div className="bg-red-500 text-white px-2 py-1 rounded shadow-md flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75" /></svg>
+                    <span className="text-[9px] font-medium">URGENT</span>
                   </div>
                 </div>
 
-                {/* Orbiting task */}
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ animation: 'orbit6 20s linear infinite' }}>
-                  <div className="bg-green-500 text-white px-2.5 py-1.5 rounded-lg shadow-lg flex items-center gap-1.5">
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    <span className="text-[10px] font-medium">Due today</span>
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ animation: 'orbit6 9s linear infinite' }}>
+                  <div className="bg-green-500 text-white px-2 py-1 rounded shadow-md flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span className="text-[9px] font-medium">Due</span>
+                  </div>
+                </div>
+
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ animation: 'orbit7 5.5s linear infinite' }}>
+                  <div className="bg-purple-500 text-white px-2 py-1 rounded shadow-md flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952" /></svg>
+                    <span className="text-[9px] font-medium">1:1</span>
+                  </div>
+                </div>
+
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ animation: 'orbit8 7.5s linear infinite' }}>
+                  <div className="bg-pink-500 text-white px-2 py-1 rounded shadow-md flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372" /></svg>
+                    <span className="text-[9px] font-medium">Call</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Floating message cards */}
-            <div className="absolute top-16 left-6 bg-white rounded-xl px-4 py-3 shadow-lg border border-border max-w-48" style={{ animation: 'float 3s ease-in-out infinite' }}>
-              <div className="flex items-center gap-2 mb-1">
-                <img src="https://api.dicebear.com/7.x/notionists/svg?seed=sarah" className="w-6 h-6 rounded-full bg-gray-100" alt="" />
-                <span className="text-xs font-medium text-dark">Sarah Chen</span>
-                <span className="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-medium">VP</span>
+            {/* Compact floating messages */}
+            <div className="absolute top-10 left-3 bg-white rounded-lg px-3 py-2 shadow-md border border-border max-w-36" style={{ animation: 'float 2s ease-in-out infinite' }}>
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <img src="https://api.dicebear.com/7.x/notionists/svg?seed=sarah" className="w-5 h-5 rounded-full bg-gray-100" alt="" />
+                <span className="text-[10px] font-medium text-dark">Sarah</span>
+                <span className="text-[8px] bg-red-100 text-red-600 px-1 rounded font-medium">VP</span>
               </div>
-              <p className="text-xs text-dark/70">"I need this by EOD. No exceptions."</p>
+              <p className="text-[10px] text-dark/70">"EOD. No exceptions."</p>
             </div>
 
-            <div className="absolute top-20 right-8 bg-white rounded-xl px-4 py-3 shadow-lg border border-border max-w-44" style={{ animation: 'float 3.5s ease-in-out infinite', animationDelay: '0.5s' }}>
-              <div className="flex items-center gap-2 mb-1">
-                <img src="https://api.dicebear.com/7.x/notionists/svg?seed=mike" className="w-6 h-6 rounded-full bg-gray-100" alt="" />
-                <span className="text-xs font-medium text-dark">Mike Ross</span>
+            <div className="absolute top-8 right-3 bg-white rounded-lg px-3 py-2 shadow-md border border-border max-w-32" style={{ animation: 'float 2.5s ease-in-out infinite', animationDelay: '0.3s' }}>
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <img src="https://api.dicebear.com/7.x/notionists/svg?seed=mike" className="w-5 h-5 rounded-full bg-gray-100" alt="" />
+                <span className="text-[10px] font-medium text-dark">Mike</span>
               </div>
-              <p className="text-xs text-dark/70">"This is blocking launch."</p>
+              <p className="text-[10px] text-dark/70">"Blocking launch"</p>
             </div>
 
-            <div className="absolute bottom-24 left-12 bg-white rounded-xl px-4 py-3 shadow-lg border border-orange-200 max-w-52" style={{ animation: 'float 2.8s ease-in-out infinite', animationDelay: '0.2s' }}>
-              <div className="flex items-center gap-2 mb-1">
-                <img src="https://api.dicebear.com/7.x/notionists/svg?seed=priya" className="w-6 h-6 rounded-full bg-gray-100" alt="" />
-                <span className="text-xs font-medium text-dark">Priya Sharma</span>
-                <span className="text-[10px] bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded">waiting</span>
+            <div className="absolute bottom-14 left-3 bg-white rounded-lg px-3 py-2 shadow-md border-2" style={{ animation: 'float 1.8s ease-in-out infinite, pulse-border 2s ease-in-out infinite', animationDelay: '0.1s' }}>
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <img src="https://api.dicebear.com/7.x/notionists/svg?seed=priya" className="w-5 h-5 rounded-full bg-gray-100" alt="" />
+                <span className="text-[10px] font-medium text-dark">Priya</span>
+                <span className="text-[8px] bg-orange-100 text-orange-600 px-1 rounded">!</span>
               </div>
-              <p className="text-xs text-dark/70">"Still waiting on your review..."</p>
+              <p className="text-[10px] text-dark/70">"Still waiting..."</p>
             </div>
 
-            <div className="absolute bottom-16 right-6 bg-white rounded-xl px-4 py-3 shadow-lg border border-border max-w-48" style={{ animation: 'float 3.2s ease-in-out infinite', animationDelay: '0.8s' }}>
-              <div className="flex items-center gap-2 mb-1">
-                <img src="https://api.dicebear.com/7.x/notionists/svg?seed=client" className="w-6 h-6 rounded-full bg-gray-100" alt="" />
-                <span className="text-xs font-medium text-dark">Acme Corp</span>
+            <div className="absolute bottom-12 right-3 bg-white rounded-lg px-3 py-2 shadow-md border border-border max-w-32" style={{ animation: 'float 2.2s ease-in-out infinite', animationDelay: '0.6s' }}>
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <img src="https://api.dicebear.com/7.x/notionists/svg?seed=client" className="w-5 h-5 rounded-full bg-gray-100" alt="" />
+                <span className="text-[10px] font-medium text-dark">Client</span>
               </div>
-              <p className="text-xs text-dark/70">"We need to discuss the timeline..."</p>
+              <p className="text-[10px] text-dark/70">"We need to talk"</p>
             </div>
 
-            {/* Your response area */}
-            <div className="absolute bottom-4 left-4 right-4 bg-white border-2 border-dark/10 rounded-xl px-4 py-3 shadow-sm">
+            {/* Response area */}
+            <div className="absolute bottom-2 left-3 right-3 bg-white border-2 border-dark/10 rounded-lg px-3 py-2 shadow-sm">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-dark/40">How do you respond?</span>
-                <div className="flex items-center gap-1">
-                  <div className="w-1.5 h-1.5 bg-dark/30 rounded-full animate-pulse" />
-                  <div className="w-1.5 h-1.5 bg-dark/30 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
-                  <div className="w-1.5 h-1.5 bg-dark/30 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
+                <span className="text-xs text-dark/40">How do you respond?</span>
+                <div className="flex items-center gap-0.5">
+                  <div className="w-1 h-1 bg-dark/30 rounded-full animate-pulse" />
+                  <div className="w-1 h-1 bg-dark/30 rounded-full animate-pulse" style={{ animationDelay: '0.15s' }} />
+                  <div className="w-1 h-1 bg-dark/30 rounded-full animate-pulse" style={{ animationDelay: '0.3s' }} />
                 </div>
               </div>
             </div>
           </div>
-          <p className="text-center text-sm text-muted mt-4">Real scenarios. Real pressure. Safe environment.</p>
+          <p className="text-center text-xs text-muted mt-3">Real scenarios. Real pressure. Safe environment.</p>
         </div>
       </section>
 
@@ -277,91 +292,118 @@ export default function Landing() {
       {/* What You'll Practice */}
       <section className="py-16 px-6">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-medium text-dark text-center mb-4 tracking-tight">
+          <p className="text-center text-sm font-medium text-muted uppercase tracking-wider mb-3">Skill tracks</p>
+          <h2 className="text-3xl md:text-4xl font-medium text-dark text-center mb-12 tracking-tight">
             Practice what actually matters
           </h2>
-          <p className="text-muted text-center mb-12 max-w-2xl mx-auto">
-            The skills that make or break careers. Not theory—actual practice.
-          </p>
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="bg-white p-6 rounded-xl border border-border hover:shadow-md transition-shadow">
-              <div className="text-2xl mb-3">🎯</div>
+          <div className="grid md:grid-cols-3 gap-5">
+            <div className="group relative bg-gradient-to-br from-gray-50 to-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all hover:-translate-y-1">
+              <div className="absolute top-4 right-4 text-xs font-medium text-muted bg-gray-100 px-2 py-0.5 rounded-full">6 scenarios</div>
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-4 shadow-sm">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
+              </div>
               <h3 className="font-medium text-dark mb-2">Interview Prep</h3>
-              <p className="text-sm text-muted mb-4">PM, consulting, leadership interviews. Get grilled by AI interviewers who've seen it all.</p>
-              <span className="text-xs text-muted">6 scenarios</span>
+              <p className="text-sm text-muted leading-relaxed">PM, consulting, leadership. Get grilled by interviewers who've seen it all.</p>
             </div>
-            <div className="bg-white p-6 rounded-xl border border-border hover:shadow-md transition-shadow">
-              <div className="text-2xl mb-3">💬</div>
+
+            <div className="group relative bg-gradient-to-br from-gray-50 to-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all hover:-translate-y-1">
+              <div className="absolute top-4 right-4 text-xs font-medium text-muted bg-gray-100 px-2 py-0.5 rounded-full">5 scenarios</div>
+              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-4 shadow-sm">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" /></svg>
+              </div>
               <h3 className="font-medium text-dark mb-2">Difficult Conversations</h3>
-              <p className="text-sm text-muted mb-4">Giving feedback, saying no, managing up. The conversations everyone avoids.</p>
-              <span className="text-xs text-muted">5 scenarios</span>
+              <p className="text-sm text-muted leading-relaxed">Giving feedback, saying no, managing up. The talks everyone avoids.</p>
             </div>
-            <div className="bg-white p-6 rounded-xl border border-border hover:shadow-md transition-shadow">
-              <div className="text-2xl mb-3">⚡</div>
+
+            <div className="group relative bg-gradient-to-br from-gray-50 to-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all hover:-translate-y-1">
+              <div className="absolute top-4 right-4 text-xs font-medium text-muted bg-gray-100 px-2 py-0.5 rounded-full">4 scenarios</div>
+              <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center mb-4 shadow-sm">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>
+              </div>
               <h3 className="font-medium text-dark mb-2">Pressure Management</h3>
-              <p className="text-sm text-muted mb-4">Competing deadlines, angry stakeholders, impossible asks. Stay cool when it counts.</p>
-              <span className="text-xs text-muted">4 scenarios</span>
+              <p className="text-sm text-muted leading-relaxed">Competing deadlines, angry stakeholders. Stay cool when it counts.</p>
             </div>
-            <div className="bg-white p-6 rounded-xl border border-border hover:shadow-md transition-shadow">
-              <div className="text-2xl mb-3">🤝</div>
+
+            <div className="group relative bg-gradient-to-br from-gray-50 to-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all hover:-translate-y-1">
+              <div className="absolute top-4 right-4 text-xs font-medium text-muted bg-gray-100 px-2 py-0.5 rounded-full">4 scenarios</div>
+              <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center mb-4 shadow-sm">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" /></svg>
+              </div>
               <h3 className="font-medium text-dark mb-2">Stakeholder Management</h3>
-              <p className="text-sm text-muted mb-4">Navigate competing interests, build alignment, manage expectations.</p>
-              <span className="text-xs text-muted">4 scenarios</span>
+              <p className="text-sm text-muted leading-relaxed">Navigate competing interests, build alignment, manage expectations.</p>
             </div>
-            <div className="bg-white p-6 rounded-xl border border-border hover:shadow-md transition-shadow">
-              <div className="text-2xl mb-3">📈</div>
+
+            <div className="group relative bg-gradient-to-br from-gray-50 to-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all hover:-translate-y-1">
+              <div className="absolute top-4 right-4 text-xs font-medium text-muted bg-gray-100 px-2 py-0.5 rounded-full">5 scenarios</div>
+              <div className="w-10 h-10 bg-gradient-to-br from-rose-500 to-pink-600 rounded-xl flex items-center justify-center mb-4 shadow-sm">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" /></svg>
+              </div>
               <h3 className="font-medium text-dark mb-2">Leadership Moments</h3>
-              <p className="text-sm text-muted mb-4">First-time manager challenges. Team conflict. Performance issues.</p>
-              <span className="text-xs text-muted">5 scenarios</span>
+              <p className="text-sm text-muted leading-relaxed">First-time manager challenges. Team conflict. Performance issues.</p>
             </div>
-            <div className="bg-white p-6 rounded-xl border border-border hover:shadow-md transition-shadow">
-              <div className="text-2xl mb-3">💰</div>
+
+            <div className="group relative bg-gradient-to-br from-gray-50 to-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all hover:-translate-y-1">
+              <div className="absolute top-4 right-4 text-xs font-medium text-muted bg-gray-100 px-2 py-0.5 rounded-full">3 scenarios</div>
+              <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-xl flex items-center justify-center mb-4 shadow-sm">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              </div>
               <h3 className="font-medium text-dark mb-2">Negotiation</h3>
-              <p className="text-sm text-muted mb-4">Salary talks, vendor deals, resource allocation. Get what you need.</p>
-              <span className="text-xs text-muted">3 scenarios</span>
+              <p className="text-sm text-muted leading-relaxed">Salary talks, vendor deals, resource allocation. Get what you need.</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* How It Works */}
-      <section className="py-16 px-6 bg-white">
+      <section className="py-16 px-6 bg-gradient-to-b from-white to-gray-50">
         <div className="max-w-4xl mx-auto">
+          <p className="text-center text-sm font-medium text-muted uppercase tracking-wider mb-3">How it works</p>
           <h2 className="text-3xl md:text-4xl font-medium text-dark text-center mb-12 tracking-tight">
             Three steps. Real skills.
           </h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-10 h-10 mx-auto mb-4 rounded-full bg-dark text-white flex items-center justify-center font-medium">1</div>
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="relative bg-gradient-to-br from-gray-50 to-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+              <div className="absolute -top-3 -left-3 w-8 h-8 bg-dark text-white rounded-full flex items-center justify-center font-semibold text-sm shadow-lg">1</div>
+              <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center mb-4">
+                <svg className="w-5 h-5 text-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" /></svg>
+              </div>
               <h3 className="font-medium text-dark mb-2">Pick a scenario</h3>
-              <p className="text-sm text-muted">Choose what you want to practice. Interview prep? Tough feedback? We've got it.</p>
+              <p className="text-sm text-muted leading-relaxed">Choose your challenge. Interview prep, tough feedback, negotiation.</p>
             </div>
-            <div className="text-center">
-              <div className="w-10 h-10 mx-auto mb-4 rounded-full bg-dark text-white flex items-center justify-center font-medium">2</div>
-              <h3 className="font-medium text-dark mb-2">Face the pressure</h3>
-              <p className="text-sm text-muted">AI colleagues with real personalities. They'll push back, get frustrated, and test your limits.</p>
+
+            <div className="relative bg-gradient-to-br from-gray-50 to-white p-6 rounded-2xl border border-gray-100 shadow-sm md:mt-4">
+              <div className="absolute -top-3 -left-3 w-8 h-8 bg-dark text-white rounded-full flex items-center justify-center font-semibold text-sm shadow-lg">2</div>
+              <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center mb-4">
+                <svg className="w-5 h-5 text-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" /></svg>
+              </div>
+              <h3 className="font-medium text-dark mb-2">Face the heat</h3>
+              <p className="text-sm text-muted leading-relaxed">Real personalities. Real pushback. The scenario tests your limits.</p>
             </div>
-            <div className="text-center">
-              <div className="w-10 h-10 mx-auto mb-4 rounded-full bg-dark text-white flex items-center justify-center font-medium">3</div>
-              <h3 className="font-medium text-dark mb-2">Get actionable feedback</h3>
-              <p className="text-sm text-muted">Detailed report on what worked, what didn't, and exactly how to improve.</p>
+
+            <div className="relative bg-gradient-to-br from-gray-50 to-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+              <div className="absolute -top-3 -left-3 w-8 h-8 bg-dark text-white rounded-full flex items-center justify-center font-semibold text-sm shadow-lg">3</div>
+              <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center mb-4">
+                <svg className="w-5 h-5 text-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" /></svg>
+              </div>
+              <h3 className="font-medium text-dark mb-2">Get real feedback</h3>
+              <p className="text-sm text-muted leading-relaxed">Detailed report. What worked, what didn't, how to improve.</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Final CTA */}
-      <section className="py-20 px-6 bg-gradient-to-b from-surface to-gray-100">
+      <section className="py-16 px-6 bg-dark">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-medium text-dark mb-4 tracking-tight">
+          <h2 className="text-3xl md:text-4xl font-medium text-white mb-3 tracking-tight">
             Your next big moment is coming.
           </h2>
-          <p className="text-lg text-muted mb-8">Be ready.</p>
+          <p className="text-lg text-white/60 mb-8">Be ready.</p>
           <Link
             to="/signup"
-            className="inline-block bg-accent text-white px-8 py-4 rounded-full text-base font-medium hover:opacity-85 transition-all hover:-translate-y-0.5"
+            className="inline-block bg-white text-dark px-8 py-4 rounded-full text-base font-medium hover:bg-gray-100 transition-all hover:-translate-y-0.5 shadow-lg"
           >
-            Start Practicing Free
+            Start Practicing Free →
           </Link>
         </div>
       </section>
