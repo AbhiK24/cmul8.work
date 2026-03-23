@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import { auth, b2cAuth } from '../api/client';
+import { useUser, useAuth as useClerkAuth } from '@clerk/clerk-react';
+import { auth } from '../api/client';
 
 // B2B User (Employer)
 interface User {
@@ -7,15 +8,12 @@ interface User {
   email: string;
 }
 
-// B2C User (Individual)
+// B2C User (Individual) - from Clerk
 interface B2CUser {
   id: string;
   email: string;
   name: string | null;
   avatar_url: string | null;
-  auth_provider: string;
-  job_role: string | null;
-  experience_level: string | null;
 }
 
 type UserType = 'b2b' | 'b2c' | null;
@@ -24,17 +22,16 @@ interface AuthContextType {
   // B2B (Employer)
   user: User | null;
   token: string | null;
-  // B2C (Individual)
+  // B2C (Individual) - Clerk
   b2cUser: B2CUser | null;
   b2cToken: string | null;
+  isClerkLoaded: boolean;
   // Common
   userType: UserType;
   isLoading: boolean;
   // B2B methods
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
-  // B2C methods
-  setB2CToken: (token: string) => void;
   // Common methods
   logout: () => void;
 }
@@ -48,14 +45,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.getItem('worksim_token')
   );
 
-  // B2C State
-  const [b2cUser, setB2CUser] = useState<B2CUser | null>(null);
-  const [b2cToken, setB2CTokenState] = useState<string | null>(() =>
-    localStorage.getItem('worksim_b2c_token')
-  );
+  // Clerk B2C state
+  const { user: clerkUser, isLoaded: isClerkLoaded } = useUser();
+  const { getToken: getClerkToken, signOut: clerkSignOut } = useClerkAuth();
 
+  const [b2cToken, setB2CToken] = useState<string | null>(null);
   const [userType, setUserType] = useState<UserType>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Convert Clerk user to B2CUser
+  const b2cUser: B2CUser | null = clerkUser ? {
+    id: clerkUser.id,
+    email: clerkUser.primaryEmailAddress?.emailAddress || '',
+    name: clerkUser.fullName,
+    avatar_url: clerkUser.imageUrl,
+  } : null;
 
   // Load B2B user
   useEffect(() => {
@@ -70,27 +74,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setToken(null);
         }
       }
+      setIsLoading(false);
     }
     loadB2BUser();
   }, [token]);
 
-  // Load B2C user
+  // Load B2C token from Clerk
   useEffect(() => {
-    async function loadB2CUser() {
-      if (b2cToken) {
+    async function loadClerkToken() {
+      if (clerkUser && isClerkLoaded) {
         try {
-          const userData = await b2cAuth.me(b2cToken);
-          setB2CUser(userData);
+          const token = await getClerkToken();
+          setB2CToken(token);
           setUserType('b2c');
-        } catch {
-          localStorage.removeItem('worksim_b2c_token');
-          setB2CTokenState(null);
+        } catch (e) {
+          console.error('Failed to get Clerk token:', e);
         }
       }
-      setIsLoading(false);
+      if (isClerkLoaded) {
+        setIsLoading(false);
+      }
     }
-    loadB2CUser();
-  }, [b2cToken]);
+    loadClerkToken();
+  }, [clerkUser, isClerkLoaded, getClerkToken]);
 
   // B2B login
   const login = async (email: string, password: string) => {
@@ -108,23 +114,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUserType('b2b');
   };
 
-  // B2C set token (from OAuth callback)
-  const setB2CToken = (newToken: string) => {
-    localStorage.setItem('worksim_b2c_token', newToken);
-    setB2CTokenState(newToken);
-    setUserType('b2c');
-  };
-
   // Logout (both B2B and B2C)
-  const logout = () => {
+  const logout = async () => {
     // Clear B2B
     localStorage.removeItem('worksim_token');
     setToken(null);
     setUser(null);
-    // Clear B2C
-    localStorage.removeItem('worksim_b2c_token');
-    setB2CTokenState(null);
-    setB2CUser(null);
+
+    // Clear B2C (Clerk)
+    if (clerkUser) {
+      await clerkSignOut();
+    }
+    setB2CToken(null);
+
     // Reset type
     setUserType(null);
   };
@@ -135,11 +137,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       token,
       b2cUser,
       b2cToken,
+      isClerkLoaded,
       userType,
       isLoading,
       login,
       register,
-      setB2CToken,
       logout
     }}>
       {children}

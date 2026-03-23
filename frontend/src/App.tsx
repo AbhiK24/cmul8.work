@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { SignedIn, SignedOut, RedirectToSignIn } from '@clerk/clerk-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
@@ -19,7 +20,7 @@ import TrainingReport from './pages/TrainingReport';
 import AssessmentDetail from './pages/AssessmentDetail';
 // B2C Pages
 import Signup from './pages/Signup';
-import AuthCallback from './pages/AuthCallback';
+import SignInPage from './pages/SignIn';
 import Practice from './pages/Practice';
 
 // B2B Protected Route (Employers)
@@ -41,23 +42,16 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-// B2C Protected Route (Individual Users)
+// B2C Protected Route (Individual Users) - Uses Clerk
 function B2CProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { b2cToken, isLoading } = useAuth();
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-surface flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-2 border-dark border-t-transparent rounded-full" />
-      </div>
-    );
-  }
-
-  if (!b2cToken) {
-    return <Navigate to="/signup" replace />;
-  }
-
-  return <>{children}</>;
+  return (
+    <>
+      <SignedIn>{children}</SignedIn>
+      <SignedOut>
+        <RedirectToSignIn />
+      </SignedOut>
+    </>
+  );
 }
 
 function App() {
@@ -68,10 +62,12 @@ function App() {
           {/* Public routes */}
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+
+          {/* B2C Auth routes (Clerk) */}
+          <Route path="/signup/*" element={<Signup />} />
+          <Route path="/signin/*" element={<SignInPage />} />
 
           {/* B2C routes (individual users) */}
           <Route
