@@ -1016,9 +1016,9 @@ TRAINING_TEMPLATES = [
 async def seed_training_templates(conn):
     """Seed training templates - updates existing and adds new ones."""
     for template in TRAINING_TEMPLATES:
-        # Check if template exists
+        # Check if template exists (use template_id since id might not exist in older schemas)
         existing = await conn.fetchrow(
-            "SELECT id FROM training_templates WHERE slug = $1",
+            "SELECT template_id FROM training_templates WHERE slug = $1",
             template["slug"]
         )
 
