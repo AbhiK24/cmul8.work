@@ -1,5 +1,6 @@
 """POST /score - Score a completed session."""
 import json
+import uuid
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
@@ -21,6 +22,12 @@ async def get_session_for_scoring(conn, session_id: str):
 
     Returns: (row, table_name, mode, template_data) or (None, None, None, None)
     """
+    # Convert string to UUID for proper type matching
+    try:
+        session_uuid = uuid.UUID(session_id)
+    except ValueError:
+        return None, None, None, None
+
     # Try B2B sessions first
     row = await conn.fetchrow("""
         SELECT
@@ -29,7 +36,7 @@ async def get_session_for_scoring(conn, session_id: str):
             s.training_template_id
         FROM b2b_sessions s
         WHERE s.session_id = $1
-    """, session_id)
+    """, session_uuid)
 
     if row:
         mode = row["mode"] or "assess"
@@ -54,7 +61,7 @@ async def get_session_for_scoring(conn, session_id: str):
             s.started_at, s.completed_at, s.training_template_id, s.template_slug
         FROM b2c_sessions s
         WHERE s.session_id = $1
-    """, session_id)
+    """, session_uuid)
 
     if row:
         template_data = None
@@ -282,13 +289,15 @@ async def score_session(request: ScoreRequest):
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Scoring failed: {e}")
 
-        # Save report to database
+        # Save report to database - use UUID for proper type matching
+        session_uuid = uuid.UUID(request.session_id)
+
         if table_name == "b2c_sessions":
             await conn.execute("""
                 UPDATE b2c_sessions
                 SET report = $1, status = 'complete', completed_at = NOW(), overall_score = $3
                 WHERE session_id = $2
-            """, json.dumps(report), request.session_id, overall_score)
+            """, json.dumps(report), session_uuid, overall_score)
         else:
             # B2B sessions - save framework_score for training mode
             if mode == "train":
@@ -296,12 +305,12 @@ async def score_session(request: ScoreRequest):
                     UPDATE b2b_sessions
                     SET report = $1, status = 'complete', completed_at = NOW(), framework_score = $3
                     WHERE session_id = $2
-                """, json.dumps(report), request.session_id, float(overall_score) if overall_score else None)
+                """, json.dumps(report), session_uuid, float(overall_score) if overall_score else None)
             else:
                 await conn.execute("""
                     UPDATE b2b_sessions
                     SET report = $1, status = 'complete', completed_at = NOW()
                     WHERE session_id = $2
-                """, json.dumps(report), request.session_id)
+                """, json.dumps(report), session_uuid)
 
     return report

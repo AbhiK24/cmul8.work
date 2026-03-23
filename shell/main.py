@@ -163,3 +163,51 @@ async def debug_sessions():
             }
             for row in rows
         ]
+
+
+@app.get("/debug/b2c-sessions")
+async def debug_b2c_sessions():
+    """Debug endpoint to check B2C session statuses."""
+    from .db.pool import get_pool
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch("""
+            SELECT session_id, template_title, status, overall_score,
+                   started_at, completed_at,
+                   debrief IS NOT NULL as has_debrief,
+                   report IS NOT NULL as has_report
+            FROM b2c_sessions
+            ORDER BY created_at DESC
+            LIMIT 10
+        """)
+        return [
+            {
+                "session_id": str(row["session_id"]),
+                "template_title": row["template_title"],
+                "status": row["status"],
+                "overall_score": row["overall_score"],
+                "started_at": str(row["started_at"]) if row["started_at"] else None,
+                "completed_at": str(row["completed_at"]) if row["completed_at"] else None,
+                "has_debrief": row["has_debrief"],
+                "has_report": row["has_report"],
+            }
+            for row in rows
+        ]
+
+
+@app.post("/debug/rescore/{session_id}")
+async def debug_rescore_session(session_id: str):
+    """Debug: re-trigger scoring for a session."""
+    import httpx
+    ENGINE_URL = os.environ.get("ENGINE_URL", "http://engine.railway.internal:8080")
+
+    try:
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            response = await client.post(
+                f"{ENGINE_URL}/score",
+                json={"session_id": session_id}
+            )
+            response.raise_for_status()
+            return {"status": "scored", "session_id": session_id, "report": response.json()}
+    except httpx.HTTPError as e:
+        return {"status": "error", "session_id": session_id, "error": str(e)}

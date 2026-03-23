@@ -108,8 +108,8 @@ export default function Practice() {
     cat.scenarios.map(s => ({ ...s, categoryName: cat.name }))
   );
 
-  // Stats for tabs
-  const completedCount = allSessions.filter(s => s.status === 'complete').length;
+  // Stats for tabs - handle both 'complete' and 'completed' status values for compatibility
+  const completedCount = allSessions.filter(s => s.status === 'complete' || s.status === 'completed').length;
   const inProgressCount = allSessions.filter(s => s.status === 'in_progress' || s.status === 'ready').length;
 
   return (
@@ -347,10 +347,12 @@ export default function Practice() {
                   </div>
                   <div className="bg-white border border-border rounded-xl p-4">
                     <div className="text-2xl font-semibold text-dark">
-                      {completedCount > 0
-                        ? Math.round(allSessions.filter(s => s.score).reduce((acc, s) => acc + (s.score || 0), 0) / completedCount)
-                        : '—'}
-                      {completedCount > 0 && '%'}
+                      {(() => {
+                        const sessionsWithScore = allSessions.filter(s => (s.status === 'complete' || s.status === 'completed') && s.score != null);
+                        if (sessionsWithScore.length === 0) return '—';
+                        const avg = Math.round(sessionsWithScore.reduce((acc, s) => acc + (s.score || 0), 0) / sessionsWithScore.length);
+                        return `${avg}%`;
+                      })()}
                     </div>
                     <div className="text-sm text-muted">Avg Score</div>
                   </div>
@@ -393,7 +395,7 @@ export default function Practice() {
                             </td>
                             <td className="px-4 py-3">
                               <span className={`text-xs font-medium px-2 py-1 rounded-full ${getStatusColor(session.status)}`}>
-                                {session.status === 'complete' ? 'Completed' : session.status === 'in_progress' ? 'In Progress' : session.status}
+                                {(session.status === 'complete' || session.status === 'completed') ? 'Completed' : session.status === 'in_progress' ? 'In Progress' : session.status}
                               </span>
                             </td>
                             <td className="px-4 py-3">
@@ -407,7 +409,7 @@ export default function Practice() {
                               {new Date(session.created_at).toLocaleDateString()}
                             </td>
                             <td className="px-4 py-3">
-                              {session.status === 'complete' && (
+                              {(session.status === 'complete' || session.status === 'completed') && (
                                 <Link
                                   to={`/training-report/${session.session_id}`}
                                   className="text-sm text-emerald-600 hover:text-emerald-700 font-medium"

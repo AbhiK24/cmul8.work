@@ -1,6 +1,7 @@
 """Debrief endpoint for completing a session."""
 import json
 import os
+import uuid
 
 import httpx
 from fastapi import APIRouter, HTTPException
@@ -27,11 +28,17 @@ async def submit_debrief(session_id: str, request: DebriefRequest):
     pool = await get_pool()
     table_name = None
 
+    # Convert string to UUID for proper type matching
+    try:
+        session_uuid = uuid.UUID(session_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid session ID format")
+
     async with pool.acquire() as conn:
         # Check B2B sessions first
         row = await conn.fetchrow(
             "SELECT candidate_token, status FROM b2b_sessions WHERE session_id = $1",
-            session_id
+            session_uuid
         )
         if row:
             table_name = "b2b_sessions"
@@ -39,7 +46,7 @@ async def submit_debrief(session_id: str, request: DebriefRequest):
             # Check B2C sessions
             row = await conn.fetchrow(
                 "SELECT candidate_token, status FROM b2c_sessions WHERE session_id = $1",
-                session_id
+                session_uuid
             )
             if row:
                 table_name = "b2c_sessions"
@@ -65,7 +72,7 @@ async def submit_debrief(session_id: str, request: DebriefRequest):
             UPDATE {table_name}
             SET debrief = $1, completed_at = NOW(), status = 'complete'
             WHERE session_id = $2
-        """, json.dumps(debrief), session_id)
+        """, json.dumps(debrief), session_uuid)
 
     # Call engine to score the session
     try:
