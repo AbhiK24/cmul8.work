@@ -15,10 +15,23 @@ export default function Landing() {
             </svg>
             <span className="font-semibold text-dark tracking-tight">WorkSim</span>
           </Link>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <Link
+              to="/signin"
+              className="text-sm text-muted hover:text-dark transition-colors px-3 py-2"
+            >
+              Sign In
+            </Link>
+            <Link
+              to="/signup"
+              className="text-sm text-dark bg-white border border-border rounded-full px-4 py-2 hover:bg-gray-50 transition-colors"
+            >
+              Start Free
+            </Link>
+            <span className="text-border">|</span>
             <Link
               to="/login"
-              className="flex items-center gap-2 text-sm text-muted hover:text-dark transition-colors border border-border rounded-full px-4 py-2 hover:bg-white"
+              className="flex items-center gap-2 text-sm text-muted hover:text-dark transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 0h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z" />
