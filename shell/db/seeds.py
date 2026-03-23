@@ -522,7 +522,7 @@ async def seed_training_templates(conn):
     for template in TRAINING_TEMPLATES:
         # Check if template exists
         existing = await conn.fetchrow(
-            "SELECT id FROM training_templates WHERE slug = $1",
+            "SELECT template_id FROM training_templates WHERE slug = $1",
             template["slug"]
         )
 

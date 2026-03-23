@@ -1,11 +1,9 @@
 """Shell service - Auth layer and session management for WorkSim."""
 import os
-import traceback
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 
 from .db.pool import init_pool, close_pool
 from .api.auth import router as auth_router
@@ -50,19 +48,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Global exception handler to ensure errors include useful info
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    """Catch all unhandled exceptions and return them as JSON."""
-    error_detail = f"{type(exc).__name__}: {str(exc)}"
-    print(f"Unhandled exception: {error_detail}")
-    print(traceback.format_exc())
-    return JSONResponse(
-        status_code=500,
-        content={"detail": error_detail, "traceback": traceback.format_exc()[:1000]}
-    )
-
 
 # Include routers
 app.include_router(auth_router)

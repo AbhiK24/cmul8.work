@@ -75,21 +75,12 @@ async def get_current_b2c_user(
     token = credentials.credentials
 
     # First try our custom JWT
-    try:
-        token_data = decode_access_token(token)
-        if token_data is not None:
-            return token_data
-    except Exception as e:
-        # Log but continue to try Clerk
-        print(f"Our JWT decode failed: {e}")
+    token_data = decode_access_token(token)
+    if token_data is not None:
+        return token_data
 
     # Try Clerk token
-    try:
-        clerk_user = await verify_clerk_token(token)
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=401, detail=f"Token verification failed: {str(e)}")
+    clerk_user = await verify_clerk_token(token)
 
     # Ensure user exists in our database (unified users table)
     pool = await get_pool()

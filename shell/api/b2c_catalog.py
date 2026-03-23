@@ -133,7 +133,7 @@ async def list_scenarios(current_user: TokenData = Depends(get_current_b2c_user)
         # B2C sees 'both' and 'b2c_only' templates
         rows = await conn.fetch("""
             SELECT
-                id, slug, title, skill_category, description,
+                template_id, slug, title, skill_category, description,
                 duration_minutes, difficulty, learning_objectives
             FROM training_templates
             WHERE COALESCE(availability, 'both') IN ('both', 'b2c_only')
@@ -142,9 +142,9 @@ async def list_scenarios(current_user: TokenData = Depends(get_current_b2c_user)
 
         # Get user's completion stats
         user_stats = await conn.fetch("""
-            SELECT template_slug, COUNT(*) as completed, MAX(overall_score) as best_score
+            SELECT template_slug, COUNT(*) as completed, MAX(score) as best_score
             FROM b2c_sessions
-            WHERE user_id = $1 AND status = 'complete'
+            WHERE user_id = $1 AND status = 'completed'
             GROUP BY template_slug
         """, user_id)
 
@@ -158,7 +158,7 @@ async def list_scenarios(current_user: TokenData = Depends(get_current_b2c_user)
 
         return [
             ScenarioSummary(
-                template_id=str(row["id"]),
+                template_id=str(row["template_id"]),
                 slug=row["slug"],
                 title=row["title"],
                 skill_category=row["skill_category"],
@@ -183,7 +183,7 @@ async def get_scenario(slug: str, current_user: TokenData = Depends(get_current_
         # B2C can access 'both' and 'b2c_only' templates
         row = await conn.fetchrow("""
             SELECT
-                id, slug, title, skill_category, description,
+                template_id, slug, title, skill_category, description,
                 duration_minutes, difficulty, learning_objectives,
                 company_context, agents, tasks, framework_name, framework_reference
             FROM training_templates
@@ -195,13 +195,13 @@ async def get_scenario(slug: str, current_user: TokenData = Depends(get_current_
 
         # Get user's stats for this scenario
         user_stat = await conn.fetchrow("""
-            SELECT COUNT(*) as completed, MAX(overall_score) as best_score
+            SELECT COUNT(*) as completed, MAX(score) as best_score
             FROM b2c_sessions
-            WHERE user_id = $1 AND template_slug = $2 AND status = 'complete'
+            WHERE user_id = $1 AND template_slug = $2 AND status = 'completed'
         """, user_id, slug)
 
         return ScenarioDetail(
-            template_id=str(row["id"]),
+            template_id=str(row["template_id"]),
             slug=row["slug"],
             title=row["title"],
             skill_category=row["skill_category"],
@@ -229,7 +229,7 @@ async def list_categories(current_user: TokenData = Depends(get_current_b2c_user
         # B2C sees 'both' and 'b2c_only' templates
         rows = await conn.fetch("""
             SELECT
-                id, slug, title, skill_category, description,
+                template_id, slug, title, skill_category, description,
                 duration_minutes, difficulty, learning_objectives
             FROM training_templates
             WHERE COALESCE(availability, 'both') IN ('both', 'b2c_only')
@@ -238,9 +238,9 @@ async def list_categories(current_user: TokenData = Depends(get_current_b2c_user
 
         # Get user's completion stats
         user_stats = await conn.fetch("""
-            SELECT template_slug, COUNT(*) as completed, MAX(overall_score) as best_score
+            SELECT template_slug, COUNT(*) as completed, MAX(score) as best_score
             FROM b2c_sessions
-            WHERE user_id = $1 AND status = 'complete'
+            WHERE user_id = $1 AND status = 'completed'
             GROUP BY template_slug
         """, user_id)
 
@@ -267,7 +267,7 @@ async def list_categories(current_user: TokenData = Depends(get_current_b2c_user
 
             categories_map[cat]["scenarios"].append(
                 ScenarioSummary(
-                    template_id=str(row["id"]),
+                    template_id=str(row["template_id"]),
                     slug=row["slug"],
                     title=row["title"],
                     skill_category=row["skill_category"],
@@ -292,7 +292,7 @@ async def start_session(slug: str, current_user: TokenData = Depends(get_current
     async with pool.acquire() as conn:
         # Get template - B2C can only access 'both' and 'b2c_only' templates
         template = await conn.fetchrow("""
-            SELECT id, slug, title, skill_category, company_context,
+            SELECT template_id, slug, title, skill_category, company_context,
                    agents, tasks, inbox, framework_name, framework_reference, coaching_prompts
             FROM training_templates
             WHERE slug = $1 AND COALESCE(availability, 'both') IN ('both', 'b2c_only')
