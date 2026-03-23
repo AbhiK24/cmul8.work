@@ -17,10 +17,10 @@ export default function SignInPage() {
             <span className="font-semibold text-dark tracking-tight">WorkSim</span>
           </Link>
           <Link
-            to="/login"
-            className="text-sm text-muted hover:text-dark transition-colors border border-border rounded-full px-4 py-2"
+            to="/signup"
+            className="text-sm text-muted hover:text-dark transition-colors"
           >
-            Enterprise Login
+            Sign up
           </Link>
         </div>
       </nav>

@@ -17,10 +17,10 @@ export default function Signup() {
             <span className="font-semibold text-dark tracking-tight">WorkSim</span>
           </Link>
           <Link
-            to="/login"
-            className="text-sm text-muted hover:text-dark transition-colors border border-border rounded-full px-4 py-2"
+            to="/signin"
+            className="text-sm text-muted hover:text-dark transition-colors"
           >
-            Enterprise Login
+            Sign in
           </Link>
         </div>
       </nav>
@@ -60,9 +60,9 @@ export default function Signup() {
           />
 
           <p className="text-center text-sm text-muted mt-6">
-            Looking to assess candidates?{' '}
-            <Link to="/login" className="text-dark font-medium hover:underline">
-              Enterprise login →
+            Already have an account?{' '}
+            <Link to="/signin" className="text-dark font-medium hover:underline">
+              Sign in →
             </Link>
           </p>
 
