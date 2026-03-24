@@ -51,6 +51,29 @@ def calculate_relationship_delta(message: str, reply: str) -> float:
     return max(-0.1, min(0.15, delta))
 
 
+def check_escalation(agent: dict, current_score: float, new_score: float) -> tuple[bool, str | None]:
+    """Check if agent should escalate to their manager.
+
+    Returns: (should_escalate, reason)
+    """
+    archetype = agent.get("archetype", "standard")
+    escalation_threshold = agent.get("escalation_threshold", 0.25)
+
+    # Only difficult agents escalate
+    if archetype != "difficult":
+        return False, None
+
+    # Escalate if relationship dropped below threshold
+    if new_score <= escalation_threshold and current_score > escalation_threshold:
+        return True, f"Relationship dropped below acceptable level ({new_score:.0%})"
+
+    # Escalate if relationship is critically low and declining
+    if new_score <= 0.2 and new_score < current_score:
+        return True, f"Critical relationship breakdown ({new_score:.0%})"
+
+    return False, None
+
+
 async def get_session_with_table(conn, session_id: str):
     """Get session data from either b2b_sessions or b2c_sessions.
 
@@ -259,6 +282,26 @@ async def send_message(request: MessageRequest) -> MessageResponse:
         delta = calculate_relationship_delta(request.message_text, reply)
         new_score = max(0.0, min(1.0, current_score + delta))
 
+        # Check for escalation (difficult agents may escalate to their boss)
+        escalated, escalation_reason = check_escalation(agent, current_score, new_score)
+
+        if escalated:
+            # Record escalation in trace
+            escalation_trace = TraceEvent(
+                event_id=str(uuid.uuid4()),
+                session_id=request.session_id,
+                timestamp=time.time(),
+                elapsed_seconds=request.elapsed_seconds,
+                event_type="agent_escalation",
+                agent_id=request.agent_id,
+                content={
+                    "agent_name": agent["name"],
+                    "reason": escalation_reason,
+                    "final_score": new_score
+                }
+            )
+            trace.append(escalation_trace.model_dump())
+
         # Update histories
         timestamp = time.time()
         history.append({
@@ -308,5 +351,7 @@ async def send_message(request: MessageRequest) -> MessageResponse:
     return MessageResponse(
         reply=reply,
         relationship_score=new_score,
-        agent_id=request.agent_id
+        agent_id=request.agent_id,
+        escalated=escalated,
+        escalation_reason=escalation_reason
     )

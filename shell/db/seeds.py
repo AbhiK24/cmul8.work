@@ -157,6 +157,22 @@ TRAINING_TEMPLATES = [
             "emotional_escalation": "You're getting heated. Stick to the facts - they're on your side.",
             "good_documentation": "Good - you're creating a paper trail. This protects you and helps your case.",
             "effective_escalation": "Strong escalation. You were clear about the stakes without being dramatic."
+        },
+        "end_conditions": {
+            "win": [
+                "Marcus agrees to delay the launch for safety review",
+                "Marcus agrees to escalate to Diana for her decision",
+                "Diana commits to a formal safety review before shipping",
+                "You successfully document concerns and get acknowledgment"
+            ],
+            "fail": [
+                "Marcus ends the conversation and reports you as 'not a team player'",
+                "You agree to ship without addressing the safety issue",
+                "Relationship with Marcus drops below 20%",
+                "You back down completely without any escalation path"
+            ],
+            "relationship_floor": 20,
+            "time_limit_seconds": 900
         }
     },
 
@@ -303,6 +319,22 @@ TRAINING_TEMPLATES = [
             "being_cruel": "Direct doesn't mean cold. You can be honest and still be kind.",
             "blaming_board": "Don't hide behind the board. You're the CEO. Own the decision.",
             "good_delivery": "That was direct, honest, and humane. Hard, but right."
+        },
+        "end_conditions": {
+            "win": [
+                "Alex accepts the decision with dignity intact",
+                "You deliver the news clearly and offer support",
+                "Alex understands it's a business decision, not personal betrayal",
+                "The conversation ends with mutual respect despite the outcome"
+            ],
+            "fail": [
+                "Alex storms out feeling blindsided and betrayed",
+                "You fail to actually deliver the news (avoid the conversation)",
+                "Relationship with Alex drops below 15%",
+                "Alex threatens legal action or public retaliation"
+            ],
+            "relationship_floor": 15,
+            "time_limit_seconds": 720
         }
     },
 
@@ -429,6 +461,22 @@ TRAINING_TEMPLATES = [
             "too_passive": "You're being too soft. Jordan might not even realize there's an issue.",
             "burning_bridge": "You're escalating too fast. Have you given Jordan a chance to make it right?",
             "good_state": "Strong use of STATE - factual, tentative, and inviting dialogue."
+        },
+        "end_conditions": {
+            "win": [
+                "Jordan acknowledges the issue and offers to correct it",
+                "Jordan agrees to give you credit in the next meeting",
+                "Victoria is informed and commits to fair attribution",
+                "You address the issue while preserving the working relationship"
+            ],
+            "fail": [
+                "Jordan becomes defensive and the relationship is damaged",
+                "Jordan escalates against you to Victoria",
+                "Relationship with Jordan drops below 25%",
+                "You back down without addressing the credit issue at all"
+            ],
+            "relationship_floor": 25,
+            "time_limit_seconds": 720
         }
     },
 
@@ -588,6 +636,22 @@ TRAINING_TEMPLATES = [
             "giving_up_too_easy": "You backed down fast. Is this something you can live with shipping?",
             "good_reframe": "Good reframe - you connected the ethical concern to something they care about.",
             "effective_coalition": "Smart - getting Maya on board strengthens your position."
+        },
+        "end_conditions": {
+            "win": [
+                "Kevin agrees to add safeguards for teen users",
+                "Lisa commits to reviewing the research before launch",
+                "The feature ships with protective measures in place",
+                "You successfully escalate and get a proper ethics review"
+            ],
+            "fail": [
+                "You agree to ship the feature without any safeguards",
+                "Kevin labels you as 'not a team player' and sidelines you",
+                "Relationship with Kevin drops below 20%",
+                "You stay silent and let the feature ship as-is"
+            ],
+            "relationship_floor": 20,
+            "time_limit_seconds": 720
         }
     },
 
@@ -774,6 +838,22 @@ TRAINING_TEMPLATES = [
             "not_pushing_back": "Derek is bulldozing you. Is his emergency really your emergency?",
             "good_delegation": "Good - you're delegating and protecting your team from chaos.",
             "smart_negotiation": "Nice negotiation on timing. You bought yourself breathing room."
+        },
+        "end_conditions": {
+            "win": [
+                "You prioritize the critical items and communicate trade-offs clearly",
+                "Nina understands the real situation and supports your decisions",
+                "The launch stays on track with managed expectations",
+                "You delegate effectively and protect your team from chaos"
+            ],
+            "fail": [
+                "You try to do everything and drop a critical ball",
+                "Nina is blindsided by bad news she should have known earlier",
+                "The launch fails due to poor prioritization",
+                "Relationship with any stakeholder drops below 25%"
+            ],
+            "relationship_floor": 25,
+            "time_limit_seconds": 900
         }
     },
 
@@ -888,6 +968,22 @@ TRAINING_TEMPLATES = [
             "attacking_personality": "You made it about who Riley is, not what they did. Stick to behavior.",
             "not_curious": "You lectured but didn't ask what's going on. There might be context you're missing.",
             "good_sbi": "Good SBI - specific, behavioral, and you invited their perspective."
+        },
+        "end_conditions": {
+            "win": [
+                "Riley acknowledges the issue and commits to a plan",
+                "You uncover root cause and agree on support needed",
+                "Riley feels heard, not attacked",
+                "Clear follow-up actions are established"
+            ],
+            "fail": [
+                "Riley becomes defensive and shuts down",
+                "Riley leaves the conversation feeling attacked",
+                "Relationship with Riley drops below 30%",
+                "No concrete plan or commitment is reached"
+            ],
+            "relationship_floor": 30,
+            "time_limit_seconds": 600
         }
     },
 

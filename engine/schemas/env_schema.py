@@ -112,6 +112,18 @@ class ArtifactContent(BaseModel):
     sections: list[ArtifactSection] = []
 
 
+class EndCondition(BaseModel):
+    """Win or fail condition for the simulation."""
+    type: str  # win|fail
+    trigger: str  # relationship_threshold|task_completion|time_limit|agent_escalation
+    description: str  # Human-readable description of condition
+    threshold: Optional[float] = None  # For relationship-based triggers
+    agent_id: Optional[str] = None  # For agent-specific triggers
+    task_ids: Optional[list[str]] = None  # For task-based triggers
+    trigger_seconds: Optional[int] = None  # For time_limit: seconds when condition is checked
+    required_task_id: Optional[str] = None  # For time_limit: task that must be complete by trigger_seconds
+
+
 class EnvironmentResponse(BaseModel):
     """The generated simulation environment."""
     company_name: str
@@ -123,6 +135,7 @@ class EnvironmentResponse(BaseModel):
     artifact_content: ArtifactContent
     inject_schedule: list[StressInject]
     background_chatter: list[AgentChatter] = []  # Agent-to-agent conversations
+    end_conditions: list[EndCondition] = []  # Win/fail conditions for the simulation
 
 
 class MessageResponse(BaseModel):
@@ -130,6 +143,8 @@ class MessageResponse(BaseModel):
     reply: str
     relationship_score: float
     agent_id: str
+    escalated: bool = False  # True if agent escalated to their manager
+    escalation_reason: Optional[str] = None  # Why they escalated
 
 
 class TraceEvent(BaseModel):

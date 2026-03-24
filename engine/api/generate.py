@@ -8,7 +8,8 @@ from fastapi import APIRouter, HTTPException
 from ..schemas.input_schema import GenerateRequest
 from ..schemas.env_schema import (
     EnvironmentResponse, Agent, Thread, Message, Task, StressInject,
-    TaskKnowledge, TaskRequirement, AgentChatter, ArtifactContent, ArtifactSection
+    TaskKnowledge, TaskRequirement, AgentChatter, ArtifactContent, ArtifactSection,
+    EndCondition
 )
 from ..engine.kimi_client import call_kimi
 from ..db.pool import get_pool
@@ -156,6 +157,24 @@ ENV_SCHEMA = {
                     "timestamp": {"type": "number"}
                 }
             }
+        },
+        "end_conditions": {
+            "type": "array",
+            "description": "Win and fail conditions that determine simulation outcome",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "type": {"type": "string", "enum": ["win", "fail"]},
+                    "trigger": {"type": "string", "enum": ["relationship_threshold", "task_completion", "time_limit", "agent_escalation"]},
+                    "description": {"type": "string"},
+                    "threshold": {"type": "number"},
+                    "agent_id": {"type": "string"},
+                    "task_ids": {"type": "array", "items": {"type": "string"}},
+                    "trigger_seconds": {"type": "integer", "description": "For time_limit: when to check the condition"},
+                    "required_task_id": {"type": "string", "description": "For time_limit: task that must be complete by trigger_seconds"}
+                },
+                "required": ["type", "trigger", "description"]
+            }
         }
     }
 }
@@ -277,6 +296,37 @@ async def generate_environment(request: GenerateRequest) -> EnvironmentResponse:
             sections=artifact_sections
         )
 
+        # Parse end conditions (with defaults if not provided)
+        end_conditions = []
+        for ec in env_data.get("end_conditions", []):
+            end_conditions.append(EndCondition(
+                type=ec.get("type", "fail"),
+                trigger=ec.get("trigger", "relationship_threshold"),
+                description=ec.get("description", ""),
+                threshold=ec.get("threshold"),
+                agent_id=ec.get("agent_id"),
+                task_ids=ec.get("task_ids"),
+                trigger_seconds=ec.get("trigger_seconds"),
+                required_task_id=ec.get("required_task_id"),
+            ))
+
+        # Add default end conditions if none provided
+        if not end_conditions:
+            # Default fail condition: any relationship drops below 15%
+            end_conditions.append(EndCondition(
+                type="fail",
+                trigger="relationship_threshold",
+                description="Your relationship with a team member deteriorated beyond repair.",
+                threshold=0.15,
+            ))
+            # Default win condition: complete all tasks with good relationships
+            end_conditions.append(EndCondition(
+                type="win",
+                trigger="task_completion",
+                description="Excellent! You completed all tasks while maintaining positive team relationships.",
+                task_ids=[t.task_id for t in tasks],
+            ))
+
         env = EnvironmentResponse(
             company_name=request.org_name if request.org_name else env_data.get("company_name", "Unnamed Company"),
             company_description=env_data.get("company_description", ""),
@@ -294,7 +344,8 @@ async def generate_environment(request: GenerateRequest) -> EnvironmentResponse:
             tasks=tasks,
             artifact_content=artifact_content,
             inject_schedule=[StressInject(**i) for i in env_data.get("inject_schedule", [])],
-            background_chatter=background_chatter
+            background_chatter=background_chatter,
+            end_conditions=end_conditions
         )
 
     except json.JSONDecodeError as e:

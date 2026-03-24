@@ -190,6 +190,38 @@ Generate a complete simulation environment:
 
    IMPORTANT: Some sections should contain INCORRECT or INCOMPLETE information that the candidate needs to fix by gathering info from agents. This creates the core gameplay loop.
 
+9. **End Conditions (Win/Fail States)**: Define clear success and failure conditions that create stakes:
+
+   **Fail Conditions** (at least 2-3):
+   - `relationship_threshold`: Relationship with critical agent drops below threshold (e.g., 0.15)
+   - `agent_escalation`: A "difficult" agent escalates to their boss after poor handling
+   - `time_limit`: Critical task not completed before deadline (link to inject timing)
+
+   **Win Conditions**:
+   - `task_completion`: All required tasks completed with good relationships (>0.4)
+
+   Each end condition should have:
+   - `type`: "win" or "fail"
+   - `trigger`: What triggers the condition
+   - `description`: Message shown to candidate when triggered
+   - `threshold`: For relationship-based triggers (0.0-1.0)
+   - `agent_id`: For agent-specific triggers
+   - `trigger_seconds`: For time_limit - when to check (should align with inject_schedule)
+   - `required_task_id`: For time_limit - which task must be done by then
+
+   **Example time_limit condition:**
+   ```json
+   {
+     "type": "fail",
+     "trigger": "time_limit",
+     "description": "The client meeting started and you haven't prepared the brief! Your manager is furious.",
+     "trigger_seconds": 900,
+     "required_task_id": "task_prepare_brief"
+   }
+   ```
+
+   IMPORTANT: End conditions create stakes and engagement. A "difficult" agent should have potential to cause a FAIL if mishandled. Time-based conditions create urgency and force prioritization. This makes the simulation feel consequential.
+
 ## Agent Archetypes
 - **standard**: Cooperative, shares info when asked appropriately
 - **difficult**: Guarded, requires relationship building (score > 0.65) to unlock critical info

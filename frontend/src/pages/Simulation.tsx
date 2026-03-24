@@ -15,6 +15,17 @@ interface TrainingContext {
   learningObjectives?: string[];
 }
 
+interface EndCondition {
+  type: 'win' | 'fail';
+  trigger: 'relationship_threshold' | 'task_completion' | 'time_limit' | 'agent_escalation';
+  description: string;
+  threshold?: number;
+  agent_id?: string;
+  task_ids?: string[];
+  trigger_seconds?: number;  // For time_limit: when to check
+  required_task_id?: string; // For time_limit: task that must be complete
+}
+
 interface SimulationEnv {
   company_name: string;
   company_description: string;
@@ -24,6 +35,7 @@ interface SimulationEnv {
   tasks: Task[];
   artifact_content: ArtifactContent;
   inject_schedule: { inject_id: string; trigger_seconds: number; message: string; from_agent_id: string }[];
+  end_conditions?: EndCondition[];
 }
 
 // Colorful but minimal palette for relationships
@@ -97,6 +109,20 @@ export default function Simulation() {
   const [artifactSections, setArtifactSections] = useState<ArtifactSection[]>([]);
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
+
+  // Win/Fail state
+  const [endCondition, setEndCondition] = useState<{
+    type: 'win' | 'fail' | null;
+    reason: string;
+    agentName?: string;
+  }>({ type: null, reason: '' });
+
+  // Score change animation
+  const [scoreChange, setScoreChange] = useState<{
+    agentId: string;
+    delta: number;
+    timestamp: number;
+  } | null>(null);
 
   // Training mode state
   const [trainingContext, setTrainingContext] = useState<TrainingContext | null>(null);
@@ -201,6 +227,50 @@ export default function Simulation() {
     }, 1000);
     return () => clearInterval(interval);
   }, [navigate, sessionId, token]);
+
+  // Time-based end condition check
+  useEffect(() => {
+    if (!env?.end_conditions || !onboardingComplete || endCondition.type) return;
+
+    const timeConditions = env.end_conditions.filter(
+      ec => ec.type === 'fail' && ec.trigger === 'time_limit' && ec.trigger_seconds
+    );
+
+    for (const condition of timeConditions) {
+      // Check if we've passed the trigger time
+      if (elapsedSeconds >= (condition.trigger_seconds || 0)) {
+        // Check if required task is completed
+        const requiredTask = condition.required_task_id
+          ? tasks.find(t => t.task_id === condition.required_task_id)
+          : null;
+
+        // If task exists and is NOT completed, trigger fail
+        if (requiredTask && !requiredTask.completed) {
+          setEndCondition({
+            type: 'fail',
+            reason: condition.description || `Time ran out! "${requiredTask.title}" was not completed in time.`,
+          });
+
+          // Log time-based fail
+          if (sessionId && token) {
+            candidate.trace({
+              session_id: sessionId,
+              token: token,
+              event_type: 'session_end' as 'thread_open',
+              elapsed_seconds: elapsedSeconds,
+              content: {
+                end_type: 'fail',
+                reason: 'time_limit',
+                task_id: condition.required_task_id,
+                trigger_seconds: condition.trigger_seconds,
+              }
+            }).catch(() => {});
+          }
+          break;
+        }
+      }
+    }
+  }, [elapsedSeconds, env, tasks, onboardingComplete, endCondition.type, sessionId, token]);
 
   // Stress injects - only start after onboarding completes
   useEffect(() => {
@@ -330,13 +400,103 @@ export default function Simulation() {
       );
 
       // Update relationship score (API returns absolute score, not delta)
+      const newScore = response.relationship_score ?? 0.5;
+      const scoringAgent = agents.find(a => a.agent_id === activeThread.from_agent_id);
+      const oldScore = scoringAgent?.relationship_score ?? 0.5;
+      const scoreDelta = newScore - oldScore;
+
       setAgents((prev) =>
         prev.map((a) =>
           a.agent_id === activeThread.from_agent_id
-            ? { ...a, relationship_score: response.relationship_score ?? a.relationship_score }
+            ? { ...a, relationship_score: newScore }
             : a
         )
       );
+
+      // Trigger score change animation if delta is significant
+      if (Math.abs(scoreDelta) >= 0.01) {
+        setScoreChange({
+          agentId: activeThread.from_agent_id,
+          delta: scoreDelta,
+          timestamp: Date.now(),
+        });
+        // Clear animation after 2 seconds
+        setTimeout(() => setScoreChange(null), 2000);
+      }
+
+      // ESCALATION DETECTION: Check if agent escalated to their boss
+      if (response.escalated && !endCondition.type) {
+        setEndCondition({
+          type: 'fail',
+          reason: `${scoringAgent?.name || 'A team member'} has escalated concerns about your interactions to their manager. ${response.escalation_reason || ''}`,
+          agentName: scoringAgent?.name,
+        });
+
+        // Log escalation fail event
+        if (sessionId && token) {
+          candidate.trace({
+            session_id: sessionId,
+            token: token,
+            event_type: 'session_end' as 'thread_open',
+            elapsed_seconds: elapsedSeconds,
+            content: {
+              end_type: 'fail',
+              reason: 'agent_escalation',
+              agent_id: activeThread.from_agent_id,
+              escalation_reason: response.escalation_reason,
+              final_score: newScore,
+            }
+          }).catch(() => {});
+        }
+      }
+
+      // FAIL DETECTION: Check end conditions from environment (with defaults)
+      const defaultFailConditions: EndCondition[] = [{
+        type: 'fail',
+        trigger: 'relationship_threshold',
+        description: `Your relationship with ${scoringAgent?.name || 'a team member'} has deteriorated beyond repair.`,
+        threshold: 0.15,
+      }];
+      const failConditions = (env?.end_conditions?.filter(ec => ec.type === 'fail') || []).length > 0
+        ? env!.end_conditions!.filter(ec => ec.type === 'fail')
+        : defaultFailConditions;
+      for (const condition of failConditions) {
+        if (endCondition.type) break; // Already triggered
+
+        if (condition.trigger === 'relationship_threshold') {
+          const threshold = condition.threshold ?? 0.15;
+          // Check if this specific agent or any agent
+          const checkAgent = condition.agent_id
+            ? condition.agent_id === activeThread.from_agent_id
+            : true;
+
+          if (checkAgent && newScore <= threshold) {
+            setEndCondition({
+              type: 'fail',
+              reason: condition.description || `Your relationship with ${scoringAgent?.name || 'a team member'} has deteriorated beyond repair.`,
+              agentName: scoringAgent?.name,
+            });
+
+            // Log fail event
+            if (sessionId && token) {
+              candidate.trace({
+                session_id: sessionId,
+                token: token,
+                event_type: 'session_end' as 'thread_open',
+                elapsed_seconds: elapsedSeconds,
+                content: {
+                  end_type: 'fail',
+                  reason: condition.trigger,
+                  agent_id: activeThread.from_agent_id,
+                  final_score: newScore,
+                  condition_description: condition.description,
+                }
+              }).catch(() => {});
+            }
+            break;
+          }
+        }
+      }
     } catch (err) {
       // Show error in thread
       const errorMessage: Message = {
@@ -373,9 +533,62 @@ export default function Simulation() {
       }).catch(() => {}); // Fire and forget
     }
 
-    setTasks((prev) =>
-      prev.map((t) => (t.task_id === taskId ? { ...t, completed: !t.completed } : t))
-    );
+    const updatedTasks = tasks.map((t) => (t.task_id === taskId ? { ...t, completed: !t.completed } : t));
+    setTasks(updatedTasks);
+
+    // WIN DETECTION: Check end conditions from environment (with defaults)
+    const defaultWinConditions: EndCondition[] = [{
+      type: 'win',
+      trigger: 'task_completion',
+      description: 'Excellent work! You completed all tasks while maintaining positive relationships.',
+      task_ids: updatedTasks.map(t => t.task_id),
+      threshold: 0.4,
+    }];
+    const winConditions = (env?.end_conditions?.filter(ec => ec.type === 'win') || []).length > 0
+      ? env!.end_conditions!.filter(ec => ec.type === 'win')
+      : defaultWinConditions;
+    const avgRelationship = agents.reduce((sum, a) => sum + a.relationship_score, 0) / agents.length;
+
+    for (const condition of winConditions) {
+      if (endCondition.type) break; // Already triggered
+
+      if (condition.trigger === 'task_completion') {
+        // Check if required tasks are completed
+        const requiredTaskIds = condition.task_ids || updatedTasks.map(t => t.task_id);
+        const requiredTasksComplete = requiredTaskIds.every(
+          tid => updatedTasks.find(t => t.task_id === tid)?.completed
+        );
+
+        // Also require good relationships (default 0.4 threshold)
+        const relationshipThreshold = condition.threshold ?? 0.4;
+        const allRelationshipsGood = agents.every(a => a.relationship_score >= relationshipThreshold);
+
+        if (requiredTasksComplete && allRelationshipsGood) {
+          setEndCondition({
+            type: 'win',
+            reason: condition.description || `Excellent work! You completed all tasks while maintaining positive relationships.`,
+          });
+
+          // Log win event
+          if (sessionId && token) {
+            candidate.trace({
+              session_id: sessionId,
+              token: token,
+              event_type: 'session_end' as 'thread_open',
+              elapsed_seconds: elapsedSeconds,
+              content: {
+                end_type: 'win',
+                reason: condition.trigger,
+                avg_relationship: avgRelationship,
+                tasks_completed: updatedTasks.filter(t => t.completed).length,
+                condition_description: condition.description,
+              }
+            }).catch(() => {});
+          }
+          break;
+        }
+      }
+    }
   };
 
   const openNewThread = (agentId: string) => {
@@ -515,8 +728,80 @@ export default function Simulation() {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-white">
+      {/* CSS for score change animation */}
+      <style>{`
+        @keyframes fadeSlideUp {
+          0% { opacity: 1; transform: translateY(0); }
+          70% { opacity: 1; transform: translateY(-10px); }
+          100% { opacity: 0; transform: translateY(-20px); }
+        }
+      `}</style>
+      {/* Win/Fail End Condition Modal */}
+      {endCondition.type && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className={`bg-white rounded-2xl p-8 max-w-md mx-4 shadow-2xl text-center ${
+            endCondition.type === 'fail' ? 'border-4 border-red-500' : 'border-4 border-emerald-500'
+          }`}>
+            {/* Icon */}
+            <div className={`w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center ${
+              endCondition.type === 'fail' ? 'bg-red-100' : 'bg-emerald-100'
+            }`}>
+              {endCondition.type === 'fail' ? (
+                <svg className="w-10 h-10 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              ) : (
+                <svg className="w-10 h-10 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              )}
+            </div>
+
+            {/* Title */}
+            <h3 className={`text-2xl font-bold mb-2 ${
+              endCondition.type === 'fail' ? 'text-red-700' : 'text-emerald-700'
+            }`}>
+              {endCondition.type === 'fail' ? 'Simulation Failed' : 'Simulation Complete!'}
+            </h3>
+
+            {/* Reason */}
+            <p className="text-muted mb-6">
+              {endCondition.reason}
+            </p>
+
+            {/* Stats */}
+            <div className={`rounded-lg p-4 mb-6 ${
+              endCondition.type === 'fail' ? 'bg-red-50' : 'bg-emerald-50'
+            }`}>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <div className="text-muted text-xs">Time Elapsed</div>
+                  <div className="font-bold">{formatTimer(elapsedSeconds)}</div>
+                </div>
+                <div>
+                  <div className="text-muted text-xs">Tasks Completed</div>
+                  <div className="font-bold">{tasks.filter(t => t.completed).length} / {tasks.length}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Action */}
+            <button
+              onClick={handleEndWorkSim}
+              className={`w-full px-6 py-3 rounded-lg text-white font-medium transition-colors ${
+                endCondition.type === 'fail'
+                  ? 'bg-red-600 hover:bg-red-700'
+                  : 'bg-emerald-600 hover:bg-emerald-700'
+              }`}
+            >
+              Continue to Debrief
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* End confirmation modal */}
-      {showEndConfirm && (
+      {showEndConfirm && !endCondition.type && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-6 max-w-sm mx-4 shadow-xl">
             <h3 className="text-lg font-semibold text-dark mb-2">End WorkSim Early?</h3>
@@ -846,12 +1131,68 @@ export default function Simulation() {
         <div className="flex flex-col overflow-hidden">
           {activeThread ? (
             <>
-              {/* Thread header */}
-              <div className="h-12 border-b border-border px-4 flex items-center shrink-0">
-                <div>
-                  <div className="text-sm font-medium text-dark">{activeThread.subject}</div>
-                  <div className="text-[10px] text-muted">with {activeAgent?.name}</div>
+              {/* Thread header with live relationship meter */}
+              <div className="h-14 border-b border-border px-4 flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-3">
+                  {activeAgent && (
+                    <img
+                      src={getAvatarUrl(activeAgent, agents.findIndex(a => a.agent_id === activeAgent.agent_id))}
+                      alt={activeAgent.name}
+                      className="w-9 h-9 rounded-full bg-surface"
+                    />
+                  )}
+                  <div>
+                    <div className="text-sm font-medium text-dark">{activeAgent?.name}</div>
+                    <div className="text-[10px] text-muted">{activeAgent?.role}</div>
+                  </div>
                 </div>
+
+                {/* Live Relationship Meter */}
+                {activeAgent && (
+                  <div className="flex items-center gap-3 relative">
+                    <div className="text-right">
+                      <div className="text-[10px] text-muted">Relationship</div>
+                      <div className={`text-sm font-bold ${
+                        activeAgent.relationship_score > 0.65 ? 'text-emerald-600' :
+                        activeAgent.relationship_score > 0.4 ? 'text-amber-600' : 'text-red-600'
+                      }`}>
+                        {Math.round(activeAgent.relationship_score * 100)}%
+                      </div>
+                    </div>
+                    <div className="w-24 h-3 bg-gray-100 rounded-full overflow-hidden relative">
+                      <div
+                        className={`h-full transition-all duration-500 ${
+                          activeAgent.relationship_score > 0.65 ? 'bg-emerald-500' :
+                          activeAgent.relationship_score > 0.4 ? 'bg-amber-500' : 'bg-red-500'
+                        }`}
+                        style={{ width: `${activeAgent.relationship_score * 100}%` }}
+                      />
+                    </div>
+
+                    {/* Score Change Animation */}
+                    {scoreChange && scoreChange.agentId === activeAgent.agent_id && (
+                      <div
+                        className={`absolute -top-8 right-12 px-2 py-1 rounded-full text-sm font-bold shadow-lg transition-all ${
+                          scoreChange.delta > 0
+                            ? 'bg-emerald-500 text-white'
+                            : 'bg-red-500 text-white'
+                        }`}
+                        style={{
+                          animation: 'fadeSlideUp 1.5s ease-out forwards',
+                        }}
+                      >
+                        {scoreChange.delta > 0 ? '↑ +' : '↓ '}{Math.round(scoreChange.delta * 100)}%
+                      </div>
+                    )}
+
+                    {activeAgent.relationship_score <= 0.25 && (
+                      <div className="flex items-center gap-1 px-2 py-1 bg-red-100 rounded-full">
+                        <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                        <span className="text-[10px] font-medium text-red-700">At Risk</span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Messages */}
@@ -888,11 +1229,29 @@ export default function Simulation() {
                   };
 
                   if (msg.sender === 'candidate') {
+                    // Check if message has been "seen" (agent responded after this message)
+                    const msgIndex = activeThread.messages.findIndex(m => m.id === msg.id);
+                    const hasAgentResponseAfter = activeThread.messages
+                      .slice(msgIndex + 1)
+                      .some(m => m.sender === 'agent');
+
                     return (
                       <div key={msg.id} className="flex justify-end">
                         <div className="bg-dark/5 text-dark rounded-lg px-3 py-2 max-w-md">
                           {renderContent(msg.content)}
-                          <p className="text-[10px] text-muted mt-1">{formatTime(msg.timestamp)}</p>
+                          <div className="flex items-center justify-end gap-1.5 mt-1">
+                            <span className="text-[10px] text-muted">{formatTime(msg.timestamp)}</span>
+                            {hasAgentResponseAfter && (
+                              <span className="text-[10px] text-emerald-600 font-medium flex items-center gap-0.5">
+                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                                </svg>
+                                <svg className="w-3 h-3 -ml-1.5" fill="currentColor" viewBox="0 0 24 24">
+                                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                                </svg>
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );
