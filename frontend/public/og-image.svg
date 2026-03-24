@@ -1,0 +1,20 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#fafafb"/>
+
+  <!-- Logo icon (scaled up) -->
+  <g transform="translate(440, 200)">
+    <!-- Infinity symbol -->
+    <path d="M35 65c0-22 18-40 40-40s40 18 40 40-18 40-40 40-40-18-40-40z" stroke="#1a1a1a" stroke-width="6" fill="none"/>
+    <path d="M85 65c0-22 18-40 40-40s40 18 40 40-18 40-40 40-40-18-40-40z" stroke="#1a1a1a" stroke-width="6" fill="none"/>
+    <!-- Arrow passing through -->
+    <line x1="0" y1="65" x2="200" y2="65" stroke="#1a1a1a" stroke-width="4" stroke-dasharray="8 8"/>
+    <polygon points="190,55 210,65 190,75" fill="#1a1a1a"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="600" y="450" font-family="Inter, -apple-system, BlinkMacSystemFont, sans-serif" font-size="72" font-weight="600" fill="#1a1a1a" text-anchor="middle">cmul8.work</text>
+
+  <!-- Tagline -->
+  <text x="600" y="520" font-family="Inter, -apple-system, BlinkMacSystemFont, sans-serif" font-size="28" font-weight="400" fill="#666666" text-anchor="middle">Hiring simulation that reveals true performance</text>
+</svg>
