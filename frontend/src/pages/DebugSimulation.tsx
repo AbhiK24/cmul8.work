@@ -634,6 +634,16 @@ export default function DebugSimulation() {
         .modal-content {
           animation: slideUp 0.3s ease-out;
         }
+        .typing-indicator span {
+          animation: typing-dot 1.4s infinite ease-in-out;
+        }
+        .typing-indicator span:nth-child(1) { animation-delay: 0s; }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing-dot {
+          0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+          30% { transform: translateY(-4px); opacity: 1; }
+        }
       `}</style>
 
       {/* Milestone Toasts */}
@@ -641,35 +651,41 @@ export default function DebugSimulation() {
         {milestones.map(milestone => (
           <div
             key={milestone.id}
-            className="milestone-toast flex items-center gap-3 px-4 py-3 bg-white rounded-xl shadow-lg border border-emerald-200 max-w-xs"
+            className="milestone-toast flex items-center gap-3 px-5 py-4 glass-morphism rounded-2xl shadow-xl border border-white/50 max-w-xs"
           >
-            <span className="text-2xl">{milestone.icon}</span>
-            <span className="text-sm font-medium text-dark">{milestone.text}</span>
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+              <span className="text-xl">{milestone.icon}</span>
+            </div>
+            <div>
+              <span className="text-sm font-semibold text-slate-800">{milestone.text}</span>
+              <div className="text-[10px] text-emerald-600 font-medium">Achievement unlocked!</div>
+            </div>
           </div>
         ))}
       </div>
 
       {/* Tools Modal */}
       {showTools && activeTool && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0 bg-gradient-to-r from-slate-50 to-gray-50">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center">
-                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)' }}>
+          <div className="modal-content bg-white rounded-3xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden border border-slate-200">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0 bg-gradient-to-r from-slate-50 to-slate-100">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center shadow-lg">
+                  <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </div>
                 <div>
-                  <h2 className="text-sm font-semibold text-dark">{activeTool.name}</h2>
-                  <p className="text-[10px] text-muted truncate max-w-md">{activeTool.url}</p>
+                  <h2 className="text-base font-bold text-slate-800">{activeTool.name}</h2>
+                  <p className="text-xs text-slate-500 truncate max-w-md">{activeTool.url}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 {toolEvents.length > 0 && (
-                  <div className="flex items-center gap-1 px-2 py-1 bg-emerald-50 border border-emerald-200 rounded-full text-[10px] text-emerald-700">
-                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                    {toolEvents.length} events tracked
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-full">
+                    <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                    <span className="text-xs font-medium text-emerald-700">{toolEvents.length} events</span>
                   </div>
                 )}
                 <button
@@ -682,6 +698,8 @@ export default function DebugSimulation() {
                 </button>
               </div>
             </div>
+
+            {/* Iframe Container */}
             <div className="flex-1 overflow-hidden bg-white">
               <iframe
                 ref={toolIframeRef}
@@ -692,8 +710,12 @@ export default function DebugSimulation() {
                 title={activeTool.name}
               />
             </div>
+
+            {/* Modal Footer */}
             <div className="px-4 py-2 border-t border-border bg-surface/50 shrink-0 flex items-center justify-between">
-              <p className="text-[10px] text-muted">Actions in this tool are being tracked.</p>
+              <p className="text-[10px] text-muted">
+                Actions in this tool are being tracked for your simulation.
+              </p>
               <button
                 onClick={() => { setShowTools(false); setActiveTool(null); }}
                 className="px-3 py-1.5 bg-dark text-white rounded-lg text-xs font-medium hover:opacity-90 transition-colors"
@@ -705,76 +727,194 @@ export default function DebugSimulation() {
         </div>
       )}
 
-      {/* Artifact Modal */}
+      {/* Artifact Modal - Multi-Agent Document Editor */}
       {showArtifact && env.artifact_content && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
-              <div>
-                <h2 className="text-lg font-semibold text-dark">{env.artifact_content.title}</h2>
-                <p className="text-xs text-muted capitalize">{env.artifact_content.type} Document</p>
-              </div>
-              <button
-                onClick={() => setShowArtifact(false)}
-                className="w-8 h-8 rounded-full hover:bg-surface flex items-center justify-center text-muted hover:text-dark transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              {artifactSections.map((section) => {
-                const linkedTask = tasks.find(t => t.task_id === section.linked_task_id);
-                const isEditing = editingSection === section.section_id;
-                return (
-                  <div
-                    key={section.section_id}
-                    className={`rounded-lg border ${linkedTask && !linkedTask.completed ? 'border-amber-300 bg-amber-50/50' : 'border-border bg-white'}`}
-                  >
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-medium text-dark">{section.title}</h3>
-                        {linkedTask && (
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${linkedTask.completed ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                            {linkedTask.completed ? 'Completed' : `Task: ${linkedTask.title}`}
-                          </span>
-                        )}
-                        {section.has_error && !linkedTask?.completed && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-100 text-red-700">Needs Review</span>
-                        )}
-                      </div>
-                      {section.editable && (
-                        <button
-                          onClick={() => setEditingSection(isEditing ? null : section.section_id)}
-                          className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${isEditing ? 'bg-indigo-500 text-white' : 'bg-surface text-muted hover:text-dark'}`}
-                        >
-                          {isEditing ? 'Done Editing' : 'Edit'}
-                        </button>
-                      )}
-                    </div>
-                    <div className="p-4">
-                      {isEditing ? (
-                        <textarea
-                          value={section.content}
-                          onChange={(e) => handleSectionEdit(section.section_id, e.target.value)}
-                          className="w-full min-h-[150px] p-3 border border-indigo-200 rounded-lg text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-indigo-500/20 resize-y"
-                        />
-                      ) : (
-                        <div className="prose prose-sm max-w-none text-mid leading-relaxed" dangerouslySetInnerHTML={{ __html: (section.content || '').replace(/\n/g, '<br/>') }} />
-                      )}
+        <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(12px)' }}>
+          <div className="modal-content bg-white rounded-3xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-200">
+            {/* Modal Header - Document Title & Collaboration Bar */}
+            <div className="shrink-0 bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 border-b border-slate-200">
+              <div className="flex items-center justify-between px-6 py-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                    <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-800">{env.artifact_content.title}</h2>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-indigo-100 text-indigo-700 capitalize">
+                        {env.artifact_content.type}
+                      </span>
+                      <span className="text-xs text-slate-500">
+                        {artifactSections.length} sections • Last edited just now
+                      </span>
                     </div>
                   </div>
-                );
-              })}
+                </div>
+
+                {/* Collaboration Status Bar */}
+                <div className="flex items-center gap-3">
+                  {/* Live Presence Indicators */}
+                  <div className="flex items-center gap-2 px-4 py-2 bg-white/80 rounded-2xl border border-slate-200 shadow-sm">
+                    <div className="flex -space-x-2">
+                      {agents.slice(0, 3).map((agent, idx) => (
+                        <div key={idx} className="relative">
+                          <img
+                            src={getAvatarUrl(agent, idx)}
+                            alt="Collaborator"
+                            className="w-8 h-8 rounded-full border-2 border-white shadow-sm"
+                          />
+                          <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white" />
+                        </div>
+                      ))}
+                    </div>
+                    <div className="pl-1">
+                      <div className="text-xs font-semibold text-slate-700">Team online</div>
+                      <div className="text-[10px] text-slate-500">viewing document</div>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => setShowArtifact(false)}
+                    className="w-10 h-10 rounded-xl hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-all"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Quick Stats Bar */}
+              <div className="flex items-center gap-6 px-6 pb-3 text-xs">
+                <div className="flex items-center gap-1.5 text-slate-600">
+                  <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>{artifactSections.filter(s => s.linked_task_id && tasks.find(t => t.task_id === s.linked_task_id)?.completed).length} sections complete</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-slate-600">
+                  <svg className="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <span>{artifactSections.filter(s => s.has_error).length} need review</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-slate-600">
+                  <svg className="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  <span>{agents.length} collaborators</span>
+                </div>
+              </div>
             </div>
-            <div className="px-6 py-4 border-t border-border bg-surface/50 shrink-0">
-              <button
-                onClick={() => setShowArtifact(false)}
-                className="px-4 py-2 bg-dark text-white rounded-lg text-sm font-medium hover:opacity-90 transition-colors"
-              >
-                Close Document
-              </button>
+
+            {/* Modal Content - Scrollable Document */}
+            <div className="flex-1 overflow-y-auto bg-slate-50/50">
+              <div className="max-w-3xl mx-auto p-8 space-y-6">
+                {artifactSections.map((section, sectionIdx) => {
+                  const linkedTask = tasks.find(t => t.task_id === section.linked_task_id);
+                  const isEditing = editingSection === section.section_id;
+
+                  return (
+                    <div
+                      key={section.section_id}
+                      className={`relative rounded-2xl border-2 transition-all ${
+                        isEditing
+                          ? 'border-indigo-300 bg-white shadow-lg shadow-indigo-500/10'
+                          : linkedTask && !linkedTask.completed
+                          ? 'border-amber-200 bg-amber-50/30 hover:border-amber-300'
+                          : section.has_error
+                          ? 'border-red-200 bg-red-50/30 hover:border-red-300'
+                          : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-md'
+                      }`}
+                    >
+                      {/* Section Header */}
+                      <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${
+                            linkedTask?.completed
+                              ? 'bg-emerald-100 text-emerald-600'
+                              : section.has_error
+                              ? 'bg-red-100 text-red-600'
+                              : 'bg-slate-100 text-slate-600'
+                          }`}>
+                            {sectionIdx + 1}
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-slate-800">{section.title}</h3>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              {linkedTask && (
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                                  linkedTask.completed
+                                    ? 'bg-emerald-100 text-emerald-700'
+                                    : 'bg-amber-100 text-amber-700'
+                                }`}>
+                                  {linkedTask.completed ? '✓ Task Complete' : `⏳ ${linkedTask.title}`}
+                                </span>
+                              )}
+                              {section.has_error && !linkedTask?.completed && (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-100 text-red-700">
+                                  ⚠️ Needs Review
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        {section.editable && (
+                          <button
+                            onClick={() => setEditingSection(isEditing ? null : section.section_id)}
+                            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+                              isEditing
+                                ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg shadow-indigo-500/30'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                            }`}
+                          >
+                            {isEditing ? '✓ Done' : '✏️ Edit'}
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Section Content */}
+                      <div className="px-5 pb-5">
+                        {isEditing ? (
+                          <textarea
+                            value={section.content}
+                            onChange={(e) => handleSectionEdit(section.section_id, e.target.value)}
+                            className="w-full min-h-[180px] p-4 border-2 border-indigo-200 rounded-xl text-sm leading-relaxed focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-400 resize-y bg-white"
+                            placeholder="Edit this section..."
+                          />
+                        ) : (
+                          <div
+                            className="prose prose-sm max-w-none text-slate-700 leading-relaxed pt-4"
+                            dangerouslySetInnerHTML={{ __html: (section.content || '').replace(/\n/g, '<br/>') }}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-4 border-t border-slate-200 bg-white shrink-0">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Changes auto-save as you edit</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowArtifact(false)}
+                  className="px-6 py-2.5 bg-gradient-to-r from-slate-800 to-slate-900 text-white rounded-xl text-sm font-semibold hover:shadow-lg hover:-translate-y-0.5 transition-all"
+                >
+                  Close Document
+                </button>
+              </div>
             </div>
           </div>
         </div>
