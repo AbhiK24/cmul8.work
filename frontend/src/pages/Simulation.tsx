@@ -150,6 +150,61 @@ function formatTimer(seconds: number) {
   return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
+// Get mood emoji based on relationship score
+function getMoodEmoji(score: number): string {
+  if (score >= 0.75) return '😊';
+  if (score >= 0.6) return '🙂';
+  if (score >= 0.45) return '😐';
+  if (score >= 0.3) return '😕';
+  return '😠';
+}
+
+// Get mood color based on relationship score
+function getMoodColor(score: number): string {
+  if (score >= 0.75) return 'text-emerald-500';
+  if (score >= 0.6) return 'text-emerald-400';
+  if (score >= 0.45) return 'text-amber-500';
+  if (score >= 0.3) return 'text-orange-500';
+  return 'text-red-500';
+}
+
+// Progress Ring SVG component
+function ProgressRing({ progress, size = 60, strokeWidth = 4, color = '#10b981' }: {
+  progress: number;
+  size?: number;
+  strokeWidth?: number;
+  color?: string;
+}) {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const offset = circumference - (progress / 100) * circumference;
+
+  return (
+    <svg width={size} height={size} className="transform -rotate-90">
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        fill="none"
+        stroke="#e5e7eb"
+        strokeWidth={strokeWidth}
+      />
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        fill="none"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeDasharray={circumference}
+        strokeDashoffset={offset}
+        strokeLinecap="round"
+        className="transition-all duration-500"
+      />
+    </svg>
+  );
+}
+
 export default function Simulation() {
   const navigate = useNavigate();
   const { sessionId, token } = useParams();
@@ -201,6 +256,13 @@ export default function Simulation() {
   const [showTools, setShowTools] = useState(false);
   const [activeTool, setActiveTool] = useState<{ id: string; name: string; url: string } | null>(null);
   const [toolEvents, setToolEvents] = useState<{ tool: string; action: string; data: Record<string, unknown>; timestamp: number }[]>([]);
+
+  // Milestone toasts state
+  const [milestones, setMilestones] = useState<{ id: string; text: string; icon: string; timestamp: number }[]>([]);
+  const [achievedMilestones, setAchievedMilestones] = useState<Set<string>>(new Set());
+
+  // Activity feed state
+  const [activityFeed, setActivityFeed] = useState<{ id: string; text: string; timestamp: number; type: 'agent' | 'system' | 'task' }[]>([]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const toolIframeRef = useRef<HTMLIFrameElement>(null);
@@ -591,6 +653,124 @@ export default function Simulation() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [activeThread?.messages.length]);
+
+  // Milestone detection
+  useEffect(() => {
+    if (!onboardingComplete) return;
+
+    const checkMilestones = () => {
+      const newMilestones: { id: string; text: string; icon: string }[] = [];
+
+      // First task completed
+      const completedTasks = tasks.filter(t => t.completed).length;
+      if (completedTasks === 1 && !achievedMilestones.has('first_task')) {
+        newMilestones.push({ id: 'first_task', text: 'First task completed!', icon: '✅' });
+      }
+
+      // All tasks completed
+      if (completedTasks === tasks.length && tasks.length > 0 && !achievedMilestones.has('all_tasks')) {
+        newMilestones.push({ id: 'all_tasks', text: 'All tasks completed!', icon: '🎯' });
+      }
+
+      // Built rapport with someone (score > 0.7)
+      agents.forEach(agent => {
+        const milestoneId = `rapport_${agent.agent_id}`;
+        if (agent.relationship_score >= 0.7 && !achievedMilestones.has(milestoneId)) {
+          newMilestones.push({ id: milestoneId, text: `Built rapport with ${agent.name}!`, icon: '🤝' });
+        }
+      });
+
+      // First message sent
+      const totalMessages = threads.reduce((sum, t) => sum + t.messages.filter(m => m.sender === 'candidate').length, 0);
+      if (totalMessages === 1 && !achievedMilestones.has('first_message')) {
+        newMilestones.push({ id: 'first_message', text: 'First message sent!', icon: '💬' });
+      }
+
+      // 5 minutes in
+      if (elapsedSeconds >= 300 && !achievedMilestones.has('five_min')) {
+        newMilestones.push({ id: 'five_min', text: '5 minutes into the simulation!', icon: '⏱️' });
+      }
+
+      // Add new milestones
+      if (newMilestones.length > 0) {
+        const now = Date.now();
+        setAchievedMilestones(prev => {
+          const next = new Set(prev);
+          newMilestones.forEach(m => next.add(m.id));
+          return next;
+        });
+        setMilestones(prev => [
+          ...prev,
+          ...newMilestones.map(m => ({ ...m, timestamp: now }))
+        ]);
+
+        // Remove milestone toasts after 4 seconds
+        setTimeout(() => {
+          setMilestones(prev => prev.filter(m => Date.now() - m.timestamp < 4000));
+        }, 4500);
+      }
+    };
+
+    checkMilestones();
+  }, [tasks, agents, threads, elapsedSeconds, onboardingComplete, achievedMilestones]);
+
+  // Activity feed generation
+  useEffect(() => {
+    if (!onboardingComplete || !agents.length) return;
+
+    // Generate random activity every 15-30 seconds
+    const generateActivity = () => {
+      const activities = [
+        () => {
+          const agent = agents[Math.floor(Math.random() * agents.length)];
+          return { text: `${agent.name} is reviewing the project docs...`, type: 'agent' as const };
+        },
+        () => {
+          const agent = agents[Math.floor(Math.random() * agents.length)];
+          return { text: `${agent.name} updated their status`, type: 'agent' as const };
+        },
+        () => {
+          const agent = agents[Math.floor(Math.random() * agents.length)];
+          return { text: `${agent.name} joined a quick call`, type: 'agent' as const };
+        },
+        () => {
+          const unreadCount = threads.filter(t => t.is_unread).length;
+          if (unreadCount > 0) {
+            return { text: `You have ${unreadCount} unread message${unreadCount > 1 ? 's' : ''}`, type: 'system' as const };
+          }
+          return null;
+        },
+        () => {
+          const pendingTasks = tasks.filter(t => !t.completed).length;
+          if (pendingTasks > 0) {
+            return { text: `${pendingTasks} task${pendingTasks > 1 ? 's' : ''} still pending`, type: 'task' as const };
+          }
+          return null;
+        },
+      ];
+
+      const activity = activities[Math.floor(Math.random() * activities.length)]();
+      if (activity) {
+        setActivityFeed(prev => [
+          { id: crypto.randomUUID(), ...activity, timestamp: Date.now() },
+          ...prev.slice(0, 4) // Keep only last 5 activities
+        ]);
+      }
+    };
+
+    // Initial activity after 10 seconds
+    const initialTimeout = setTimeout(generateActivity, 10000);
+
+    // Then every 15-30 seconds
+    const interval = setInterval(() => {
+      generateActivity();
+    }, 15000 + Math.random() * 15000);
+
+    return () => {
+      clearTimeout(initialTimeout);
+      clearInterval(interval);
+    };
+  }, [onboardingComplete, agents, threads, tasks]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1009,16 +1189,47 @@ export default function Simulation() {
     );
   }
 
+  // Calculate progress metrics
+  const tasksCompleted = tasks.filter(t => t.completed).length;
+  const taskProgress = tasks.length > 0 ? (tasksCompleted / tasks.length) * 100 : 0;
+  const avgRelationship = agents.length > 0 ? agents.reduce((sum, a) => sum + a.relationship_score, 0) / agents.length : 0.5;
+  const relationshipProgress = avgRelationship * 100;
+  const overallProgress = (taskProgress + relationshipProgress) / 2;
+
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-white">
-      {/* CSS for score change animation */}
+    <div className="h-screen flex flex-col overflow-hidden bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
+      {/* CSS for animations */}
       <style>{`
         @keyframes fadeSlideUp {
           0% { opacity: 1; transform: translateY(0); }
           70% { opacity: 1; transform: translateY(-10px); }
           100% { opacity: 0; transform: translateY(-20px); }
         }
+        @keyframes slideInRight {
+          0% { opacity: 0; transform: translateX(100px); }
+          100% { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes pulse-soft {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.7; }
+        }
+        .milestone-toast {
+          animation: slideInRight 0.3s ease-out;
+        }
       `}</style>
+
+      {/* Milestone Toasts */}
+      <div className="fixed top-20 right-4 z-50 space-y-2">
+        {milestones.map(milestone => (
+          <div
+            key={milestone.id}
+            className="milestone-toast flex items-center gap-3 px-4 py-3 bg-white rounded-xl shadow-lg border border-emerald-200 max-w-xs"
+          >
+            <span className="text-2xl">{milestone.icon}</span>
+            <span className="text-sm font-medium text-dark">{milestone.text}</span>
+          </div>
+        ))}
+      </div>
       {/* Win/Fail End Condition Modal */}
       {endCondition.type && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
@@ -1458,15 +1669,9 @@ export default function Simulation() {
                         ) : agent.role}
                       </div>
                     </div>
-                    <div className="w-8 h-1 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full transition-all ${
-                          agent.relationship_score > 0.65 ? 'bg-emerald-500' :
-                          agent.relationship_score > 0.4 ? 'bg-amber-500' : 'bg-red-400'
-                        }`}
-                        style={{ width: `${agent.relationship_score * 100}%` }}
-                      />
-                    </div>
+                    <span className={`text-sm ${getMoodColor(agent.relationship_score)}`} title={`${Math.round(agent.relationship_score * 100)}% rapport`}>
+                      {getMoodEmoji(agent.relationship_score)}
+                    </span>
                   </button>
 
                   {/* Hover tooltip */}
@@ -1579,11 +1784,25 @@ export default function Simulation() {
         </div>
 
         {/* Center panel - Thread */}
-        <div className="flex flex-col overflow-hidden">
+        <div className="flex flex-col overflow-hidden bg-white/50">
+          {/* Scenario Context Banner */}
+          <div className="px-4 py-2 bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-200/50 shrink-0">
+            <div className="flex items-center gap-2">
+              <span className="text-amber-600 text-sm">⚡</span>
+              <p className="text-xs text-amber-800 font-medium truncate flex-1">
+                {env.scenario_tension}
+              </p>
+              <div className="flex items-center gap-1 px-2 py-0.5 bg-amber-100 rounded-full">
+                <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
+                <span className="text-[10px] text-amber-700 font-medium">Live</span>
+              </div>
+            </div>
+          </div>
+
           {activeThread ? (
             <>
               {/* Thread header with live relationship meter */}
-              <div className="h-14 border-b border-border px-4 flex items-center justify-between shrink-0">
+              <div className="h-14 border-b border-border px-4 flex items-center justify-between shrink-0 bg-white/80">
                 <div className="flex items-center gap-3">
                   {activeAgent && (
                     <img
@@ -1835,7 +2054,77 @@ export default function Simulation() {
         </div>
 
         {/* Right panel - Coaching + Tasks */}
-        <div className="border-l border-border overflow-y-auto flex flex-col">
+        <div className="border-l border-border overflow-y-auto flex flex-col bg-white/50">
+          {/* Progress & Score Preview */}
+          <div className="p-3 border-b border-border bg-gradient-to-r from-indigo-50/50 to-purple-50/50">
+            <div className="flex items-center gap-3">
+              {/* Progress Ring */}
+              <div className="relative">
+                <ProgressRing
+                  progress={overallProgress}
+                  size={52}
+                  strokeWidth={4}
+                  color={overallProgress >= 60 ? '#10b981' : overallProgress >= 40 ? '#f59e0b' : '#ef4444'}
+                />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-xs font-bold text-dark">{Math.round(overallProgress)}%</span>
+                </div>
+              </div>
+              {/* Score Breakdown */}
+              <div className="flex-1 space-y-1.5">
+                <div>
+                  <div className="flex items-center justify-between text-[10px]">
+                    <span className="text-muted">Tasks</span>
+                    <span className="font-medium text-dark">{tasksCompleted}/{tasks.length}</span>
+                  </div>
+                  <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-emerald-500 transition-all duration-500"
+                      style={{ width: `${taskProgress}%` }}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center justify-between text-[10px]">
+                    <span className="text-muted">Relationships</span>
+                    <span className="font-medium text-dark">{Math.round(avgRelationship * 100)}%</span>
+                  </div>
+                  <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full transition-all duration-500 ${
+                        avgRelationship >= 0.6 ? 'bg-emerald-500' :
+                        avgRelationship >= 0.4 ? 'bg-amber-500' : 'bg-red-500'
+                      }`}
+                      style={{ width: `${relationshipProgress}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Live Activity Feed */}
+          {activityFeed.length > 0 && (
+            <div className="p-2 border-b border-border bg-slate-50/50">
+              <div className="text-[9px] uppercase tracking-widest text-muted mb-1.5 px-1">Activity</div>
+              <div className="space-y-1 max-h-24 overflow-y-auto">
+                {activityFeed.slice(0, 3).map(activity => (
+                  <div
+                    key={activity.id}
+                    className={`flex items-center gap-2 px-2 py-1 rounded text-[10px] ${
+                      activity.type === 'agent' ? 'bg-blue-50 text-blue-700' :
+                      activity.type === 'task' ? 'bg-amber-50 text-amber-700' :
+                      'bg-gray-50 text-gray-600'
+                    }`}
+                  >
+                    <span className="w-1 h-1 rounded-full bg-current opacity-60 shrink-0" />
+                    <span className="truncate">{activity.text}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Coaching Sidebar (Training Mode Only) */}
           {trainingContext?.mode === 'train' && trainingContext.frameworkReference && (
             <div className={`border-b border-border bg-gradient-to-b from-emerald-50 to-white ${showCoachingSidebar ? '' : 'hidden'}`}>

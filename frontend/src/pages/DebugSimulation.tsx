@@ -87,6 +87,61 @@ function formatTimer(seconds: number) {
   return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
+// Get mood emoji based on relationship score
+function getMoodEmoji(score: number): string {
+  if (score >= 0.75) return '😊';
+  if (score >= 0.6) return '🙂';
+  if (score >= 0.45) return '😐';
+  if (score >= 0.3) return '😕';
+  return '😠';
+}
+
+// Get mood color based on relationship score
+function getMoodColor(score: number): string {
+  if (score >= 0.75) return 'text-emerald-500';
+  if (score >= 0.6) return 'text-emerald-400';
+  if (score >= 0.45) return 'text-amber-500';
+  if (score >= 0.3) return 'text-orange-500';
+  return 'text-red-500';
+}
+
+// Progress Ring SVG component
+function ProgressRing({ progress, size = 60, strokeWidth = 4, color = '#10b981' }: {
+  progress: number;
+  size?: number;
+  strokeWidth?: number;
+  color?: string;
+}) {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const offset = circumference - (progress / 100) * circumference;
+
+  return (
+    <svg width={size} height={size} className="transform -rotate-90">
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        fill="none"
+        stroke="#e5e7eb"
+        strokeWidth={strokeWidth}
+      />
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        fill="none"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeDasharray={circumference}
+        strokeDashoffset={offset}
+        strokeLinecap="round"
+        className="transition-all duration-500"
+      />
+    </svg>
+  );
+}
+
 // ============ MOCK DATA ============
 const MOCK_ENV: SimulationEnv = {
   company_name: 'TechNova Solutions',
@@ -319,6 +374,16 @@ export default function DebugSimulation() {
     timestamp: number;
   } | null>(null);
 
+  // Milestone toasts state (static for debug)
+  const [milestones] = useState<{ id: string; text: string; icon: string; timestamp: number }[]>([]);
+
+  // Activity feed state (static mock data for debug)
+  const [activityFeed] = useState<{ id: string; text: string; timestamp: number; type: 'agent' | 'system' | 'task' }[]>([
+    { id: '1', text: 'Sarah Chen is reviewing project docs...', timestamp: Date.now(), type: 'agent' },
+    { id: '2', text: 'You have 2 unread messages', timestamp: Date.now() - 10000, type: 'system' },
+    { id: '3', text: '3 tasks still pending', timestamp: Date.now() - 20000, type: 'task' },
+  ]);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const toolIframeRef = useRef<HTMLIFrameElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -519,21 +584,48 @@ export default function DebugSimulation() {
   const progressPercent = (elapsedSeconds / totalSeconds) * 100;
   const isLowTime = remainingSeconds < 10 * 60;
 
+  // Progress metrics
+  const tasksCompleted = tasks.filter(t => t.completed).length;
+  const taskProgress = tasks.length > 0 ? (tasksCompleted / tasks.length) * 100 : 0;
+  const avgRelationship = agents.length > 0 ? agents.reduce((sum, a) => sum + a.relationship_score, 0) / agents.length : 0.5;
+  const relationshipProgress = avgRelationship * 100;
+  const overallProgress = (taskProgress + relationshipProgress) / 2;
+
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-white">
+    <div className="h-screen flex flex-col overflow-hidden bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
       {/* Debug Banner */}
       <div className="bg-amber-500 text-white text-center py-1 text-xs font-medium">
         DEBUG MODE - Mock Data | <a href="/dashboard" className="underline">Exit to Dashboard</a>
       </div>
 
-      {/* CSS for score change animation */}
+      {/* CSS for animations */}
       <style>{`
         @keyframes fadeSlideUp {
           0% { opacity: 1; transform: translateY(0); }
           70% { opacity: 1; transform: translateY(-10px); }
           100% { opacity: 0; transform: translateY(-20px); }
         }
+        @keyframes slideInRight {
+          0% { opacity: 0; transform: translateX(100px); }
+          100% { opacity: 1; transform: translateX(0); }
+        }
+        .milestone-toast {
+          animation: slideInRight 0.3s ease-out;
+        }
       `}</style>
+
+      {/* Milestone Toasts */}
+      <div className="fixed top-20 right-4 z-50 space-y-2">
+        {milestones.map(milestone => (
+          <div
+            key={milestone.id}
+            className="milestone-toast flex items-center gap-3 px-4 py-3 bg-white rounded-xl shadow-lg border border-emerald-200 max-w-xs"
+          >
+            <span className="text-2xl">{milestone.icon}</span>
+            <span className="text-sm font-medium text-dark">{milestone.text}</span>
+          </div>
+        ))}
+      </div>
 
       {/* Tools Modal */}
       {showTools && activeTool && (
@@ -726,12 +818,9 @@ export default function DebugSimulation() {
                       <div className="text-xs font-medium text-dark truncate">{agent.name}</div>
                       <div className="text-[10px] text-muted truncate">{agent.role}</div>
                     </div>
-                    <div className="w-8 h-1 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full transition-all ${agent.relationship_score > 0.65 ? 'bg-emerald-500' : agent.relationship_score > 0.4 ? 'bg-amber-500' : 'bg-red-400'}`}
-                        style={{ width: `${agent.relationship_score * 100}%` }}
-                      />
-                    </div>
+                    <span className={`text-sm ${getMoodColor(agent.relationship_score)}`} title={`${Math.round(agent.relationship_score * 100)}% rapport`}>
+                      {getMoodEmoji(agent.relationship_score)}
+                    </span>
                   </button>
                   {hoveredAgent === agent.agent_id && (
                     <div className="absolute left-full top-0 ml-2 z-50 w-56 p-3 bg-white rounded-lg shadow-lg border border-border">
@@ -797,10 +886,24 @@ export default function DebugSimulation() {
         </div>
 
         {/* Center panel - Thread */}
-        <div className="flex flex-col overflow-hidden">
+        <div className="flex flex-col overflow-hidden bg-white/50">
+          {/* Scenario Context Banner */}
+          <div className="px-4 py-2 bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-200/50 shrink-0">
+            <div className="flex items-center gap-2">
+              <span className="text-amber-600 text-sm">⚡</span>
+              <p className="text-xs text-amber-800 font-medium truncate flex-1">
+                {env.scenario_tension}
+              </p>
+              <div className="flex items-center gap-1 px-2 py-0.5 bg-amber-100 rounded-full">
+                <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
+                <span className="text-[10px] text-amber-700 font-medium">Live</span>
+              </div>
+            </div>
+          </div>
+
           {activeThread ? (
             <>
-              <div className="h-14 border-b border-border px-4 flex items-center justify-between shrink-0">
+              <div className="h-14 border-b border-border px-4 flex items-center justify-between shrink-0 bg-white/80">
                 <div className="flex items-center gap-3">
                   {activeAgent && <img src={getAvatarUrl(activeAgent, agents.findIndex(a => a.agent_id === activeAgent.agent_id))} alt={activeAgent.name} className="w-9 h-9 rounded-full bg-surface" />}
                   <div>
@@ -919,7 +1022,77 @@ export default function DebugSimulation() {
         </div>
 
         {/* Right panel - Tasks */}
-        <div className="border-l border-border overflow-y-auto flex flex-col">
+        <div className="border-l border-border overflow-y-auto flex flex-col bg-white/50">
+          {/* Progress & Score Preview */}
+          <div className="p-3 border-b border-border bg-gradient-to-r from-indigo-50/50 to-purple-50/50">
+            <div className="flex items-center gap-3">
+              {/* Progress Ring */}
+              <div className="relative">
+                <ProgressRing
+                  progress={overallProgress}
+                  size={52}
+                  strokeWidth={4}
+                  color={overallProgress >= 60 ? '#10b981' : overallProgress >= 40 ? '#f59e0b' : '#ef4444'}
+                />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-xs font-bold text-dark">{Math.round(overallProgress)}%</span>
+                </div>
+              </div>
+              {/* Score Breakdown */}
+              <div className="flex-1 space-y-1.5">
+                <div>
+                  <div className="flex items-center justify-between text-[10px]">
+                    <span className="text-muted">Tasks</span>
+                    <span className="font-medium text-dark">{tasksCompleted}/{tasks.length}</span>
+                  </div>
+                  <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-emerald-500 transition-all duration-500"
+                      style={{ width: `${taskProgress}%` }}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center justify-between text-[10px]">
+                    <span className="text-muted">Relationships</span>
+                    <span className="font-medium text-dark">{Math.round(avgRelationship * 100)}%</span>
+                  </div>
+                  <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full transition-all duration-500 ${
+                        avgRelationship >= 0.6 ? 'bg-emerald-500' :
+                        avgRelationship >= 0.4 ? 'bg-amber-500' : 'bg-red-500'
+                      }`}
+                      style={{ width: `${relationshipProgress}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Live Activity Feed */}
+          {activityFeed.length > 0 && (
+            <div className="p-2 border-b border-border bg-slate-50/50">
+              <div className="text-[9px] uppercase tracking-widest text-muted mb-1.5 px-1">Activity</div>
+              <div className="space-y-1 max-h-24 overflow-y-auto">
+                {activityFeed.slice(0, 3).map(activity => (
+                  <div
+                    key={activity.id}
+                    className={`flex items-center gap-2 px-2 py-1 rounded text-[10px] ${
+                      activity.type === 'agent' ? 'bg-blue-50 text-blue-700' :
+                      activity.type === 'task' ? 'bg-amber-50 text-amber-700' :
+                      'bg-gray-50 text-gray-600'
+                    }`}
+                  >
+                    <span className="w-1 h-1 rounded-full bg-current opacity-60 shrink-0" />
+                    <span className="truncate">{activity.text}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="flex-1 overflow-y-auto p-3">
             <h3 className="text-[9px] uppercase tracking-widest text-muted mb-3">Tasks</h3>
             <div className="space-y-2">
