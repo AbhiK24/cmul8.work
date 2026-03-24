@@ -1197,8 +1197,8 @@ export default function Simulation() {
   const overallProgress = (taskProgress + relationshipProgress) / 2;
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
-      {/* CSS for animations */}
+    <div className="h-screen flex flex-col overflow-hidden bg-[#f8fafc]">
+      {/* CSS for animations and patterns */}
       <style>{`
         @keyframes fadeSlideUp {
           0% { opacity: 1; transform: translateY(0); }
@@ -1209,13 +1209,54 @@ export default function Simulation() {
           0% { opacity: 0; transform: translateX(100px); }
           100% { opacity: 1; transform: translateX(0); }
         }
+        @keyframes slideUp {
+          0% { opacity: 0; transform: translateY(20px) scale(0.95); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes fadeIn {
+          0% { opacity: 0; }
+          100% { opacity: 1; }
+        }
         @keyframes pulse-soft {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.7; }
         }
+        @keyframes typing-dot {
+          0%, 60%, 100% { transform: translateY(0); }
+          30% { transform: translateY(-4px); }
+        }
         .milestone-toast {
           animation: slideInRight 0.3s ease-out;
         }
+        .modal-backdrop {
+          animation: fadeIn 0.2s ease-out;
+        }
+        .modal-content {
+          animation: slideUp 0.3s ease-out;
+        }
+        .glass-morphism {
+          background: rgba(255, 255, 255, 0.85);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+        }
+        .glass-dark {
+          background: rgba(15, 23, 42, 0.9);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+        }
+        .chat-pattern {
+          background-color: #ffffff;
+          background-image:
+            radial-gradient(circle at 25px 25px, rgba(99, 102, 241, 0.03) 2px, transparent 0),
+            radial-gradient(circle at 75px 75px, rgba(99, 102, 241, 0.03) 2px, transparent 0);
+          background-size: 100px 100px;
+        }
+        .typing-indicator span {
+          animation: typing-dot 1.4s infinite ease-in-out;
+        }
+        .typing-indicator span:nth-child(1) { animation-delay: 0s; }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
       `}</style>
 
       {/* Milestone Toasts */}
@@ -1223,29 +1264,41 @@ export default function Simulation() {
         {milestones.map(milestone => (
           <div
             key={milestone.id}
-            className="milestone-toast flex items-center gap-3 px-4 py-3 bg-white rounded-xl shadow-lg border border-emerald-200 max-w-xs"
+            className="milestone-toast flex items-center gap-3 px-5 py-4 glass-morphism rounded-2xl shadow-xl border border-white/50 max-w-xs"
           >
-            <span className="text-2xl">{milestone.icon}</span>
-            <span className="text-sm font-medium text-dark">{milestone.text}</span>
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+              <span className="text-xl">{milestone.icon}</span>
+            </div>
+            <div>
+              <span className="text-sm font-semibold text-slate-800">{milestone.text}</span>
+              <div className="text-[10px] text-emerald-600 font-medium">Achievement unlocked!</div>
+            </div>
           </div>
         ))}
       </div>
       {/* Win/Fail End Condition Modal */}
       {endCondition.type && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className={`bg-white rounded-2xl p-8 max-w-md mx-4 shadow-2xl text-center ${
-            endCondition.type === 'fail' ? 'border-4 border-red-500' : 'border-4 border-emerald-500'
+        <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}>
+          <div className={`modal-content glass-morphism rounded-3xl p-8 max-w-md mx-4 shadow-2xl text-center border ${
+            endCondition.type === 'fail' ? 'border-red-200' : 'border-emerald-200'
           }`}>
+            {/* Glow effect */}
+            <div className={`absolute inset-0 rounded-3xl opacity-20 blur-xl -z-10 ${
+              endCondition.type === 'fail' ? 'bg-red-500' : 'bg-emerald-500'
+            }`} />
+
             {/* Icon */}
-            <div className={`w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center ${
-              endCondition.type === 'fail' ? 'bg-red-100' : 'bg-emerald-100'
+            <div className={`w-24 h-24 mx-auto mb-6 rounded-2xl flex items-center justify-center shadow-lg ${
+              endCondition.type === 'fail'
+                ? 'bg-gradient-to-br from-red-400 to-red-600 shadow-red-500/30'
+                : 'bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-emerald-500/30'
             }`}>
               {endCondition.type === 'fail' ? (
-                <svg className="w-10 h-10 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-12 h-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               ) : (
-                <svg className="w-10 h-10 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-12 h-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               )}
@@ -1259,36 +1312,30 @@ export default function Simulation() {
             </h3>
 
             {/* Reason */}
-            <p className="text-muted mb-6">
-              {endCondition.reason}
-            </p>
+            <p className="text-slate-600 mb-6">{endCondition.reason}</p>
 
             {/* Stats */}
-            <div className={`rounded-lg p-4 mb-6 ${
-              endCondition.type === 'fail' ? 'bg-red-50' : 'bg-emerald-50'
-            }`}>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <div className="text-muted text-xs">Time Elapsed</div>
-                  <div className="font-bold">{formatTimer(elapsedSeconds)}</div>
-                </div>
-                <div>
-                  <div className="text-muted text-xs">Tasks Completed</div>
-                  <div className="font-bold">{tasks.filter(t => t.completed).length} / {tasks.length}</div>
-                </div>
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              <div className="p-4 rounded-2xl bg-white/60 border border-slate-200">
+                <div className="text-slate-500 text-xs mb-1">Time Elapsed</div>
+                <div className="text-xl font-bold text-slate-800">{formatTimer(elapsedSeconds)}</div>
+              </div>
+              <div className="p-4 rounded-2xl bg-white/60 border border-slate-200">
+                <div className="text-slate-500 text-xs mb-1">Tasks Completed</div>
+                <div className="text-xl font-bold text-slate-800">{tasks.filter(t => t.completed).length}/{tasks.length}</div>
               </div>
             </div>
 
             {/* Action */}
             <button
               onClick={handleEndWorkSim}
-              className={`w-full px-6 py-3 rounded-lg text-white font-medium transition-colors ${
+              className={`w-full px-6 py-4 rounded-2xl text-white font-semibold transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 ${
                 endCondition.type === 'fail'
-                  ? 'bg-red-600 hover:bg-red-700'
-                  : 'bg-emerald-600 hover:bg-emerald-700'
+                  ? 'bg-gradient-to-r from-red-500 to-red-600 shadow-red-500/30'
+                  : 'bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-emerald-500/30'
               }`}
             >
-              Continue to Debrief
+              Continue to Debrief →
             </button>
           </div>
         </div>
@@ -1296,23 +1343,28 @@ export default function Simulation() {
 
       {/* End confirmation modal */}
       {showEndConfirm && !endCondition.type && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 max-w-sm mx-4 shadow-xl">
-            <h3 className="text-lg font-semibold text-dark mb-2">End WorkSim Early?</h3>
-            <p className="text-sm text-muted mb-4">
-              You still have {Math.floor(remainingSeconds / 60)} minutes remaining.
-              Are you sure you want to finish and proceed to debrief?
+        <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50" style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)' }}>
+          <div className="modal-content glass-morphism rounded-3xl p-8 max-w-sm mx-4 shadow-2xl border border-white/50">
+            <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/30">
+              <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-bold text-slate-800 mb-2 text-center">End Early?</h3>
+            <p className="text-sm text-slate-600 mb-6 text-center">
+              You still have <span className="font-semibold text-amber-600">{Math.floor(remainingSeconds / 60)} minutes</span> remaining.
+              Are you sure you want to finish?
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowEndConfirm(false)}
-                className="flex-1 px-4 py-2 border border-border rounded-lg text-sm font-medium hover:bg-surface transition-colors"
+                className="flex-1 px-4 py-3 rounded-xl border-2 border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-all"
               >
-                Continue Working
+                Keep Working
               </button>
               <button
                 onClick={handleEndWorkSim}
-                className="flex-1 px-4 py-2 bg-dark text-white rounded-lg text-sm font-medium hover:opacity-90 transition-colors"
+                className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-slate-800 to-slate-900 text-white text-sm font-semibold hover:shadow-lg hover:-translate-y-0.5 transition-all"
               >
                 End & Debrief
               </button>
@@ -1323,27 +1375,26 @@ export default function Simulation() {
 
       {/* Tools/Browser Modal */}
       {showTools && activeTool && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col">
+        <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)' }}>
+          <div className="modal-content bg-white rounded-3xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden border border-slate-200">
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0 bg-gradient-to-r from-slate-50 to-gray-50">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center">
-                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0 bg-gradient-to-r from-slate-50 to-slate-100">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center shadow-lg">
+                  <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </div>
                 <div>
-                  <h2 className="text-sm font-semibold text-dark">{activeTool.name}</h2>
-                  <p className="text-[10px] text-muted truncate max-w-md">{activeTool.url}</p>
+                  <h2 className="text-base font-bold text-slate-800">{activeTool.name}</h2>
+                  <p className="text-xs text-slate-500 truncate max-w-md">{activeTool.url}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                {/* Tool event indicator */}
+              <div className="flex items-center gap-3">
                 {toolEvents.length > 0 && (
-                  <div className="flex items-center gap-1 px-2 py-1 bg-emerald-50 border border-emerald-200 rounded-full text-[10px] text-emerald-700">
-                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                    {toolEvents.length} events tracked
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-full">
+                    <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                    <span className="text-xs font-medium text-emerald-700">{toolEvents.length} events</span>
                   </div>
                 )}
                 <button
@@ -1385,181 +1436,285 @@ export default function Simulation() {
         </div>
       )}
 
-      {/* Artifact Modal */}
+      {/* Artifact Modal - Multi-Agent Document Editor */}
       {showArtifact && env?.artifact_content && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
-              <div>
-                <h2 className="text-lg font-semibold text-dark">{env.artifact_content.title}</h2>
-                <p className="text-xs text-muted capitalize">{env.artifact_content.type} Document</p>
-              </div>
+        <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(12px)' }}>
+          <div className="modal-content bg-white rounded-3xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-200">
+            {/* Modal Header - Document Title & Collaboration Bar */}
+            <div className="shrink-0 bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 border-b border-slate-200">
+              <div className="flex items-center justify-between px-6 py-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                    <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-800">{env.artifact_content.title}</h2>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-indigo-100 text-indigo-700 capitalize">
+                        {env.artifact_content.type}
+                      </span>
+                      <span className="text-xs text-slate-500">
+                        {artifactSections.length} sections • Last edited just now
+                      </span>
+                    </div>
+                  </div>
+                </div>
 
-              {/* Presence indicators - who's viewing */}
-              <div className="flex items-center gap-2">
-                {docPresence.length > 0 && (
-                  <div className="flex items-center gap-1 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-full">
+                {/* Collaboration Status Bar */}
+                <div className="flex items-center gap-3">
+                  {/* Live Presence Indicators */}
+                  <div className="flex items-center gap-2 px-4 py-2 bg-white/80 rounded-2xl border border-slate-200 shadow-sm">
                     <div className="flex -space-x-2">
-                      {docPresence.slice(0, 3).map((p, idx) => {
-                        const presenceAgent = agents.find(a => a.agent_id === p.agent_id);
+                      {/* Show agents who might be viewing */}
+                      {(docPresence.length > 0 ? docPresence : agents.slice(0, 2)).slice(0, 3).map((item, idx) => {
+                        const agentData = 'agent_id' in item
+                          ? agents.find(a => a.agent_id === item.agent_id)
+                          : item;
                         return (
-                          <img
-                            key={p.agent_id}
-                            src={presenceAgent ? getAvatarUrl(presenceAgent, idx) : `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.agent_name}`}
-                            alt={p.agent_name}
-                            className="w-6 h-6 rounded-full border-2 border-white"
-                            title={`${p.agent_name} is ${p.action}${p.section_id ? ` in a section` : ''}`}
-                          />
+                          <div key={idx} className="relative">
+                            <img
+                              src={agentData ? getAvatarUrl(agentData as Agent, idx) : `https://api.dicebear.com/7.x/avataaars/svg?seed=Agent${idx}`}
+                              alt="Collaborator"
+                              className="w-8 h-8 rounded-full border-2 border-white shadow-sm"
+                            />
+                            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white" />
+                          </div>
                         );
                       })}
                     </div>
-                    <span className="text-[10px] text-emerald-700 font-medium ml-1">
-                      {docPresence.length === 1
-                        ? `${docPresence[0].agent_name} is ${docPresence[0].action}`
-                        : `${docPresence.length} people viewing`}
-                    </span>
-                    {docPresence.some(p => p.action === 'typing') && (
-                      <div className="flex gap-0.5 ml-1">
-                        <span className="w-1 h-1 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                        <span className="w-1 h-1 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                        <span className="w-1 h-1 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    <div className="pl-1">
+                      <div className="text-xs font-semibold text-slate-700">
+                        {docPresence.length > 0 ? `${docPresence.length} collaborator${docPresence.length > 1 ? 's' : ''}` : 'Team online'}
                       </div>
-                    )}
+                      {docPresence.some(p => p.action === 'typing') ? (
+                        <div className="flex items-center gap-1 text-[10px] text-emerald-600">
+                          <span>typing</span>
+                          <span className="typing-indicator flex gap-0.5">
+                            <span className="w-1 h-1 bg-emerald-500 rounded-full" />
+                            <span className="w-1 h-1 bg-emerald-500 rounded-full" />
+                            <span className="w-1 h-1 bg-emerald-500 rounded-full" />
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="text-[10px] text-slate-500">viewing document</div>
+                      )}
+                    </div>
                   </div>
-                )}
-                <button
-                  onClick={() => setShowArtifact(false)}
-                  className="w-8 h-8 rounded-full hover:bg-surface flex items-center justify-center text-muted hover:text-dark transition-colors"
-                >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+
+                  <button
+                    onClick={() => setShowArtifact(false)}
+                    className="w-10 h-10 rounded-xl hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-all"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Quick Stats Bar */}
+              <div className="flex items-center gap-6 px-6 pb-3 text-xs">
+                <div className="flex items-center gap-1.5 text-slate-600">
+                  <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                </button>
+                  <span>{artifactSections.filter(s => s.linked_task_id && tasks.find(t => t.task_id === s.linked_task_id)?.completed).length} sections complete</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-slate-600">
+                  <svg className="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <span>{artifactSections.filter(s => s.has_error).length} need review</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-slate-600">
+                  <svg className="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                  </svg>
+                  <span>{docComments.length} comments</span>
+                </div>
               </div>
             </div>
 
-            {/* Modal Content - Scrollable */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              {artifactSections.map((section) => {
-                const linkedTask = tasks.find(t => t.task_id === section.linked_task_id);
-                const isEditing = editingSection === section.section_id;
+            {/* Modal Content - Scrollable Document */}
+            <div className="flex-1 overflow-y-auto bg-slate-50/50">
+              <div className="max-w-3xl mx-auto p-8 space-y-6">
+                {artifactSections.map((section, sectionIdx) => {
+                  const linkedTask = tasks.find(t => t.task_id === section.linked_task_id);
+                  const isEditing = editingSection === section.section_id;
+                  const sectionComments = docComments.filter(c => c.section_id === section.section_id);
+                  const sectionPresence = docPresence.filter(p => p.section_id === section.section_id);
 
-                return (
-                  <div
-                    key={section.section_id}
-                    className={`rounded-lg border ${
-                      linkedTask && !linkedTask.completed
-                        ? 'border-amber-300 bg-amber-50/50'
-                        : 'border-border bg-white'
-                    }`}
-                  >
-                    {/* Section Header */}
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-medium text-dark">{section.title}</h3>
-                        {linkedTask && (
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                            linkedTask.completed
-                              ? 'bg-emerald-100 text-emerald-700'
-                              : 'bg-amber-100 text-amber-700'
-                          }`}>
-                            {linkedTask.completed ? 'Completed' : `Task: ${linkedTask.title}`}
-                          </span>
-                        )}
-                        {section.has_error && !linkedTask?.completed && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-100 text-red-700">
-                            Needs Review
-                          </span>
-                        )}
-                      </div>
-                      {section.editable && (
-                        <button
-                          onClick={() => setEditingSection(isEditing ? null : section.section_id)}
-                          className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-                            isEditing
-                              ? 'bg-indigo-500 text-white'
-                              : 'bg-surface text-muted hover:text-dark'
-                          }`}
-                        >
-                          {isEditing ? 'Done Editing' : 'Edit'}
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Section Content */}
-                    <div className="p-4">
-                      {/* Typing indicator for this section */}
-                      {docPresence.some(p => p.action === 'typing' && p.section_id === section.section_id) && (
-                        <div className="flex items-center gap-2 mb-2 text-emerald-600 text-[10px]">
-                          {docPresence.filter(p => p.action === 'typing' && p.section_id === section.section_id).map(p => (
-                            <span key={p.agent_id} className="flex items-center gap-1">
-                              <span>{p.agent_name} is typing</span>
-                              <div className="flex gap-0.5">
-                                <span className="w-1 h-1 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                                <span className="w-1 h-1 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                                <span className="w-1 h-1 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                              </div>
-                            </span>
+                  return (
+                    <div
+                      key={section.section_id}
+                      className={`relative rounded-2xl border-2 transition-all ${
+                        isEditing
+                          ? 'border-indigo-300 bg-white shadow-lg shadow-indigo-500/10'
+                          : linkedTask && !linkedTask.completed
+                          ? 'border-amber-200 bg-amber-50/30 hover:border-amber-300'
+                          : section.has_error
+                          ? 'border-red-200 bg-red-50/30 hover:border-red-300'
+                          : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-md'
+                      }`}
+                    >
+                      {/* Section presence indicator */}
+                      {sectionPresence.length > 0 && (
+                        <div className="absolute -top-3 -right-2 flex -space-x-1">
+                          {sectionPresence.map((p, idx) => (
+                            <div key={idx} className="relative">
+                              <img
+                                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${p.agent_name}`}
+                                alt={p.agent_name}
+                                className="w-6 h-6 rounded-full border-2 border-white shadow"
+                              />
+                              {p.action === 'typing' && (
+                                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border border-white animate-pulse" />
+                              )}
+                            </div>
                           ))}
                         </div>
                       )}
 
-                      {isEditing ? (
-                        <textarea
-                          value={section.content}
-                          onChange={(e) => handleSectionEdit(section.section_id, e.target.value)}
-                          className="w-full min-h-[150px] p-3 border border-indigo-200 rounded-lg text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-indigo-500/20 resize-y"
-                          placeholder="Edit this section..."
-                        />
-                      ) : (
-                        <div
-                          className="prose prose-sm max-w-none text-mid leading-relaxed"
-                          dangerouslySetInnerHTML={{ __html: (section.content || '').replace(/\n/g, '<br/>') }}
-                        />
-                      )}
-
-                      {/* Comments on this section */}
-                      {docComments.filter(c => c.section_id === section.section_id).length > 0 && (
-                        <div className="mt-4 pt-3 border-t border-border/50 space-y-2">
-                          <div className="text-[10px] uppercase tracking-wider text-muted font-medium">Comments</div>
-                          {docComments.filter(c => c.section_id === section.section_id).map(comment => {
-                            const commentAgent = agents.find(a => a.agent_id === comment.agent_id);
-                            const agentIdx = agents.findIndex(a => a.agent_id === comment.agent_id);
-                            return (
-                              <div key={comment.comment_id} className="flex gap-2 p-2 bg-amber-50 rounded-lg border border-amber-200">
-                                <img
-                                  src={commentAgent ? getAvatarUrl(commentAgent, agentIdx >= 0 ? agentIdx : 0) : `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.agent_name}`}
-                                  alt={comment.agent_name}
-                                  className="w-6 h-6 rounded-full bg-white border border-amber-200 shrink-0"
-                                />
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-xs font-medium text-amber-900">{comment.agent_name}</span>
-                                    <span className="text-[10px] text-amber-600">{formatTime(comment.timestamp * 1000)}</span>
-                                  </div>
-                                  <p className="text-xs text-amber-800 mt-0.5">{comment.content}</p>
-                                </div>
-                              </div>
-                            );
-                          })}
+                      {/* Section Header */}
+                      <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${
+                            linkedTask?.completed
+                              ? 'bg-emerald-100 text-emerald-600'
+                              : section.has_error
+                              ? 'bg-red-100 text-red-600'
+                              : 'bg-slate-100 text-slate-600'
+                          }`}>
+                            {sectionIdx + 1}
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-slate-800">{section.title}</h3>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              {linkedTask && (
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                                  linkedTask.completed
+                                    ? 'bg-emerald-100 text-emerald-700'
+                                    : 'bg-amber-100 text-amber-700'
+                                }`}>
+                                  {linkedTask.completed ? '✓ Task Complete' : `⏳ ${linkedTask.title}`}
+                                </span>
+                              )}
+                              {section.has_error && !linkedTask?.completed && (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-100 text-red-700">
+                                  ⚠️ Needs Review
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         </div>
+                        {section.editable && (
+                          <button
+                            onClick={() => setEditingSection(isEditing ? null : section.section_id)}
+                          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+                            isEditing
+                              ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg shadow-indigo-500/30'
+                              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          }`}
+                        >
+                          {isEditing ? '✓ Done' : '✏️ Edit'}
+                        </button>
                       )}
                     </div>
-                  </div>
-                );
-              })}
+
+                      {/* Section Content */}
+                      <div className="px-5 pb-5">
+                        {/* Typing indicator */}
+                        {sectionPresence.some(p => p.action === 'typing') && (
+                          <div className="flex items-center gap-2 mb-3 px-3 py-2 bg-emerald-50 rounded-lg border border-emerald-200">
+                            {sectionPresence.filter(p => p.action === 'typing').map((p, idx) => (
+                              <span key={idx} className="flex items-center gap-1.5 text-xs text-emerald-700">
+                                <img
+                                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${p.agent_name}`}
+                                  alt={p.agent_name}
+                                  className="w-5 h-5 rounded-full"
+                                />
+                                <span className="font-medium">{p.agent_name}</span>
+                                <span>is typing</span>
+                                <span className="typing-indicator flex gap-0.5">
+                                  <span className="w-1 h-1 bg-emerald-500 rounded-full" />
+                                  <span className="w-1 h-1 bg-emerald-500 rounded-full" />
+                                  <span className="w-1 h-1 bg-emerald-500 rounded-full" />
+                                </span>
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        {isEditing ? (
+                          <textarea
+                            value={section.content}
+                            onChange={(e) => handleSectionEdit(section.section_id, e.target.value)}
+                            className="w-full min-h-[180px] p-4 border-2 border-indigo-200 rounded-xl text-sm leading-relaxed focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-400 resize-y bg-white"
+                            placeholder="Edit this section..."
+                          />
+                        ) : (
+                          <div
+                            className="prose prose-sm max-w-none text-slate-700 leading-relaxed"
+                            dangerouslySetInnerHTML={{ __html: (section.content || '').replace(/\n/g, '<br/>') }}
+                          />
+                        )}
+
+                        {/* Comments Thread */}
+                        {sectionComments.length > 0 && (
+                          <div className="mt-5 pt-4 border-t border-slate-100">
+                            <div className="flex items-center gap-2 mb-3">
+                              <svg className="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                              </svg>
+                              <span className="text-xs font-semibold text-slate-700">{sectionComments.length} Comment{sectionComments.length > 1 ? 's' : ''}</span>
+                            </div>
+                            <div className="space-y-2">
+                              {sectionComments.map(comment => {
+                                const commentAgent = agents.find(a => a.agent_id === comment.agent_id);
+                                const agentIdx = agents.findIndex(a => a.agent_id === comment.agent_id);
+                                return (
+                                  <div key={comment.comment_id} className="flex gap-3 p-3 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-100">
+                                    <img
+                                      src={commentAgent ? getAvatarUrl(commentAgent, agentIdx >= 0 ? agentIdx : 0) : `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.agent_name}`}
+                                      alt={comment.agent_name}
+                                      className="w-8 h-8 rounded-full border-2 border-white shadow shrink-0"
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-sm font-semibold text-slate-800">{comment.agent_name}</span>
+                                        <span className="text-[10px] text-slate-500">{formatTime(comment.timestamp * 1000)}</span>
+                                      </div>
+                                      <p className="text-sm text-slate-700 mt-1">{comment.content}</p>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Modal Footer */}
-            <div className="px-6 py-4 border-t border-border bg-surface/50 shrink-0">
+            <div className="px-6 py-4 border-t border-slate-200 bg-white shrink-0">
               <div className="flex items-center justify-between">
-                <p className="text-xs text-muted">
-                  Click "Edit" on any section to make changes. Your edits are saved automatically.
-                </p>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Changes auto-save as you edit</span>
+                  </div>
+                </div>
                 <button
                   onClick={() => setShowArtifact(false)}
-                  className="px-4 py-2 bg-dark text-white rounded-lg text-sm font-medium hover:opacity-90 transition-colors"
+                  className="px-6 py-2.5 bg-gradient-to-r from-slate-800 to-slate-900 text-white rounded-xl text-sm font-semibold hover:shadow-lg hover:-translate-y-0.5 transition-all"
                 >
                   Close Document
                 </button>
