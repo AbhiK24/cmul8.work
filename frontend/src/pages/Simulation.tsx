@@ -300,31 +300,32 @@ export default function Simulation() {
         const response = await candidate.autonomyTick(sessionId, token, elapsedSeconds);
 
         if (response.should_act && response.agent_id && response.message) {
-          const agentData = agents.find(a => a.agent_id === response.agent_id);
+          const agentId = response.agent_id;
+          const messageContent = response.message;
 
           if (response.is_new_thread && response.thread_id) {
             // Create new thread
             const newThread: Thread = {
               thread_id: response.thread_id,
-              from_agent_id: response.agent_id,
+              from_agent_id: agentId,
               subject: response.subject || `Message from ${response.agent_name}`,
-              preview: response.message.slice(0, 50),
+              preview: messageContent.slice(0, 50),
               is_urgent: false,
               is_unread: true,
               messages: [{
                 id: crypto.randomUUID(),
                 sender: 'agent',
-                agent_id: response.agent_id,
-                content: response.message,
+                agent_id: agentId,
+                content: messageContent,
                 timestamp: Date.now(),
               }],
             };
             setThreads(prev => [newThread, ...prev]);
-            setInjectAlert(`${response.agent_name}: ${response.message.slice(0, 60)}...`);
+            setInjectAlert(`${response.agent_name}: ${messageContent.slice(0, 60)}...`);
             setTimeout(() => setInjectAlert(null), 5000);
           } else {
             // Add to existing thread
-            const existingThread = threads.find(t => t.from_agent_id === response.agent_id);
+            const existingThread = threads.find(t => t.from_agent_id === agentId);
             if (existingThread) {
               setThreads(prev => prev.map(t =>
                 t.thread_id === existingThread.thread_id
@@ -334,14 +335,14 @@ export default function Simulation() {
                       messages: [...t.messages, {
                         id: crypto.randomUUID(),
                         sender: 'agent' as const,
-                        agent_id: response.agent_id,
-                        content: response.message,
+                        agent_id: agentId,
+                        content: messageContent,
                         timestamp: Date.now(),
                       }]
                     }
                   : t
               ));
-              setInjectAlert(`${response.agent_name}: ${response.message.slice(0, 60)}...`);
+              setInjectAlert(`${response.agent_name}: ${messageContent.slice(0, 60)}...`);
               setTimeout(() => setInjectAlert(null), 5000);
             }
           }
