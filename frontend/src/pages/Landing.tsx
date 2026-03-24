@@ -1,215 +1,231 @@
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
 
 export default function Landing() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-surface">
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-surface/80 backdrop-blur-sm border-b border-border">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 hover:opacity-70 transition-opacity">
-            <svg className="w-7 h-4" viewBox="0 0 28 16" fill="none">
+            <svg className="w-6 h-3.5 sm:w-7 sm:h-4" viewBox="0 0 28 16" fill="none">
               <path d="M7 8c0-2.5 2-4.5 4.5-4.5S16 5.5 16 8s-2 4.5-4.5 4.5S7 10.5 7 8z" stroke="currentColor" strokeWidth="1.5" fill="none"/>
               <path d="M12 8c0-2.5 2-4.5 4.5-4.5S21 5.5 21 8s-2 4.5-4.5 4.5S12 10.5 12 8z" stroke="currentColor" strokeWidth="1.5" fill="none"/>
               <line x1="1" y1="8" x2="27" y2="8" stroke="currentColor" strokeWidth="1" strokeDasharray="2 2"/>
               <polygon points="25,6 27,8 25,10" fill="currentColor"/>
             </svg>
-            <span className="font-semibold text-dark tracking-tight">WorkSim</span>
+            <span className="font-semibold text-dark tracking-tight text-sm sm:text-base">WorkSim</span>
           </Link>
-          <div className="flex items-center gap-3">
-            <Link
-              to="/signin"
-              className="text-sm text-muted hover:text-dark transition-colors px-3 py-2"
-            >
-              Sign In
-            </Link>
-            <Link
-              to="/signup"
-              className="text-sm text-dark bg-white border border-border rounded-full px-4 py-2 hover:bg-gray-50 transition-colors"
-            >
-              Start Free
-            </Link>
+
+          {/* Desktop nav */}
+          <div className="hidden md:flex items-center gap-3">
+            <Link to="/signin" className="text-sm text-muted hover:text-dark transition-colors px-3 py-2">Sign In</Link>
+            <Link to="/signup" className="text-sm text-dark bg-white border border-border rounded-full px-4 py-2 hover:bg-gray-50 transition-colors">Start Free</Link>
             <span className="text-border">|</span>
-            <Link
-              to="/login"
-              className="flex items-center gap-2 text-sm text-muted hover:text-dark transition-colors"
-            >
+            <Link to="/login" className="flex items-center gap-2 text-sm text-muted hover:text-dark transition-colors">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 0h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z" />
               </svg>
               Enterprise
             </Link>
           </div>
+
+          {/* Mobile nav button */}
+          <button
+            className="md:hidden p-2 text-dark"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+              {mobileMenuOpen ? (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+              )}
+            </svg>
+          </button>
         </div>
+
+        {/* Mobile menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-border bg-white px-4 py-3 flex flex-col gap-2">
+            <Link to="/signin" className="text-sm text-muted hover:text-dark py-2" onClick={() => setMobileMenuOpen(false)}>Sign In</Link>
+            <Link to="/signup" className="text-sm text-dark bg-accent text-white rounded-full px-4 py-2.5 text-center" onClick={() => setMobileMenuOpen(false)}>Start Free</Link>
+            <Link to="/login" className="text-sm text-muted hover:text-dark py-2 flex items-center gap-2" onClick={() => setMobileMenuOpen(false)}>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 0h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z" />
+              </svg>
+              Enterprise
+            </Link>
+          </div>
+        )}
       </nav>
 
       {/* Hero Section - Side by Side */}
-      <section className="pt-24 pb-16 px-6 min-h-[calc(100vh-80px)] flex items-center">
+      <section className="pt-20 sm:pt-24 pb-8 sm:pb-16 px-4 sm:px-6 min-h-[calc(100vh-60px)] sm:min-h-[calc(100vh-80px)] flex items-center">
         <div className="max-w-7xl mx-auto w-full">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
             {/* Left - Hero Text */}
-            <div className="order-2 lg:order-1">
-              <h1 className="text-4xl md:text-5xl xl:text-6xl font-medium text-dark tracking-tight leading-[1.1] mb-6">
+            <div className="order-2 lg:order-1 text-center lg:text-left">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl xl:text-6xl font-medium text-dark tracking-tight leading-[1.1] mb-4 sm:mb-6">
                 Soft skills decide careers.
                 <br />
                 <span className="text-muted">Practice yours.</span>
               </h1>
-              <p className="text-lg md:text-xl text-muted max-w-lg mb-8 leading-relaxed">
+              <p className="text-base sm:text-lg md:text-xl text-muted max-w-lg mb-6 sm:mb-8 leading-relaxed mx-auto lg:mx-0">
                 High-stakes scenarios. Real feedback. Skills that stick.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start">
                 <Link
                   to="/signup"
-                  className="bg-accent text-white px-8 py-4 rounded-full text-base font-medium hover:opacity-85 transition-all hover:-translate-y-0.5 shadow-lg shadow-dark/20 text-center"
+                  className="bg-accent text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full text-sm sm:text-base font-medium hover:opacity-85 transition-all hover:-translate-y-0.5 shadow-lg shadow-dark/20 text-center"
                 >
                   Start Simulation Free →
                 </Link>
               </div>
-              <p className="text-sm text-muted mt-4">No credit card required</p>
+              <p className="text-xs sm:text-sm text-muted mt-3 sm:mt-4">No credit card required</p>
             </div>
 
             {/* Right - Motion Demo */}
             <div className="order-1 lg:order-2">
-              <div className="bg-gradient-to-br from-gray-100 via-gray-50 to-gray-100 rounded-2xl p-4 md:p-6 aspect-[4/3] lg:aspect-square relative overflow-hidden border border-border shadow-xl shadow-black/5">
+              <div className="bg-gradient-to-br from-gray-100 via-gray-50 to-gray-100 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 aspect-square sm:aspect-[4/3] lg:aspect-square relative overflow-hidden border border-border shadow-xl shadow-black/5 max-w-[320px] sm:max-w-none mx-auto">
 
-                {/* Orbiting work artifacts - tighter, faster */}
+                {/* Responsive orbit animations - using CSS custom properties */}
                 <style>{`
-              @keyframes orbit1 { from { transform: rotate(0deg) translateX(85px) rotate(0deg); } to { transform: rotate(360deg) translateX(85px) rotate(-360deg); } }
-              @keyframes orbit2 { from { transform: rotate(60deg) translateX(95px) rotate(-60deg); } to { transform: rotate(420deg) translateX(95px) rotate(-420deg); } }
-              @keyframes orbit3 { from { transform: rotate(120deg) translateX(80px) rotate(-120deg); } to { transform: rotate(480deg) translateX(80px) rotate(-480deg); } }
-              @keyframes orbit4 { from { transform: rotate(180deg) translateX(100px) rotate(-180deg); } to { transform: rotate(540deg) translateX(100px) rotate(-540deg); } }
-              @keyframes orbit5 { from { transform: rotate(240deg) translateX(90px) rotate(-240deg); } to { transform: rotate(600deg) translateX(90px) rotate(-600deg); } }
-              @keyframes orbit6 { from { transform: rotate(300deg) translateX(105px) rotate(-300deg); } to { transform: rotate(660deg) translateX(105px) rotate(-660deg); } }
-              @keyframes orbit7 { from { transform: rotate(30deg) translateX(75px) rotate(-30deg); } to { transform: rotate(390deg) translateX(75px) rotate(-390deg); } }
-              @keyframes orbit8 { from { transform: rotate(150deg) translateX(110px) rotate(-150deg); } to { transform: rotate(510deg) translateX(110px) rotate(-510deg); } }
-              @keyframes float { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-4px) scale(1.02); } }
-              @keyframes pulse-border { 0%, 100% { border-color: rgba(239, 68, 68, 0.3); } 50% { border-color: rgba(239, 68, 68, 0.6); } }
-              @keyframes float-around { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(4px, -3px); } 50% { transform: translate(-2px, 4px); } 75% { transform: translate(-4px, -2px); } }
-              @keyframes float-around-reverse { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(-3px, 4px); } 50% { transform: translate(4px, -2px); } 75% { transform: translate(2px, 3px); } }
-            `}</style>
+                  :root {
+                    --orbit-radius: 55px;
+                  }
+                  @media (min-width: 640px) {
+                    :root { --orbit-radius: 75px; }
+                  }
+                  @media (min-width: 768px) {
+                    :root { --orbit-radius: 85px; }
+                  }
+                  @media (min-width: 1024px) {
+                    :root { --orbit-radius: 95px; }
+                  }
+                  @keyframes orbit1 { from { transform: rotate(0deg) translateX(var(--orbit-radius)) rotate(0deg); } to { transform: rotate(360deg) translateX(var(--orbit-radius)) rotate(-360deg); } }
+                  @keyframes orbit2 { from { transform: rotate(60deg) translateX(calc(var(--orbit-radius) * 1.1)) rotate(-60deg); } to { transform: rotate(420deg) translateX(calc(var(--orbit-radius) * 1.1)) rotate(-420deg); } }
+                  @keyframes orbit3 { from { transform: rotate(120deg) translateX(calc(var(--orbit-radius) * 0.9)) rotate(-120deg); } to { transform: rotate(480deg) translateX(calc(var(--orbit-radius) * 0.9)) rotate(-480deg); } }
+                  @keyframes orbit4 { from { transform: rotate(180deg) translateX(calc(var(--orbit-radius) * 1.15)) rotate(-180deg); } to { transform: rotate(540deg) translateX(calc(var(--orbit-radius) * 1.15)) rotate(-540deg); } }
+                  @keyframes orbit5 { from { transform: rotate(240deg) translateX(var(--orbit-radius)) rotate(-240deg); } to { transform: rotate(600deg) translateX(var(--orbit-radius)) rotate(-600deg); } }
+                  @keyframes orbit6 { from { transform: rotate(300deg) translateX(calc(var(--orbit-radius) * 1.2)) rotate(-300deg); } to { transform: rotate(660deg) translateX(calc(var(--orbit-radius) * 1.2)) rotate(-660deg); } }
+                  @keyframes float { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-4px) scale(1.02); } }
+                  @keyframes pulse-border { 0%, 100% { border-color: rgba(239, 68, 68, 0.3); } 50% { border-color: rgba(239, 68, 68, 0.6); } }
+                  @keyframes float-around { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(3px, -2px); } 50% { transform: translate(-2px, 3px); } 75% { transform: translate(-3px, -2px); } }
+                  @keyframes float-around-reverse { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(-2px, 3px); } 50% { transform: translate(3px, -2px); } 75% { transform: translate(2px, 2px); } }
+                `}</style>
 
-            {/* Stress indicators */}
-            <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-red-50 border border-red-200 px-2 py-1 rounded-full animate-pulse">
-              <div className="w-1.5 h-1.5 bg-red-500 rounded-full" />
-              <span className="text-[10px] text-red-600 font-medium">5 urgent</span>
-            </div>
-
-            {/* Timer */}
-            <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-white border border-border px-2 py-1 rounded-full shadow-sm">
-              <svg className="w-3 h-3 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="text-[10px] text-red-600 font-mono font-medium">02:47</span>
-            </div>
-
-            {/* Central user */}
-            <div className="absolute left-1/2 top-[45%] -translate-x-1/2 -translate-y-1/2">
-              <div className="relative">
-                {/* Stress ring */}
-                <div className="absolute inset-0 -m-3 border-2 border-red-300/40 rounded-full animate-ping" style={{ animationDuration: '1.5s' }} />
-
-                {/* User */}
-                <div className="w-12 h-12 bg-white rounded-full border-2 border-dark/20 flex items-center justify-center shadow-lg relative z-10">
-                  <span className="text-sm font-medium text-dark">You</span>
+                {/* Stress indicators */}
+                <div className="absolute top-2 sm:top-3 right-2 sm:right-3 flex items-center gap-1 sm:gap-1.5 bg-red-50 border border-red-200 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full animate-pulse">
+                  <div className="w-1 sm:w-1.5 h-1 sm:h-1.5 bg-red-500 rounded-full" />
+                  <span className="text-[8px] sm:text-[10px] text-red-600 font-medium">5 urgent</span>
                 </div>
 
-                {/* Orbiting artifacts - faster, tighter */}
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ animation: 'orbit1 6s linear infinite' }}>
-                  <div className="bg-[#4A154B] text-white px-2 py-1 rounded shadow-md flex items-center gap-1">
-                    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313z"/></svg>
-                    <span className="text-[9px] font-medium">@you</span>
+                {/* Timer */}
+                <div className="absolute top-2 sm:top-3 left-2 sm:left-3 flex items-center gap-1 sm:gap-1.5 bg-white border border-border px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full shadow-sm">
+                  <svg className="w-2.5 sm:w-3 h-2.5 sm:h-3 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-[8px] sm:text-[10px] text-red-600 font-mono font-medium">02:47</span>
+                </div>
+
+                {/* Central user */}
+                <div className="absolute left-1/2 top-[42%] sm:top-[45%] -translate-x-1/2 -translate-y-1/2">
+                  <div className="relative">
+                    {/* Stress ring */}
+                    <div className="absolute inset-0 -m-2 sm:-m-3 border-2 border-red-300/40 rounded-full animate-ping" style={{ animationDuration: '1.5s' }} />
+
+                    {/* User */}
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-full border-2 border-dark/20 flex items-center justify-center shadow-lg relative z-10">
+                      <span className="text-xs sm:text-sm font-medium text-dark">You</span>
+                    </div>
+
+                    {/* Orbiting artifacts - responsive sizing */}
+                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ animation: 'orbit1 6s linear infinite' }}>
+                      <div className="bg-[#4A154B] text-white px-1.5 sm:px-2 py-0.5 sm:py-1 rounded shadow-md flex items-center gap-0.5 sm:gap-1">
+                        <svg className="w-2.5 sm:w-3 h-2.5 sm:h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313z"/></svg>
+                        <span className="text-[7px] sm:text-[9px] font-medium">@you</span>
+                      </div>
+                    </div>
+
+                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ animation: 'orbit2 7s linear infinite' }}>
+                      <div className="bg-blue-500 text-white px-1.5 sm:px-2 py-0.5 sm:py-1 rounded shadow-md flex items-center gap-0.5 sm:gap-1">
+                        <svg className="w-2.5 sm:w-3 h-2.5 sm:h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25" /></svg>
+                        <span className="text-[7px] sm:text-[9px] font-medium">NOW</span>
+                      </div>
+                    </div>
+
+                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ animation: 'orbit3 5s linear infinite' }}>
+                      <div className="bg-white border border-gray-200 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded shadow-md flex items-center gap-0.5 sm:gap-1">
+                        <svg className="w-2.5 sm:w-3 h-2.5 sm:h-3 text-blue-600" viewBox="0 0 24 24" fill="currentColor"><path d="M14.2 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V7.8L14.2 2z"/></svg>
+                        <span className="text-[7px] sm:text-[9px] font-medium text-dark">Doc</span>
+                      </div>
+                    </div>
+
+                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ animation: 'orbit4 8s linear infinite' }}>
+                      <div className="bg-amber-500 text-white px-1.5 sm:px-2 py-0.5 sm:py-1 rounded shadow-md flex items-center gap-0.5 sm:gap-1">
+                        <svg className="w-2.5 sm:w-3 h-2.5 sm:h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022" /></svg>
+                        <span className="text-[7px] sm:text-[9px] font-medium">Late</span>
+                      </div>
+                    </div>
+
+                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden sm:block" style={{ animation: 'orbit5 6.5s linear infinite' }}>
+                      <div className="bg-red-500 text-white px-1.5 sm:px-2 py-0.5 sm:py-1 rounded shadow-md flex items-center gap-0.5 sm:gap-1">
+                        <svg className="w-2.5 sm:w-3 h-2.5 sm:h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75" /></svg>
+                        <span className="text-[7px] sm:text-[9px] font-medium">URGENT</span>
+                      </div>
+                    </div>
+
+                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden sm:block" style={{ animation: 'orbit6 9s linear infinite' }}>
+                      <div className="bg-green-500 text-white px-1.5 sm:px-2 py-0.5 sm:py-1 rounded shadow-md flex items-center gap-0.5 sm:gap-1">
+                        <svg className="w-2.5 sm:w-3 h-2.5 sm:h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <span className="text-[7px] sm:text-[9px] font-medium">Due</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ animation: 'orbit2 7s linear infinite' }}>
-                  <div className="bg-blue-500 text-white px-2 py-1 rounded shadow-md flex items-center gap-1">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25" /></svg>
-                    <span className="text-[9px] font-medium">NOW</span>
+                {/* Floating messages - responsive positioning */}
+                <div className="absolute top-[12%] sm:top-[15%] left-[5%] sm:left-[8%] bg-white rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 shadow-md border border-border max-w-[120px] sm:max-w-36" style={{ animation: 'float-around 4s ease-in-out infinite' }}>
+                  <div className="flex items-center gap-1 sm:gap-1.5 mb-0.5">
+                    <img src="https://api.dicebear.com/7.x/notionists/svg?seed=sarah" className="w-4 sm:w-5 h-4 sm:h-5 rounded-full bg-gray-100" alt="" />
+                    <span className="text-[8px] sm:text-[10px] font-medium text-dark">Sarah</span>
+                    <span className="text-[6px] sm:text-[8px] bg-red-100 text-red-600 px-0.5 sm:px-1 rounded font-medium">VP</span>
                   </div>
+                  <p className="text-[8px] sm:text-[10px] text-dark/70">"EOD. No exceptions."</p>
                 </div>
 
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ animation: 'orbit3 5s linear infinite' }}>
-                  <div className="bg-white border border-gray-200 px-2 py-1 rounded shadow-md flex items-center gap-1">
-                    <svg className="w-3 h-3 text-blue-600" viewBox="0 0 24 24" fill="currentColor"><path d="M14.2 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V7.8L14.2 2z"/></svg>
-                    <span className="text-[9px] font-medium text-dark">Doc</span>
+                <div className="absolute top-[10%] sm:top-[12%] right-[5%] sm:right-[8%] bg-white rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 shadow-md border border-border max-w-[100px] sm:max-w-32" style={{ animation: 'float-around-reverse 5s ease-in-out infinite', animationDelay: '0.5s' }}>
+                  <div className="flex items-center gap-1 sm:gap-1.5 mb-0.5">
+                    <img src="https://api.dicebear.com/7.x/notionists/svg?seed=mike" className="w-4 sm:w-5 h-4 sm:h-5 rounded-full bg-gray-100" alt="" />
+                    <span className="text-[8px] sm:text-[10px] font-medium text-dark">Mike</span>
                   </div>
+                  <p className="text-[8px] sm:text-[10px] text-dark/70">"Blocking launch"</p>
                 </div>
 
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ animation: 'orbit4 8s linear infinite' }}>
-                  <div className="bg-amber-500 text-white px-2 py-1 rounded shadow-md flex items-center gap-1">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022" /></svg>
-                    <span className="text-[9px] font-medium">Late</span>
+                <div className="hidden sm:block absolute bottom-[22%] left-[10%] bg-white rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 shadow-md border-2" style={{ animation: 'float-around 3.5s ease-in-out infinite, pulse-border 2s ease-in-out infinite', animationDelay: '0.2s' }}>
+                  <div className="flex items-center gap-1 sm:gap-1.5 mb-0.5">
+                    <img src="https://api.dicebear.com/7.x/notionists/svg?seed=priya" className="w-4 sm:w-5 h-4 sm:h-5 rounded-full bg-gray-100" alt="" />
+                    <span className="text-[8px] sm:text-[10px] font-medium text-dark">Priya</span>
+                    <span className="text-[6px] sm:text-[8px] bg-orange-100 text-orange-600 px-0.5 sm:px-1 rounded">!</span>
                   </div>
+                  <p className="text-[8px] sm:text-[10px] text-dark/70">"Still waiting..."</p>
                 </div>
 
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ animation: 'orbit5 6.5s linear infinite' }}>
-                  <div className="bg-red-500 text-white px-2 py-1 rounded shadow-md flex items-center gap-1">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75" /></svg>
-                    <span className="text-[9px] font-medium">URGENT</span>
+                <div className="hidden sm:block absolute bottom-[18%] right-[8%] bg-white rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 shadow-md border border-border max-w-[100px] sm:max-w-32" style={{ animation: 'float-around-reverse 4.5s ease-in-out infinite', animationDelay: '0.8s' }}>
+                  <div className="flex items-center gap-1 sm:gap-1.5 mb-0.5">
+                    <img src="https://api.dicebear.com/7.x/notionists/svg?seed=client" className="w-4 sm:w-5 h-4 sm:h-5 rounded-full bg-gray-100" alt="" />
+                    <span className="text-[8px] sm:text-[10px] font-medium text-dark">Client</span>
                   </div>
+                  <p className="text-[8px] sm:text-[10px] text-dark/70">"We need to talk"</p>
                 </div>
-
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ animation: 'orbit6 9s linear infinite' }}>
-                  <div className="bg-green-500 text-white px-2 py-1 rounded shadow-md flex items-center gap-1">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    <span className="text-[9px] font-medium">Due</span>
-                  </div>
-                </div>
-
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ animation: 'orbit7 5.5s linear infinite' }}>
-                  <div className="bg-purple-500 text-white px-2 py-1 rounded shadow-md flex items-center gap-1">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952" /></svg>
-                    <span className="text-[9px] font-medium">1:1</span>
-                  </div>
-                </div>
-
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ animation: 'orbit8 7.5s linear infinite' }}>
-                  <div className="bg-pink-500 text-white px-2 py-1 rounded shadow-md flex items-center gap-1">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372" /></svg>
-                    <span className="text-[9px] font-medium">Call</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Compact floating messages - positioned closer to center */}
-            <div className="absolute top-[15%] left-[8%] bg-white rounded-lg px-3 py-2 shadow-md border border-border max-w-36" style={{ animation: 'float-around 4s ease-in-out infinite' }}>
-              <div className="flex items-center gap-1.5 mb-0.5">
-                <img src="https://api.dicebear.com/7.x/notionists/svg?seed=sarah" className="w-5 h-5 rounded-full bg-gray-100" alt="" />
-                <span className="text-[10px] font-medium text-dark">Sarah</span>
-                <span className="text-[8px] bg-red-100 text-red-600 px-1 rounded font-medium">VP</span>
-              </div>
-              <p className="text-[10px] text-dark/70">"EOD. No exceptions."</p>
-            </div>
-
-            <div className="absolute top-[12%] right-[8%] bg-white rounded-lg px-3 py-2 shadow-md border border-border max-w-32" style={{ animation: 'float-around-reverse 5s ease-in-out infinite', animationDelay: '0.5s' }}>
-              <div className="flex items-center gap-1.5 mb-0.5">
-                <img src="https://api.dicebear.com/7.x/notionists/svg?seed=mike" className="w-5 h-5 rounded-full bg-gray-100" alt="" />
-                <span className="text-[10px] font-medium text-dark">Mike</span>
-              </div>
-              <p className="text-[10px] text-dark/70">"Blocking launch"</p>
-            </div>
-
-            <div className="absolute bottom-[22%] left-[10%] bg-white rounded-lg px-3 py-2 shadow-md border-2" style={{ animation: 'float-around 3.5s ease-in-out infinite, pulse-border 2s ease-in-out infinite', animationDelay: '0.2s' }}>
-              <div className="flex items-center gap-1.5 mb-0.5">
-                <img src="https://api.dicebear.com/7.x/notionists/svg?seed=priya" className="w-5 h-5 rounded-full bg-gray-100" alt="" />
-                <span className="text-[10px] font-medium text-dark">Priya</span>
-                <span className="text-[8px] bg-orange-100 text-orange-600 px-1 rounded">!</span>
-              </div>
-              <p className="text-[10px] text-dark/70">"Still waiting..."</p>
-            </div>
-
-            <div className="absolute bottom-[18%] right-[8%] bg-white rounded-lg px-3 py-2 shadow-md border border-border max-w-32" style={{ animation: 'float-around-reverse 4.5s ease-in-out infinite', animationDelay: '0.8s' }}>
-              <div className="flex items-center gap-1.5 mb-0.5">
-                <img src="https://api.dicebear.com/7.x/notionists/svg?seed=client" className="w-5 h-5 rounded-full bg-gray-100" alt="" />
-                <span className="text-[10px] font-medium text-dark">Client</span>
-              </div>
-              <p className="text-[10px] text-dark/70">"We need to talk"</p>
-            </div>
 
                 {/* Response area */}
-                <div className="absolute bottom-2 left-3 right-3 bg-white border-2 border-dark/10 rounded-lg px-3 py-2 shadow-sm">
+                <div className="absolute bottom-2 left-2 sm:left-3 right-2 sm:right-3 bg-white border-2 border-dark/10 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 shadow-sm">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-dark/40">How do you respond?</span>
+                    <span className="text-[10px] sm:text-xs text-dark/40">How do you respond?</span>
                     <div className="flex items-center gap-0.5">
                       <div className="w-1 h-1 bg-dark/30 rounded-full animate-pulse" />
                       <div className="w-1 h-1 bg-dark/30 rounded-full animate-pulse" style={{ animationDelay: '0.15s' }} />
@@ -218,29 +234,29 @@ export default function Landing() {
                   </div>
                 </div>
               </div>
-              <p className="text-center text-xs text-muted mt-3">Real scenarios. Real pressure. Safe environment.</p>
+              <p className="text-center text-[10px] sm:text-xs text-muted mt-2 sm:mt-3">Real scenarios. Real pressure. Safe environment.</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Social Proof Bar */}
-      <section className="py-8 px-6 bg-white border-y border-gray-100">
+      <section className="py-6 sm:py-8 px-4 sm:px-6 bg-white border-y border-gray-100">
         <div className="max-w-5xl mx-auto">
-          <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-4 text-sm text-muted">
+          <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-4 sm:gap-x-12 sm:gap-y-4 text-xs sm:text-sm text-muted">
             <div className="flex items-center gap-2">
-              <span className="text-2xl font-semibold text-dark">2,400+</span>
+              <span className="text-xl sm:text-2xl font-semibold text-dark">2,400+</span>
               <span>simulations completed</span>
             </div>
             <div className="hidden sm:block w-px h-8 bg-gray-200" />
             <div className="flex items-center gap-2">
-              <span className="text-2xl font-semibold text-dark">94%</span>
+              <span className="text-xl sm:text-2xl font-semibold text-dark">94%</span>
               <span>felt more confident after</span>
             </div>
             <div className="hidden sm:block w-px h-8 bg-gray-200" />
-            <div className="flex items-center gap-3">
-              <span>Practiced by people at</span>
-              <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <span className="hidden sm:inline">Practiced by people at</span>
+              <div className="flex items-center gap-3 sm:gap-4">
                 {/* Google - Full color */}
                 <svg className="h-5" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -261,69 +277,69 @@ export default function Landing() {
       </section>
 
       {/* What You'll Practice - Compact Pills */}
-      <section className="py-16 px-6">
+      <section className="py-10 sm:py-16 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-medium text-dark mb-4 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-medium text-dark mb-3 sm:mb-4 tracking-tight">
             Train on what actually matters
           </h2>
-          <p className="text-muted mb-10 max-w-xl mx-auto">Pick a skill. Get dropped into a realistic scenario. Practice until it clicks.</p>
+          <p className="text-sm sm:text-base text-muted mb-6 sm:mb-10 max-w-xl mx-auto">Pick a skill. Get dropped into a realistic scenario. Practice until it clicks.</p>
 
-          <div className="flex flex-wrap justify-center gap-3 mb-12">
-            <div className="group flex items-center gap-2 bg-white border border-gray-200 rounded-full px-4 py-2.5 hover:border-blue-300 hover:bg-blue-50 transition-all cursor-pointer">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
-                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0" /></svg>
+          <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-8 sm:mb-12">
+            <div className="group flex items-center gap-1.5 sm:gap-2 bg-white border border-gray-200 rounded-full px-2.5 sm:px-4 py-2 sm:py-2.5 hover:border-blue-300 hover:bg-blue-50 transition-all cursor-pointer">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                <svg className="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0" /></svg>
               </div>
-              <span className="font-medium text-dark">Interview Prep</span>
-              <span className="text-xs text-muted bg-gray-100 px-2 py-0.5 rounded-full">6</span>
+              <span className="text-xs sm:text-sm font-medium text-dark">Interview</span>
+              <span className="hidden sm:inline text-xs text-muted bg-gray-100 px-2 py-0.5 rounded-full">6</span>
             </div>
 
-            <div className="group flex items-center gap-2 bg-white border border-gray-200 rounded-full px-4 py-2.5 hover:border-purple-300 hover:bg-purple-50 transition-all cursor-pointer">
-              <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center">
-                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" /></svg>
+            <div className="group flex items-center gap-1.5 sm:gap-2 bg-white border border-gray-200 rounded-full px-2.5 sm:px-4 py-2 sm:py-2.5 hover:border-purple-300 hover:bg-purple-50 transition-all cursor-pointer">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center">
+                <svg className="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" /></svg>
               </div>
-              <span className="font-medium text-dark">Hard Conversations</span>
-              <span className="text-xs text-muted bg-gray-100 px-2 py-0.5 rounded-full">5</span>
+              <span className="text-xs sm:text-sm font-medium text-dark">Conversations</span>
+              <span className="hidden sm:inline text-xs text-muted bg-gray-100 px-2 py-0.5 rounded-full">5</span>
             </div>
 
-            <div className="group flex items-center gap-2 bg-white border border-gray-200 rounded-full px-4 py-2.5 hover:border-amber-300 hover:bg-amber-50 transition-all cursor-pointer">
-              <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-orange-500 rounded-full flex items-center justify-center">
-                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>
+            <div className="group flex items-center gap-1.5 sm:gap-2 bg-white border border-gray-200 rounded-full px-2.5 sm:px-4 py-2 sm:py-2.5 hover:border-amber-300 hover:bg-amber-50 transition-all cursor-pointer">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-amber-500 to-orange-500 rounded-full flex items-center justify-center">
+                <svg className="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>
               </div>
-              <span className="font-medium text-dark">Under Pressure</span>
-              <span className="text-xs text-muted bg-gray-100 px-2 py-0.5 rounded-full">4</span>
+              <span className="text-xs sm:text-sm font-medium text-dark">Pressure</span>
+              <span className="hidden sm:inline text-xs text-muted bg-gray-100 px-2 py-0.5 rounded-full">4</span>
             </div>
 
-            <div className="group flex items-center gap-2 bg-white border border-gray-200 rounded-full px-4 py-2.5 hover:border-emerald-300 hover:bg-emerald-50 transition-all cursor-pointer">
-              <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-green-600 rounded-full flex items-center justify-center">
-                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584" /></svg>
+            <div className="group flex items-center gap-1.5 sm:gap-2 bg-white border border-gray-200 rounded-full px-2.5 sm:px-4 py-2 sm:py-2.5 hover:border-emerald-300 hover:bg-emerald-50 transition-all cursor-pointer">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-emerald-500 to-green-600 rounded-full flex items-center justify-center">
+                <svg className="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584" /></svg>
               </div>
-              <span className="font-medium text-dark">Stakeholders</span>
-              <span className="text-xs text-muted bg-gray-100 px-2 py-0.5 rounded-full">4</span>
+              <span className="text-xs sm:text-sm font-medium text-dark">Stakeholders</span>
+              <span className="hidden sm:inline text-xs text-muted bg-gray-100 px-2 py-0.5 rounded-full">4</span>
             </div>
 
-            <div className="group flex items-center gap-2 bg-white border border-gray-200 rounded-full px-4 py-2.5 hover:border-rose-300 hover:bg-rose-50 transition-all cursor-pointer">
-              <div className="w-8 h-8 bg-gradient-to-br from-rose-500 to-pink-600 rounded-full flex items-center justify-center">
-                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" /></svg>
+            <div className="group flex items-center gap-1.5 sm:gap-2 bg-white border border-gray-200 rounded-full px-2.5 sm:px-4 py-2 sm:py-2.5 hover:border-rose-300 hover:bg-rose-50 transition-all cursor-pointer">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-rose-500 to-pink-600 rounded-full flex items-center justify-center">
+                <svg className="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" /></svg>
               </div>
-              <span className="font-medium text-dark">Leadership</span>
-              <span className="text-xs text-muted bg-gray-100 px-2 py-0.5 rounded-full">5</span>
+              <span className="text-xs sm:text-sm font-medium text-dark">Leadership</span>
+              <span className="hidden sm:inline text-xs text-muted bg-gray-100 px-2 py-0.5 rounded-full">5</span>
             </div>
 
-            <div className="group flex items-center gap-2 bg-white border border-gray-200 rounded-full px-4 py-2.5 hover:border-cyan-300 hover:bg-cyan-50 transition-all cursor-pointer">
-              <div className="w-8 h-8 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-full flex items-center justify-center">
-                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <div className="group flex items-center gap-1.5 sm:gap-2 bg-white border border-gray-200 rounded-full px-2.5 sm:px-4 py-2 sm:py-2.5 hover:border-cyan-300 hover:bg-cyan-50 transition-all cursor-pointer">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-full flex items-center justify-center">
+                <svg className="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               </div>
-              <span className="font-medium text-dark">Negotiation</span>
-              <span className="text-xs text-muted bg-gray-100 px-2 py-0.5 rounded-full">3</span>
+              <span className="text-xs sm:text-sm font-medium text-dark">Negotiation</span>
+              <span className="hidden sm:inline text-xs text-muted bg-gray-100 px-2 py-0.5 rounded-full">3</span>
             </div>
           </div>
         </div>
       </section>
 
       {/* How It Works - Horizontal Timeline */}
-      <section className="py-16 px-6 bg-dark text-white overflow-hidden">
+      <section className="py-12 sm:py-16 px-4 sm:px-6 bg-dark text-white overflow-hidden">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-medium text-center mb-16 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-medium text-center mb-10 sm:mb-16 tracking-tight">
             Three steps. Real skills.
           </h2>
 
@@ -331,23 +347,23 @@ export default function Landing() {
             {/* Connection line */}
             <div className="hidden md:block absolute top-8 left-[16%] right-[16%] h-0.5 bg-white/20" />
 
-            <div className="grid md:grid-cols-3 gap-8 md:gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 md:gap-4">
               <div className="text-center relative">
-                <div className="w-16 h-16 bg-white text-dark rounded-2xl flex items-center justify-center mx-auto mb-6 text-2xl font-bold shadow-lg relative z-10">1</div>
-                <h3 className="text-xl font-medium mb-2">Pick a scenario</h3>
-                <p className="text-white/60 text-sm leading-relaxed">Interview prep, tough feedback, negotiation — choose your challenge</p>
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white text-dark rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-6 text-xl sm:text-2xl font-bold shadow-lg relative z-10">1</div>
+                <h3 className="text-lg sm:text-xl font-medium mb-1.5 sm:mb-2">Pick a scenario</h3>
+                <p className="text-white/60 text-xs sm:text-sm leading-relaxed max-w-[250px] mx-auto">Interview prep, tough feedback, negotiation — choose your challenge</p>
               </div>
 
               <div className="text-center relative">
-                <div className="w-16 h-16 bg-white text-dark rounded-2xl flex items-center justify-center mx-auto mb-6 text-2xl font-bold shadow-lg relative z-10">2</div>
-                <h3 className="text-xl font-medium mb-2">Face the heat</h3>
-                <p className="text-white/60 text-sm leading-relaxed">AI coworkers with real personalities push back on your ideas</p>
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white text-dark rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-6 text-xl sm:text-2xl font-bold shadow-lg relative z-10">2</div>
+                <h3 className="text-lg sm:text-xl font-medium mb-1.5 sm:mb-2">Face the heat</h3>
+                <p className="text-white/60 text-xs sm:text-sm leading-relaxed max-w-[250px] mx-auto">AI coworkers with real personalities push back on your ideas</p>
               </div>
 
               <div className="text-center relative">
-                <div className="w-16 h-16 bg-white text-dark rounded-2xl flex items-center justify-center mx-auto mb-6 text-2xl font-bold shadow-lg relative z-10">3</div>
-                <h3 className="text-xl font-medium mb-2">Get real feedback</h3>
-                <p className="text-white/60 text-sm leading-relaxed">Detailed report shows what worked and where to improve</p>
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white text-dark rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-6 text-xl sm:text-2xl font-bold shadow-lg relative z-10">3</div>
+                <h3 className="text-lg sm:text-xl font-medium mb-1.5 sm:mb-2">Get real feedback</h3>
+                <p className="text-white/60 text-xs sm:text-sm leading-relaxed max-w-[250px] mx-auto">Detailed report shows what worked and where to improve</p>
               </div>
             </div>
           </div>
@@ -355,18 +371,18 @@ export default function Landing() {
       </section>
 
       {/* Testimonials - Pyramid Layout */}
-      <section className="py-20 px-6 bg-gradient-to-b from-gray-50 to-white">
+      <section className="py-12 sm:py-20 px-4 sm:px-6 bg-gradient-to-b from-gray-50 to-white">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <p className="text-sm font-medium text-muted uppercase tracking-wider mb-3">Results that matter</p>
-            <h2 className="text-3xl md:text-4xl font-medium text-dark tracking-tight">Skills that changed careers</h2>
+          <div className="text-center mb-8 sm:mb-12">
+            <p className="text-xs sm:text-sm font-medium text-muted uppercase tracking-wider mb-2 sm:mb-3">Results that matter</p>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-medium text-dark tracking-tight">Skills that changed careers</h2>
           </div>
 
           {/* Pyramid: 1 on top, 2 below */}
-          <div className="flex flex-col items-center gap-6">
+          <div className="flex flex-col items-center gap-4 sm:gap-6">
             {/* Top card - centered */}
             <div className="w-full max-w-md">
-              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+              <div className="bg-white p-4 sm:p-6 rounded-xl sm:rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-center gap-3 mb-4">
                   <img src="https://api.dicebear.com/7.x/notionists/svg?seed=arun&backgroundColor=c0aede" className="w-12 h-12 rounded-full border-2 border-white shadow-sm" alt="" />
                   <div>
@@ -419,15 +435,15 @@ export default function Landing() {
       </section>
 
       {/* Final CTA */}
-      <section className="py-16 px-6 bg-dark">
+      <section className="py-12 sm:py-16 px-4 sm:px-6 bg-dark">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-medium text-white mb-3 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-medium text-white mb-2 sm:mb-3 tracking-tight">
             Your next big moment is coming.
           </h2>
-          <p className="text-lg text-white/60 mb-8">Be ready.</p>
+          <p className="text-base sm:text-lg text-white/60 mb-6 sm:mb-8">Be ready.</p>
           <Link
             to="/signup"
-            className="inline-block bg-white text-dark px-8 py-4 rounded-full text-base font-medium hover:bg-gray-100 transition-all hover:-translate-y-0.5 shadow-lg"
+            className="inline-block bg-white text-dark px-6 sm:px-8 py-3 sm:py-4 rounded-full text-sm sm:text-base font-medium hover:bg-gray-100 transition-all hover:-translate-y-0.5 shadow-lg"
           >
             Start Practicing Free →
           </Link>
@@ -435,43 +451,43 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-6 border-t border-border bg-white">
-        <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+      <footer className="py-8 sm:py-12 px-4 sm:px-6 border-t border-border bg-white">
+        <div className="max-w-5xl mx-auto flex flex-col items-center gap-4 sm:gap-6">
           <div className="flex items-center gap-2">
-            <svg className="w-6 h-3.5" viewBox="0 0 28 16" fill="none">
+            <svg className="w-5 sm:w-6 h-3 sm:h-3.5" viewBox="0 0 28 16" fill="none">
               <path d="M7 8c0-2.5 2-4.5 4.5-4.5S16 5.5 16 8s-2 4.5-4.5 4.5S7 10.5 7 8z" stroke="currentColor" strokeWidth="1.5" fill="none"/>
               <path d="M12 8c0-2.5 2-4.5 4.5-4.5S21 5.5 21 8s-2 4.5-4.5 4.5S12 10.5 12 8z" stroke="currentColor" strokeWidth="1.5" fill="none"/>
               <line x1="1" y1="8" x2="27" y2="8" stroke="currentColor" strokeWidth="1" strokeDasharray="2 2"/>
               <polygon points="25,6 27,8 25,10" fill="currentColor"/>
             </svg>
-            <span className="text-muted text-sm">WorkSim by cmul8</span>
+            <span className="text-muted text-xs sm:text-sm">WorkSim by cmul8</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
             <a
               href="https://www.cmul8.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 text-sm text-muted border border-border rounded-full px-4 py-2 hover:text-dark hover:bg-gray-50 transition-all"
+              className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted border border-border rounded-full px-3 sm:px-4 py-1.5 sm:py-2 hover:text-dark hover:bg-gray-50 transition-all"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+              <svg className="w-3.5 sm:w-4 h-3.5 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
               </svg>
-              cmul8.com
+              <span className="hidden sm:inline">cmul8.com</span>
             </a>
             <Link
               to="/login"
-              className="flex items-center gap-2 text-sm text-muted border border-border rounded-full px-4 py-2 hover:text-dark hover:bg-gray-50 transition-all"
+              className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted border border-border rounded-full px-3 sm:px-4 py-1.5 sm:py-2 hover:text-dark hover:bg-gray-50 transition-all"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+              <svg className="w-3.5 sm:w-4 h-3.5 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 0h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z" />
               </svg>
               Enterprise
             </Link>
             <a
               href="mailto:hello@cmul8.com"
-              className="flex items-center gap-2 text-sm text-muted border border-border rounded-full px-4 py-2 hover:text-dark hover:bg-gray-50 transition-all"
+              className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted border border-border rounded-full px-3 sm:px-4 py-1.5 sm:py-2 hover:text-dark hover:bg-gray-50 transition-all"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+              <svg className="w-3.5 sm:w-4 h-3.5 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
               </svg>
               Contact
