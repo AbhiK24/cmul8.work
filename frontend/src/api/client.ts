@@ -407,7 +407,14 @@ export interface DocActivityResponse {
 
 export const candidate = {
   sendMessage: (data: MessageRequest) =>
-    apiRequest<{ reply: string; relationship_score: number; agent_id: string; escalated?: boolean; escalation_reason?: string }>('/candidate/message', {
+    apiRequest<{
+      reply: string | { type: string; text?: string; image_url?: string }[];
+      relationship_score: number;
+      agent_id: string;
+      escalated?: boolean;
+      escalation_reason?: string;
+      generated_image?: { image_id: string; image_type: string; description: string; url: string; context?: string };
+    }>('/candidate/message', {
       method: 'POST',
       body: data,
     }),

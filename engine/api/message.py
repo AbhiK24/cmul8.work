@@ -13,7 +13,7 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException
 
 from ..schemas.input_schema import MessageRequest
-from ..schemas.env_schema import MessageResponse, TraceEvent
+from ..schemas.env_schema import MessageResponse, TraceEvent, GeneratedImage, MessageContent
 from ..engine.kimi_client import call_kimi
 from ..engine.memory import (
     record_agent_interaction,
@@ -21,7 +21,9 @@ from ..engine.memory import (
     should_reflect,
     generate_reflections
 )
+from ..engine.image_gen import generate_diagram, generate_scene, generate_handwritten_notes, generate_chart
 from ..db.pool import get_pool
+import re
 
 router = APIRouter()
 
@@ -49,6 +51,59 @@ def calculate_relationship_delta(message: str, reply: str) -> float:
 
     # Clamp delta
     return max(-0.1, min(0.15, delta))
+
+
+async def detect_and_generate_image(reply: str) -> tuple[str, GeneratedImage | None]:
+    """Detect if agent wants to share an image and generate it.
+
+    Looks for patterns like:
+    - [DIAGRAM: description]
+    - [SKETCH: description]
+    - [CHART: description]
+    - [NOTES: description]
+    - [SCENE: description]
+
+    Returns: (cleaned_reply, generated_image or None)
+    """
+    image_patterns = {
+        "DIAGRAM": ("diagram", generate_diagram),
+        "SKETCH": ("diagram", generate_diagram),
+        "FLOWCHART": ("diagram", lambda d: generate_diagram(d, "flowchart")),
+        "ARCHITECTURE": ("diagram", lambda d: generate_diagram(d, "architecture")),
+        "CHART": ("chart", generate_chart),
+        "GRAPH": ("chart", lambda d: generate_chart(d, "line")),
+        "NOTES": ("notes", generate_handwritten_notes),
+        "SCENE": ("scene", generate_scene),
+        "SCREENSHOT": ("scene", lambda d: generate_scene(d, "workspace")),
+    }
+
+    # Look for [TYPE: description] pattern
+    pattern = r'\[(' + '|'.join(image_patterns.keys()) + r'):\s*([^\]]+)\]'
+    match = re.search(pattern, reply, re.IGNORECASE)
+
+    if not match:
+        return reply, None
+
+    image_type_key = match.group(1).upper()
+    description = match.group(2).strip()
+    image_type, gen_func = image_patterns[image_type_key]
+
+    try:
+        result = await gen_func(description)
+        if result and result.get("url"):
+            # Clean the reply - replace the tag with a reference
+            cleaned_reply = re.sub(pattern, "(see attached image)", reply, count=1, flags=re.IGNORECASE)
+            return cleaned_reply, GeneratedImage(
+                image_id=f"runtime_{uuid.uuid4().hex[:8]}",
+                image_type=image_type,
+                description=description,
+                url=result["url"],
+                context="Agent shared this during conversation"
+            )
+    except Exception as e:
+        print(f"Runtime image generation failed: {e}")
+
+    return reply, None
 
 
 def check_escalation(agent: dict, current_score: float, new_score: float) -> tuple[bool, str | None]:
@@ -268,14 +323,17 @@ async def send_message(request: MessageRequest) -> MessageResponse:
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Agent response failed: {e}")
 
+        # Check if agent wants to share an image and generate it
+        reply, generated_image = await detect_and_generate_image(reply)
+
         # Record agent's reply as observation
         await record_agent_interaction(
             pool=pool,
             session_id=request.session_id,
             agent_id=request.agent_id,
             interaction_type="message_sent",
-            content=f"I replied to the candidate: '{reply}'",
-            metadata={"relationship_score": current_score}
+            content=f"I replied to the candidate: '{reply}'" + (" [with image]" if generated_image else ""),
+            metadata={"relationship_score": current_score, "has_image": generated_image is not None}
         )
 
         # Calculate new relationship score
@@ -348,10 +406,20 @@ async def send_message(request: MessageRequest) -> MessageResponse:
             request.session_id
         )
 
+    # Build response - if we have an image, make it multimodal
+    if generated_image:
+        reply_content = [
+            MessageContent(type="text", text=reply),
+            MessageContent(type="image_url", image_url=generated_image.url)
+        ]
+    else:
+        reply_content = reply
+
     return MessageResponse(
-        reply=reply,
+        reply=reply_content,
         relationship_score=new_score,
         agent_id=request.agent_id,
         escalated=escalated,
-        escalation_reason=escalation_reason
+        escalation_reason=escalation_reason,
+        generated_image=generated_image
     )

@@ -25,6 +25,8 @@ class GenerateRequest(BaseModel):
     hiring_focus: Optional[str] = None
     # Job description from uploaded PDF
     job_description: Optional[str] = None
+    # Image generation (optional - adds realism with diagrams, scenes, notes)
+    generate_images: bool = False
 
 
 class MessageRequest(BaseModel):

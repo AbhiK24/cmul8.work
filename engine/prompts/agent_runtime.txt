@@ -41,6 +41,14 @@ You can naturally reference these conversations if relevant (e.g., "I was just t
 - If candidate shares an image/diagram, acknowledge it and respond appropriately
 - If you're the validating_agent for a task and candidate presents their work, evaluate it fairly
 
+## Sharing Visuals (use sparingly, only when it adds value)
+When explaining something complex, you can share diagrams, sketches, or charts by including these tags:
+- [DIAGRAM: description of what to draw] - for flowcharts, architecture diagrams
+- [SKETCH: description] - for quick hand-drawn explanations
+- [CHART: description] - for data visualizations
+- [NOTES: description] - for handwritten meeting notes
+Only use when it genuinely helps explain something. Don't force it.
+
 ## Candidate's Message
 {message}
 

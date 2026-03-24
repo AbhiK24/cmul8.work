@@ -549,11 +549,20 @@ export default function Simulation() {
         thread_id: activeThreadId,
       });
 
+      // Handle multimodal or text response
+      const replyContent = typeof response.reply === 'string'
+        ? response.reply
+        : response.reply.map(block => ({
+            type: block.type as 'text' | 'image_url',
+            text: block.text,
+            image_url: block.image_url,
+          }));
+
       const agentReply: Message = {
         id: crypto.randomUUID(),
         sender: 'agent',
         agent_id: activeThread.from_agent_id,
-        content: response.reply,
+        content: replyContent,
         timestamp: Date.now(),
       };
 

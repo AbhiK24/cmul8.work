@@ -59,6 +59,14 @@ export interface MessageContentBlock {
   image_url?: string;
 }
 
+export interface GeneratedImage {
+  image_id: string;
+  image_type: 'diagram' | 'scene' | 'notes' | 'chart' | 'screenshot';
+  description: string;
+  url: string;
+  context?: string;
+}
+
 export interface Message {
   id: string;
   sender: 'agent' | 'candidate' | 'system';
@@ -128,6 +136,7 @@ export interface Environment {
   tasks: Task[];
   artifact_content: ArtifactContent;
   inject_schedule: StressInject[];
+  generated_images?: GeneratedImage[];
 }
 
 export type Role = 'PM' | 'Analyst' | 'Ops Lead' | 'Sales' | 'Eng Manager' | 'Custom';

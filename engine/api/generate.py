@@ -9,9 +9,10 @@ from ..schemas.input_schema import GenerateRequest
 from ..schemas.env_schema import (
     EnvironmentResponse, Agent, Thread, Message, Task, StressInject,
     TaskKnowledge, TaskRequirement, AgentChatter, ArtifactContent, ArtifactSection,
-    EndCondition, AgentAvailabilitySlot, AgentHelpRequest
+    EndCondition, AgentAvailabilitySlot, AgentHelpRequest, GeneratedImage
 )
 from ..engine.kimi_client import call_kimi
+from ..engine.image_gen import generate_diagram, generate_scene, generate_handwritten_notes, generate_chart
 from ..db.pool import get_pool
 
 router = APIRouter()
@@ -205,6 +206,23 @@ ENV_SCHEMA = {
                 },
                 "required": ["type", "trigger", "description"]
             }
+        },
+        "image_prompts": {
+            "type": "array",
+            "description": "Images that would enhance realism - diagrams, scenes, notes agents might share",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "image_type": {"type": "string", "enum": ["diagram", "scene", "notes", "chart", "screenshot"]},
+                    "description": {"type": "string", "description": "Detailed description of what this image should show"},
+                    "context": {"type": "string", "description": "When/how an agent might share this (e.g., 'Jordan might share this to explain the architecture')"},
+                    "diagram_type": {"type": "string", "enum": ["flowchart", "architecture", "sequence", "mindmap", "org_chart"]},
+                    "scene_type": {"type": "string", "enum": ["office", "warehouse", "meeting_room", "workspace", "server_room"]},
+                    "notes_style": {"type": "string", "enum": ["neat", "messy", "bullet_points"]},
+                    "chart_type": {"type": "string", "enum": ["bar", "line", "pie", "dashboard"]}
+                },
+                "required": ["image_type", "description", "context"]
+            }
         }
     }
 }
@@ -371,6 +389,45 @@ async def generate_environment(request: GenerateRequest) -> EnvironmentResponse:
                 task_ids=[t.task_id for t in tasks],
             ))
 
+        # Generate images if requested
+        generated_images = []
+        if request.generate_images:
+            image_prompts = env_data.get("image_prompts", [])
+            for idx, img_prompt in enumerate(image_prompts[:5]):  # Limit to 5 images
+                try:
+                    image_type = img_prompt.get("image_type", "diagram")
+                    description = img_prompt.get("description", "")
+                    context = img_prompt.get("context", "")
+
+                    result = None
+                    if image_type == "diagram":
+                        diagram_type = img_prompt.get("diagram_type", "flowchart")
+                        result = await generate_diagram(description, diagram_type)
+                    elif image_type == "scene":
+                        scene_type = img_prompt.get("scene_type", "office")
+                        result = await generate_scene(description, scene_type)
+                    elif image_type == "notes":
+                        notes_style = img_prompt.get("notes_style", "neat")
+                        result = await generate_handwritten_notes(description, notes_style)
+                    elif image_type == "chart":
+                        chart_type = img_prompt.get("chart_type", "bar")
+                        result = await generate_chart(description, chart_type)
+                    else:
+                        # Default to diagram
+                        result = await generate_diagram(description, "flowchart")
+
+                    if result and result.get("url"):
+                        generated_images.append(GeneratedImage(
+                            image_id=f"img_{idx}_{uuid.uuid4().hex[:8]}",
+                            image_type=image_type,
+                            description=description,
+                            url=result["url"],
+                            context=context,
+                        ))
+                except Exception as e:
+                    # Log but don't fail on image generation errors
+                    print(f"Image generation failed for {img_prompt}: {e}")
+
         env = EnvironmentResponse(
             company_name=request.org_name if request.org_name else env_data.get("company_name", "Unnamed Company"),
             company_description=env_data.get("company_description", ""),
@@ -389,7 +446,8 @@ async def generate_environment(request: GenerateRequest) -> EnvironmentResponse:
             artifact_content=artifact_content,
             inject_schedule=[StressInject(**i) for i in env_data.get("inject_schedule", [])],
             background_chatter=background_chatter,
-            end_conditions=end_conditions
+            end_conditions=end_conditions,
+            generated_images=generated_images
         )
 
     except json.JSONDecodeError as e:
