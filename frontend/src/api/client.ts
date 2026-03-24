@@ -372,11 +372,28 @@ export interface ArtifactCommentRequest {
   elapsed_seconds: number;
 }
 
+export interface AutonomyTickResponse {
+  should_act: boolean;
+  agent_id?: string;
+  agent_name?: string;
+  message?: string;
+  thread_id?: string;
+  is_new_thread?: boolean;
+  subject?: string;
+}
+
 export const candidate = {
   sendMessage: (data: MessageRequest) =>
-    apiRequest<{ reply: string; relationship_score: number; agent_id: string }>('/candidate/message', {
+    apiRequest<{ reply: string; relationship_score: number; agent_id: string; escalated?: boolean; escalation_reason?: string }>('/candidate/message', {
       method: 'POST',
       body: data,
+    }),
+
+  // Agent autonomy - check if any agent wants to initiate contact
+  autonomyTick: (sessionId: string, token: string, elapsedSeconds: number) =>
+    apiRequest<AutonomyTickResponse>('/candidate/autonomy/tick', {
+      method: 'POST',
+      body: { session_id: sessionId, token, elapsed_seconds: elapsedSeconds },
     }),
 
   getEnvironment: (sessionId: string, token: string) =>

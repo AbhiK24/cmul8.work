@@ -228,6 +228,80 @@ export default function Simulation() {
     return () => clearInterval(interval);
   }, [navigate, sessionId, token]);
 
+  // Agent Autonomy Loop - agents can initiate contact
+  useEffect(() => {
+    if (!sessionId || !token || !onboardingComplete || endCondition.type) return;
+
+    // Random interval between 45-90 seconds for natural feel
+    const getRandomInterval = () => 45000 + Math.random() * 45000;
+
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const checkAutonomy = async () => {
+      try {
+        const response = await candidate.autonomyTick(sessionId, token, elapsedSeconds);
+
+        if (response.should_act && response.agent_id && response.message) {
+          const agentData = agents.find(a => a.agent_id === response.agent_id);
+
+          if (response.is_new_thread && response.thread_id) {
+            // Create new thread
+            const newThread: Thread = {
+              thread_id: response.thread_id,
+              from_agent_id: response.agent_id,
+              subject: response.subject || `Message from ${response.agent_name}`,
+              preview: response.message.slice(0, 50),
+              is_urgent: false,
+              is_unread: true,
+              messages: [{
+                id: crypto.randomUUID(),
+                sender: 'agent',
+                agent_id: response.agent_id,
+                content: response.message,
+                timestamp: Date.now(),
+              }],
+            };
+            setThreads(prev => [newThread, ...prev]);
+            setInjectAlert(`${response.agent_name}: ${response.message.slice(0, 60)}...`);
+            setTimeout(() => setInjectAlert(null), 5000);
+          } else {
+            // Add to existing thread
+            const existingThread = threads.find(t => t.from_agent_id === response.agent_id);
+            if (existingThread) {
+              setThreads(prev => prev.map(t =>
+                t.thread_id === existingThread.thread_id
+                  ? {
+                      ...t,
+                      is_unread: true,
+                      messages: [...t.messages, {
+                        id: crypto.randomUUID(),
+                        sender: 'agent' as const,
+                        agent_id: response.agent_id,
+                        content: response.message,
+                        timestamp: Date.now(),
+                      }]
+                    }
+                  : t
+              ));
+              setInjectAlert(`${response.agent_name}: ${response.message.slice(0, 60)}...`);
+              setTimeout(() => setInjectAlert(null), 5000);
+            }
+          }
+        }
+      } catch (err) {
+        // Silently fail - don't disrupt simulation
+      }
+
+      // Schedule next check
+      timeoutId = setTimeout(checkAutonomy, getRandomInterval());
+    };
+
+    // Start after initial delay (give user time to settle)
+    timeoutId = setTimeout(checkAutonomy, 30000);
+
+    return () => clearTimeout(timeoutId);
+  }, [sessionId, token, onboardingComplete, endCondition.type, agents, threads, elapsedSeconds]);
+
   // Time-based end condition check
   useEffect(() => {
     if (!env?.end_conditions || !onboardingComplete || endCondition.type) return;

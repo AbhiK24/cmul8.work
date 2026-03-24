@@ -24,6 +24,10 @@ class Agent(BaseModel):
     relationship_score_baseline: float = 0.5
     escalation_threshold: float = 0.7
     avatar_url: Optional[str] = None  # DiceBear avatar URL
+    # Autonomy fields - agents can initiate contact
+    proactivity: float = 0.3  # 0-1, how likely to reach out unprompted
+    current_concern: Optional[str] = None  # What's on their mind right now
+    will_initiate_about: Optional[list[str]] = None  # Topics they might bring up
 
 
 class StressInject(BaseModel):

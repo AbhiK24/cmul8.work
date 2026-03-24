@@ -164,6 +164,10 @@ Generate a complete simulation environment:
      - What info they hold
      - Condition for sharing ("asked directly", "relationship > 0.6", "only after they share X")
    - `hidden_information`: Info they won't share easily
+   - **Autonomy fields** (agents can initiate contact!):
+     - `proactivity`: 0.0-1.0, how likely to reach out unprompted (managers: 0.5-0.7, peers: 0.2-0.4)
+     - `current_concern`: What's on their mind that they might bring up (e.g., "worried about the deadline")
+     - `will_initiate_about`: List of topics they might message the candidate about first
 
 5. **Background Chatter (2-3 conversations)**: Pre-existing conversations between agents that they may reference:
    - Agent A and B discussed topic X

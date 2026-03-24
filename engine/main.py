@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .db.pool import init_pool, close_pool, get_pool
 from .db.migrations import run_migrations
 from .engine.kimi_client import init_kimi
-from .api import generate, message, events, score, health, trace
+from .api import generate, message, events, score, health, trace, autonomy
 
 
 @asynccontextmanager
@@ -47,6 +47,7 @@ app.include_router(message.router, tags=["simulation"])
 app.include_router(events.router, tags=["simulation"])
 app.include_router(score.router, tags=["simulation"])
 app.include_router(trace.router, tags=["trace"])
+app.include_router(autonomy.router)
 
 
 @app.get("/")

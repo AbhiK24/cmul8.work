@@ -51,7 +51,10 @@ ENV_SCHEMA = {
                         }
                     },
                     "relationship_score_baseline": {"type": "number"},
-                    "escalation_threshold": {"type": "number"}
+                    "escalation_threshold": {"type": "number"},
+                    "proactivity": {"type": "number", "description": "0-1, how likely to reach out unprompted"},
+                    "current_concern": {"type": "string", "description": "What's on their mind right now"},
+                    "will_initiate_about": {"type": "array", "items": {"type": "string"}, "description": "Topics they might bring up"}
                 }
             }
         },
@@ -244,7 +247,10 @@ async def generate_environment(request: GenerateRequest) -> EnvironmentResponse:
                 task_knowledge=task_knowledge,
                 relationship_score_baseline=a.get("relationship_score_baseline", 0.5),
                 escalation_threshold=a.get("escalation_threshold", 0.7),
-                avatar_url=avatar_url
+                avatar_url=avatar_url,
+                proactivity=a.get("proactivity", 0.3),
+                current_concern=a.get("current_concern"),
+                will_initiate_about=a.get("will_initiate_about"),
             ))
 
         # Parse tasks with required_info

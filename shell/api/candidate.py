@@ -43,6 +43,13 @@ class CandidateTraceRequest(BaseModel):
     content: dict = {}
 
 
+class AutonomyTickRequest(BaseModel):
+    """Autonomy tick request - check if agents want to initiate."""
+    session_id: str
+    token: str
+    elapsed_seconds: int
+
+
 async def validate_candidate_token(session_id: str, token: str) -> tuple[bool, str]:
     """Validate candidate token for a session.
 
@@ -186,3 +193,30 @@ async def get_environment(session_id: str, token: str):
             """, session_id)
 
         return json.loads(row["env"])
+
+
+@router.post("/autonomy/tick")
+async def autonomy_tick(request: AutonomyTickRequest):
+    """Check if any agent wants to initiate contact (proxied to engine).
+
+    Called every 60-90 seconds to make the world feel alive.
+    """
+    is_valid, _ = await validate_candidate_token(request.session_id, request.token)
+    if not is_valid:
+        raise HTTPException(status_code=403, detail="Invalid or expired session")
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.post(
+                f"{ENGINE_URL}/autonomy/tick",
+                json={
+                    "session_id": request.session_id,
+                    "token": request.token,
+                    "elapsed_seconds": request.elapsed_seconds
+                }
+            )
+            response.raise_for_status()
+            return response.json()
+    except httpx.HTTPError as e:
+        # Don't fail the simulation if autonomy check fails
+        return {"should_act": False}
