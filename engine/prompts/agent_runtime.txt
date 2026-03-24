@@ -28,6 +28,10 @@ You can naturally reference these conversations if relevant (e.g., "I was just t
 ## Relevant Memories & Reflections
 {memory_context}
 
+## Candidate's Recent Tool Actions
+{tool_context}
+You can reference these actions naturally if relevant (e.g., "I see you pulled up the customer record...", "Good that you checked the CRM first")
+
 ## Recent Conversation with Candidate
 {conversation_history}
 

@@ -248,6 +248,23 @@ async def send_message(request: MessageRequest) -> MessageResponse:
         if not chatter_str:
             chatter_str = "No recent conversations with colleagues."
 
+        # Build tool context from recent trace events
+        tool_context_str = ""
+        tool_events = [t for t in trace if t.get("event_type") == "tool_event"]
+        recent_tool_events = tool_events[-5:] if tool_events else []  # Last 5 tool events
+        for event in recent_tool_events:
+            content = event.get("content", {})
+            tool_name = content.get("tool", "unknown tool")
+            action = content.get("action", "used")
+            data = content.get("data", {})
+            data_summary = ", ".join(f"{k}: {v}" for k, v in list(data.items())[:3]) if data else ""
+            tool_context_str += f"- Used {tool_name}: {action}"
+            if data_summary:
+                tool_context_str += f" ({data_summary})"
+            tool_context_str += "\n"
+        if not tool_context_str:
+            tool_context_str = "No recent tool usage."
+
         # Handle multimodal message content
         message_text_raw = request.message_text
         image_url = None
@@ -289,6 +306,7 @@ async def send_message(request: MessageRequest) -> MessageResponse:
             background_chatter=chatter_str,
             artifact_knowledge=agent.get("artifact_knowledge", "N/A"),
             memory_context=memory_context or "No relevant memories yet.",
+            tool_context=tool_context_str,
             conversation_history=history_str or "No previous conversation.",
             message=message_text,
             image_note=image_note

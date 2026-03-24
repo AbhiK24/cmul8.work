@@ -127,6 +127,15 @@ export interface ArtifactContent {
   sections: ArtifactSection[];
 }
 
+export interface SimulationTool {
+  id: string;
+  name: string;
+  url: string;
+  icon?: 'email' | 'crm' | 'calendar' | 'support' | 'analytics' | 'default';
+  description?: string;
+  linked_task_id?: string;
+}
+
 export interface Environment {
   company_name: string;
   company_description: string;
@@ -137,6 +146,7 @@ export interface Environment {
   artifact_content: ArtifactContent;
   inject_schedule: StressInject[];
   generated_images?: GeneratedImage[];
+  tools?: SimulationTool[];
 }
 
 export type Role = 'PM' | 'Analyst' | 'Ops Lead' | 'Sales' | 'Eng Manager' | 'Custom';

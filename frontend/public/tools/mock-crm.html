@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mock CRM - Customer Records</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+      color: #333;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #ddd;
+    }
+    .header h1 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+    .context-info {
+      font-size: 11px;
+      color: #666;
+      background: #e8f4fd;
+      padding: 6px 10px;
+      border-radius: 4px;
+    }
+    .search-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .search-bar input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    .search-bar button {
+      padding: 10px 20px;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .search-bar button:hover {
+      background: #1d4ed8;
+    }
+    .customer-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .customer-card {
+      background: white;
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      padding: 15px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .customer-card:hover {
+      border-color: #2563eb;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
+    }
+    .customer-card.selected {
+      border-color: #2563eb;
+      background: #f0f7ff;
+    }
+    .customer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+    .customer-name {
+      font-weight: 600;
+      font-size: 15px;
+    }
+    .customer-status {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+    .status-active { background: #dcfce7; color: #166534; }
+    .status-churned { background: #fee2e2; color: #991b1b; }
+    .status-at-risk { background: #fef3c7; color: #92400e; }
+    .customer-meta {
+      font-size: 12px;
+      color: #666;
+      display: flex;
+      gap: 15px;
+    }
+    .customer-details {
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid #eee;
+      display: none;
+    }
+    .customer-card.selected .customer-details {
+      display: block;
+    }
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+    .detail-label {
+      color: #666;
+    }
+    .detail-value {
+      font-weight: 500;
+    }
+    .actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .actions button {
+      flex: 1;
+      padding: 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: #2563eb;
+      color: white;
+      border: none;
+    }
+    .btn-secondary {
+      background: white;
+      color: #333;
+      border: 1px solid #ddd;
+    }
+    .event-log {
+      margin-top: 20px;
+      padding: 15px;
+      background: #1a1a1a;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 11px;
+      color: #4ade80;
+      max-height: 120px;
+      overflow-y: auto;
+    }
+    .event-log-title {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Customer Records</h1>
+    <div class="context-info" id="contextInfo">Connecting to simulation...</div>
+  </div>
+
+  <div class="search-bar">
+    <input type="text" id="searchInput" placeholder="Search customers by name or company...">
+    <button onclick="handleSearch()">Search</button>
+  </div>
+
+  <div class="customer-list" id="customerList">
+    <!-- Customers will be rendered here -->
+  </div>
+
+  <div class="event-log-title">Event Log (sent to simulation)</div>
+  <div class="event-log" id="eventLog"></div>
+
+  <script>
+    // Mock customer data
+    const customers = [
+      {
+        id: 'cust_001',
+        name: 'Sarah Chen',
+        company: 'Acme Corp',
+        status: 'active',
+        email: 'sarah@acmecorp.com',
+        phone: '+1 (555) 123-4567',
+        mrr: '$12,500',
+        lastContact: '2 days ago',
+        healthScore: 85,
+        notes: 'Key stakeholder. Interested in enterprise features.'
+      },
+      {
+        id: 'cust_002',
+        name: 'Marcus Johnson',
+        company: 'TechStart Inc',
+        status: 'at-risk',
+        email: 'marcus@techstart.io',
+        phone: '+1 (555) 987-6543',
+        mrr: '$4,200',
+        lastContact: '3 weeks ago',
+        healthScore: 42,
+        notes: 'Unhappy with recent support response times. Considering competitors.'
+      },
+      {
+        id: 'cust_003',
+        name: 'Emily Rodriguez',
+        company: 'DataFlow Systems',
+        status: 'active',
+        email: 'emily@dataflow.com',
+        phone: '+1 (555) 456-7890',
+        mrr: '$8,900',
+        lastContact: '1 week ago',
+        healthScore: 78,
+        notes: 'Recently upgraded to Pro plan. Very engaged with new features.'
+      },
+      {
+        id: 'cust_004',
+        name: 'James Wilson',
+        company: 'CloudNine Ltd',
+        status: 'churned',
+        email: 'james@cloudnine.co',
+        phone: '+1 (555) 321-0987',
+        mrr: '$0',
+        lastContact: '1 month ago',
+        healthScore: 0,
+        notes: 'Churned due to budget cuts. Open to reconnecting Q2 next year.'
+      }
+    ];
+
+    let selectedCustomer = null;
+    let simulationContext = null;
+
+    // Request context from parent simulation
+    function requestContext() {
+      window.parent.postMessage({ type: 'REQUEST_CONTEXT' }, '*');
+    }
+
+    // Send event to parent simulation
+    function sendEvent(action, data = {}) {
+      const event = {
+        type: 'TOOL_EVENT',
+        tool: 'CRM',
+        action,
+        data
+      };
+      window.parent.postMessage(event, '*');
+      logEvent(action, data);
+    }
+
+    // Log event to the event log
+    function logEvent(action, data) {
+      const log = document.getElementById('eventLog');
+      const time = new Date().toLocaleTimeString();
+      const dataStr = Object.keys(data).length ? ` | ${JSON.stringify(data)}` : '';
+      log.innerHTML += `[${time}] ${action}${dataStr}\n`;
+      log.scrollTop = log.scrollHeight;
+    }
+
+    // Listen for messages from parent
+    window.addEventListener('message', (event) => {
+      if (event.data.type === 'SIMULATION_CONTEXT') {
+        simulationContext = event.data.context;
+        document.getElementById('contextInfo').textContent =
+          `Session: ${simulationContext.candidate_name} | ${simulationContext.company_name}`;
+        sendEvent('tool_opened', { candidate: simulationContext.candidate_name });
+      }
+    });
+
+    // Render customer list
+    function renderCustomers(filter = '') {
+      const list = document.getElementById('customerList');
+      const filtered = customers.filter(c =>
+        !filter ||
+        c.name.toLowerCase().includes(filter.toLowerCase()) ||
+        c.company.toLowerCase().includes(filter.toLowerCase())
+      );
+
+      list.innerHTML = filtered.map(c => `
+        <div class="customer-card ${selectedCustomer === c.id ? 'selected' : ''}"
+             onclick="selectCustomer('${c.id}')">
+          <div class="customer-header">
+            <div class="customer-name">${c.name}</div>
+            <div class="customer-status status-${c.status}">${c.status}</div>
+          </div>
+          <div class="customer-meta">
+            <span>${c.company}</span>
+            <span>MRR: ${c.mrr}</span>
+            <span>Health: ${c.healthScore}%</span>
+          </div>
+          <div class="customer-details">
+            <div class="detail-row">
+              <span class="detail-label">Email</span>
+              <span class="detail-value">${c.email}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Phone</span>
+              <span class="detail-value">${c.phone}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Last Contact</span>
+              <span class="detail-value">${c.lastContact}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Notes</span>
+              <span class="detail-value">${c.notes}</span>
+            </div>
+            <div class="actions">
+              <button class="btn-primary" onclick="event.stopPropagation(); logCall('${c.id}')">Log Call</button>
+              <button class="btn-secondary" onclick="event.stopPropagation(); sendEmail('${c.id}')">Send Email</button>
+              <button class="btn-secondary" onclick="event.stopPropagation(); addNote('${c.id}')">Add Note</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function selectCustomer(id) {
+      const customer = customers.find(c => c.id === id);
+      if (selectedCustomer === id) {
+        selectedCustomer = null;
+        sendEvent('customer_deselected', { customer_id: id });
+      } else {
+        selectedCustomer = id;
+        sendEvent('customer_viewed', {
+          customer_id: id,
+          customer_name: customer.name,
+          company: customer.company,
+          status: customer.status,
+          health_score: customer.healthScore
+        });
+      }
+      renderCustomers(document.getElementById('searchInput').value);
+    }
+
+    function handleSearch() {
+      const query = document.getElementById('searchInput').value;
+      sendEvent('search_performed', { query });
+      renderCustomers(query);
+    }
+
+    function logCall(id) {
+      const customer = customers.find(c => c.id === id);
+      sendEvent('call_logged', { customer_id: id, customer_name: customer.name });
+      alert(`Call logged for ${customer.name}`);
+    }
+
+    function sendEmail(id) {
+      const customer = customers.find(c => c.id === id);
+      sendEvent('email_initiated', { customer_id: id, customer_name: customer.name, email: customer.email });
+      alert(`Email composer opened for ${customer.email}`);
+    }
+
+    function addNote(id) {
+      const customer = customers.find(c => c.id === id);
+      const note = prompt('Enter note:');
+      if (note) {
+        sendEvent('note_added', { customer_id: id, customer_name: customer.name, note_preview: note.slice(0, 50) });
+        alert(`Note added for ${customer.name}`);
+      }
+    }
+
+    // Initialize
+    renderCustomers();
+    requestContext();
+
+    // Handle Enter key in search
+    document.getElementById('searchInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') handleSearch();
+    });
+  </script>
+</body>
+</html>

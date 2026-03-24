@@ -181,6 +181,16 @@ class GeneratedImage(BaseModel):
     context: Optional[str] = None  # When/how this should be used
 
 
+class SimulationTool(BaseModel):
+    """A browser-based tool candidates can use during simulation."""
+    id: str
+    name: str
+    url: str  # URL to the tool (can be internal mock or external)
+    icon: str = "default"  # email|crm|calendar|support|analytics|default
+    description: Optional[str] = None  # Brief description of tool purpose
+    linked_task_id: Optional[str] = None  # Task that requires using this tool
+
+
 class EnvironmentResponse(BaseModel):
     """The generated simulation environment."""
     company_name: str
@@ -194,6 +204,7 @@ class EnvironmentResponse(BaseModel):
     background_chatter: list[AgentChatter] = []  # Agent-to-agent conversations
     end_conditions: list[EndCondition] = []  # Win/fail conditions for the simulation
     generated_images: list[GeneratedImage] = []  # Pre-generated images for the scenario
+    tools: list[SimulationTool] = []  # Browser-based tools candidates can use
 
 
 class MessageResponse(BaseModel):

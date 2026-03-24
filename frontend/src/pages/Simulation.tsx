@@ -26,6 +26,15 @@ interface EndCondition {
   required_task_id?: string; // For time_limit: task that must be complete
 }
 
+interface SimulationTool {
+  id: string;
+  name: string;
+  url: string;
+  icon?: 'email' | 'crm' | 'calendar' | 'support' | 'analytics' | 'default';
+  description?: string;
+  linked_task_id?: string;
+}
+
 interface SimulationEnv {
   company_name: string;
   company_description: string;
@@ -36,6 +45,7 @@ interface SimulationEnv {
   artifact_content: ArtifactContent;
   inject_schedule: { inject_id: string; trigger_seconds: number; message: string; from_agent_id: string }[];
   end_conditions?: EndCondition[];
+  tools?: SimulationTool[];
 }
 
 // Colorful but minimal palette for relationships
@@ -187,12 +197,110 @@ export default function Simulation() {
   const [showCoachingSidebar, setShowCoachingSidebar] = useState(true);
   const [activeCoachingHint, setActiveCoachingHint] = useState<string | null>(null);
 
+  // Tools/Browser state
+  const [showTools, setShowTools] = useState(false);
+  const [activeTool, setActiveTool] = useState<{ id: string; name: string; url: string } | null>(null);
+  const [toolEvents, setToolEvents] = useState<{ tool: string; action: string; data: Record<string, unknown>; timestamp: number }[]>([]);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const toolIframeRef = useRef<HTMLIFrameElement>(null);
   const startTimeRef = useRef<number>(Date.now());
   const imageInputRef = useRef<HTMLInputElement>(null);
 
   const activeThread = threads.find((t) => t.thread_id === activeThreadId);
   const activeAgent = agents.find((a) => a.agent_id === activeThread?.from_agent_id);
+
+  // Tools/Browser postMessage listener
+  useEffect(() => {
+    const handleToolMessage = (event: MessageEvent) => {
+      // Validate origin in production (for now, accept all for development)
+      // In production: if (event.origin !== 'https://tools.yourapp.com') return;
+
+      const { type, tool, action, data } = event.data || {};
+
+      if (type === 'TOOL_EVENT' && tool && action) {
+        // Record the event
+        const toolEvent = {
+          tool,
+          action,
+          data: data || {},
+          timestamp: Date.now(),
+          elapsed_seconds: elapsedSeconds,
+        };
+        setToolEvents(prev => [...prev, toolEvent]);
+
+        // Send to backend for tracing
+        if (sessionId && token) {
+          candidate.trace({
+            session_id: sessionId,
+            token: token,
+            event_type: 'tool_event' as 'thread_open',
+            elapsed_seconds: elapsedSeconds,
+            content: toolEvent,
+          }).catch(() => {});
+        }
+
+        // Handle specific tool events
+        if (action === 'task_complete' && data?.task_id) {
+          // Auto-complete associated task
+          const taskId = data.task_id;
+          setTasks(prev => prev.map(t =>
+            t.task_id === taskId ? { ...t, completed: true } : t
+          ));
+        }
+
+        if (action === 'close') {
+          // Tool requested to close
+          setShowTools(false);
+          setActiveTool(null);
+        }
+      }
+
+      // Tool is requesting simulation context
+      if (type === 'REQUEST_CONTEXT') {
+        sendToolContext();
+      }
+    };
+
+    window.addEventListener('message', handleToolMessage);
+    return () => window.removeEventListener('message', handleToolMessage);
+  }, [sessionId, token, elapsedSeconds]);
+
+  // Send context to tool iframe
+  const sendToolContext = () => {
+    if (!toolIframeRef.current?.contentWindow) return;
+
+    toolIframeRef.current.contentWindow.postMessage({
+      type: 'SIMULATION_CONTEXT',
+      context: {
+        session_id: sessionId,
+        candidate_name: candidateInfo?.name,
+        candidate_role: candidateInfo?.role,
+        company_name: env?.company_name,
+        elapsed_seconds: elapsedSeconds,
+        agents: agents.map(a => ({
+          agent_id: a.agent_id,
+          name: a.name,
+          role: a.role,
+          relationship_score: a.relationship_score,
+        })),
+        tasks: tasks.map(t => ({
+          task_id: t.task_id,
+          title: t.title,
+          completed: t.completed,
+        })),
+        recent_tool_events: toolEvents.slice(-20),
+      }
+    }, '*');
+  };
+
+  // Open a tool in the browser panel
+  const openTool = (tool: { id: string; name: string; url: string }) => {
+    setActiveTool(tool);
+    setShowTools(true);
+    // Send context once iframe loads
+    setTimeout(sendToolContext, 500);
+  };
 
   // Load environment on mount
   useEffect(() => {
@@ -1002,6 +1110,70 @@ export default function Simulation() {
         </div>
       )}
 
+      {/* Tools/Browser Modal */}
+      {showTools && activeTool && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0 bg-gradient-to-r from-slate-50 to-gray-50">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-sm font-semibold text-dark">{activeTool.name}</h2>
+                  <p className="text-[10px] text-muted truncate max-w-md">{activeTool.url}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {/* Tool event indicator */}
+                {toolEvents.length > 0 && (
+                  <div className="flex items-center gap-1 px-2 py-1 bg-emerald-50 border border-emerald-200 rounded-full text-[10px] text-emerald-700">
+                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                    {toolEvents.length} events tracked
+                  </div>
+                )}
+                <button
+                  onClick={() => { setShowTools(false); setActiveTool(null); }}
+                  className="w-8 h-8 rounded-full hover:bg-surface flex items-center justify-center text-muted hover:text-dark transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Iframe Container */}
+            <div className="flex-1 overflow-hidden bg-white">
+              <iframe
+                ref={toolIframeRef}
+                src={activeTool.url}
+                className="w-full h-full border-0"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                onLoad={sendToolContext}
+                title={activeTool.name}
+              />
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-4 py-2 border-t border-border bg-surface/50 shrink-0 flex items-center justify-between">
+              <p className="text-[10px] text-muted">
+                Actions in this tool are being tracked for your simulation.
+              </p>
+              <button
+                onClick={() => { setShowTools(false); setActiveTool(null); }}
+                className="px-3 py-1.5 bg-dark text-white rounded-lg text-xs font-medium hover:opacity-90 transition-colors"
+              >
+                Close Tool
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Artifact Modal */}
       {showArtifact && env?.artifact_content && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
@@ -1795,8 +1967,50 @@ export default function Simulation() {
             </div>
           </div>
 
-          {/* Prominent Artifact Button */}
-          <div className="p-3 border-t border-border">
+          {/* Tools & Artifact Buttons */}
+          <div className="p-3 border-t border-border space-y-2">
+            {/* Tools Button - for browser-based work tools */}
+            {env?.tools && env.tools.length > 0 && (
+              <div className="space-y-1.5">
+                <div className="text-[9px] uppercase tracking-wider text-muted font-medium px-1">Work Tools</div>
+                {env.tools.map(tool => (
+                  <button
+                    key={tool.id}
+                    onClick={() => openTool(tool)}
+                    className="w-full flex items-center gap-3 p-2.5 rounded-lg bg-gradient-to-r from-slate-50 to-gray-50 border border-slate-200 hover:from-slate-100 hover:to-gray-100 transition-all group text-left"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-slate-600 text-white flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+                      {tool.icon === 'email' ? (
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                      ) : tool.icon === 'crm' ? (
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                      ) : tool.icon === 'calendar' ? (
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-medium text-slate-800 truncate">{tool.name}</div>
+                      <div className="text-[10px] text-slate-500 truncate">Open tool</div>
+                    </div>
+                    <svg className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Artifact Button */}
             <button
               onClick={handleOpenArtifact}
               className="w-full flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 hover:from-indigo-100 hover:to-purple-100 transition-all group text-left"
