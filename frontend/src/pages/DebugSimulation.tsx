@@ -609,8 +609,30 @@ export default function DebugSimulation() {
           0% { opacity: 0; transform: translateX(100px); }
           100% { opacity: 1; transform: translateX(0); }
         }
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
         .milestone-toast {
           animation: slideInRight 0.3s ease-out;
+        }
+        .glass-morphism {
+          background: rgba(255, 255, 255, 0.85);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+        }
+        .chat-pattern {
+          background-color: #f1f5f9;
+          background-image:
+            linear-gradient(135deg, rgba(99, 102, 241, 0.03) 25%, transparent 25%),
+            linear-gradient(225deg, rgba(99, 102, 241, 0.03) 25%, transparent 25%),
+            linear-gradient(45deg, rgba(99, 102, 241, 0.03) 25%, transparent 25%),
+            linear-gradient(315deg, rgba(99, 102, 241, 0.03) 25%, transparent 25%);
+          background-size: 20px 20px;
+          background-position: 0 0, 10px 0, 10px -10px, 0 10px;
+        }
+        .modal-content {
+          animation: slideUp 0.3s ease-out;
         }
       `}</style>
 
@@ -936,7 +958,7 @@ export default function DebugSimulation() {
                   </div>
                 )}
               </div>
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 chat-pattern">
                 {activeThread.messages.map((msg) => {
                   const msgAgent = agents.find(a => a.agent_id === msg.agent_id);
                   const renderContent = (content: string | { type: string; text?: string; image_url?: string }[]) => {
@@ -1017,7 +1039,23 @@ export default function DebugSimulation() {
               </div>
             </>
           ) : (
-            <div className="flex-1 flex items-center justify-center text-muted text-sm">Select a thread or start a new conversation</div>
+            <div className="flex-1 flex items-center justify-center chat-pattern">
+              <div className="text-center max-w-sm px-6">
+                <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center">
+                  <svg className="w-10 h-10 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                </div>
+                <h3 className="text-base font-semibold text-slate-700 mb-2">Your Inbox Awaits</h3>
+                <p className="text-sm text-slate-500 leading-relaxed">
+                  Select a conversation from your inbox to continue, or wait for new messages from your colleagues.
+                </p>
+                <div className="mt-6 flex items-center justify-center gap-2 text-xs text-slate-400">
+                  <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                  <span>{agents.filter(a => a.status === 'active').length} colleagues online</span>
+                </div>
+              </div>
+            </div>
           )}
         </div>
 
