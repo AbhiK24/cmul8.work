@@ -12,6 +12,7 @@ import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import CandidateLanding from './pages/CandidateLanding';
 import Simulation from './pages/Simulation';
+import DebugSimulation from './pages/DebugSimulation';
 import Debrief from './pages/Debrief';
 import Report from './pages/Report';
 import CandidateReport from './pages/CandidateReport';
@@ -190,6 +191,9 @@ function App() {
           <Route path="/sim/:sessionId/:token" element={<Simulation />} />
           <Route path="/debrief/:sessionId/:token" element={<Debrief />} />
           <Route path="/report/:sessionId/candidate" element={<CandidateReport />} />
+
+          {/* Debug routes (for testing UI without real sessions) */}
+          <Route path="/debug/sim" element={<DebugSimulation />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
