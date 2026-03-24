@@ -10,6 +10,23 @@ class TaskKnowledge(BaseModel):
     will_share_if: str  # Condition for sharing (e.g., "asked directly", "relationship > 0.6")
 
 
+class AgentHelpRequest(BaseModel):
+    """A help request an agent might make to the candidate."""
+    trigger_seconds: int  # When to potentially ask
+    topic: str  # What they need help with
+    message: str  # The ask message
+    context: Optional[str] = None  # Additional context/attachment description
+    priority: str = "normal"  # normal|urgent
+
+
+class AgentAvailabilitySlot(BaseModel):
+    """A scheduled availability change for an agent."""
+    at_seconds: int  # When state changes
+    state: str  # active|busy|in_meeting|away|dnd
+    duration_seconds: Optional[int] = None  # How long (None = until next change)
+    reason: Optional[str] = None  # "On a call with client"
+
+
 class Agent(BaseModel):
     """An AI agent in the simulation."""
     agent_id: str
@@ -28,6 +45,10 @@ class Agent(BaseModel):
     proactivity: float = 0.3  # 0-1, how likely to reach out unprompted
     current_concern: Optional[str] = None  # What's on their mind right now
     will_initiate_about: Optional[list[str]] = None  # Topics they might bring up
+    # Availability - agents have schedules
+    availability_schedule: list[AgentAvailabilitySlot] = []  # Scheduled state changes
+    # Help requests - agents can ask candidate for help
+    help_requests: list[AgentHelpRequest] = []  # Things they might ask for
 
 
 class StressInject(BaseModel):
@@ -98,6 +119,26 @@ class Task(BaseModel):
     linked_artifact_section: Optional[str] = None  # section_id if completion_type is artifact_edit
 
 
+class DocComment(BaseModel):
+    """A comment on an artifact section by an agent."""
+    comment_id: str
+    agent_id: str
+    agent_name: str
+    section_id: str
+    content: str
+    timestamp: float
+    resolved: bool = False
+
+
+class DocPresence(BaseModel):
+    """Who is currently viewing/editing the document."""
+    agent_id: str
+    agent_name: str
+    action: str  # viewing|typing|editing
+    section_id: Optional[str] = None  # Which section they're on
+    started_at: float
+
+
 class ArtifactSection(BaseModel):
     """A section in the artifact document."""
     section_id: str
@@ -107,6 +148,9 @@ class ArtifactSection(BaseModel):
     editable: bool = True
     has_error: bool = False  # Whether this section contains intentional errors
     error_hint: Optional[str] = None  # Hint about what's wrong (for scoring)
+    # Multi-agent collaboration
+    last_edited_by: Optional[str] = None  # agent_id of last editor
+    last_edited_at: Optional[float] = None
 
 
 class ArtifactContent(BaseModel):

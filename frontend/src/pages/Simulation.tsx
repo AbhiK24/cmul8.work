@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { candidate, sessions } from '../api/client';
-import type { FrameworkReference } from '../api/client';
+import type { FrameworkReference, DocPresence, DocComment } from '../api/client';
 import type { Agent, Thread, Message, Task, ArtifactSection, ArtifactContent } from '../types';
 import { antiCheat } from '../utils/antiCheat';
 import Onboarding from './Onboarding';
@@ -63,9 +63,63 @@ const archetypeHints: Record<string, string> = {
 
 const statusColors: Record<string, string> = {
   active: 'bg-green-500',
-  idle: 'bg-amber-500',
+  busy: 'bg-amber-500',
+  in_meeting: 'bg-red-500',
   away: 'bg-gray-400',
+  dnd: 'bg-red-600',
+  idle: 'bg-amber-500',
 };
+
+const statusLabels: Record<string, string> = {
+  active: 'Active',
+  busy: 'Busy',
+  in_meeting: 'In a meeting',
+  away: 'Away',
+  dnd: 'Do not disturb',
+};
+
+interface AvailabilitySlot {
+  at_seconds: number;
+  state: string;
+  duration_seconds?: number;
+  reason?: string;
+}
+
+// Compute current availability based on schedule and elapsed time
+function getCurrentAvailability(
+  schedule: AvailabilitySlot[] | undefined,
+  elapsedSeconds: number
+): { state: string; reason?: string } {
+  if (!schedule || schedule.length === 0) {
+    return { state: 'active' };
+  }
+
+  // Sort by time and find the most recent state change
+  const sorted = [...schedule].sort((a, b) => a.at_seconds - b.at_seconds);
+  let currentState = 'active';
+  let currentReason: string | undefined;
+
+  for (const slot of sorted) {
+    if (slot.at_seconds <= elapsedSeconds) {
+      // Check if this state has expired (duration passed)
+      if (slot.duration_seconds) {
+        const endTime = slot.at_seconds + slot.duration_seconds;
+        if (elapsedSeconds < endTime) {
+          currentState = slot.state;
+          currentReason = slot.reason;
+        } else {
+          currentState = 'active'; // Reverted to active after duration
+          currentReason = undefined;
+        }
+      } else {
+        currentState = slot.state;
+        currentReason = slot.reason;
+      }
+    }
+  }
+
+  return { state: currentState, reason: currentReason };
+}
 
 // Generate DiceBear avatar URL for agents without one (retroactive support)
 const avatarStyles = ['avataaars', 'personas', 'notionists', 'lorelei', 'adventurer'];
@@ -109,6 +163,10 @@ export default function Simulation() {
   const [artifactSections, setArtifactSections] = useState<ArtifactSection[]>([]);
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
+
+  // Multi-agent doc collaboration state
+  const [docPresence, setDocPresence] = useState<DocPresence[]>([]);
+  const [docComments, setDocComments] = useState<DocComment[]>([]);
 
   // Win/Fail state
   const [endCondition, setEndCondition] = useState<{
@@ -386,6 +444,39 @@ export default function Simulation() {
 
     return () => timeouts.forEach(t => clearTimeout(t));
   }, [env, agents, threads, onboardingComplete]);
+
+  // Doc Activity Polling - check for agent presence/comments when artifact is open
+  useEffect(() => {
+    if (!sessionId || !token || !showArtifact || endCondition.type) return;
+
+    const checkDocActivity = async () => {
+      try {
+        const response = await candidate.docActivity(sessionId, token, elapsedSeconds);
+        if (response.has_activity) {
+          setDocPresence(response.presence || []);
+          // Append new comments (avoid duplicates)
+          if (response.new_comments?.length) {
+            setDocComments(prev => {
+              const existingIds = new Set(prev.map(c => c.comment_id));
+              const newComments = response.new_comments.filter(c => !existingIds.has(c.comment_id));
+              return [...prev, ...newComments];
+            });
+          }
+        } else {
+          // Clear presence when no activity
+          setDocPresence([]);
+        }
+      } catch (err) {
+        // Silently fail
+      }
+    };
+
+    // Check immediately and then every 5 seconds
+    checkDocActivity();
+    const interval = setInterval(checkDocActivity, 5000);
+
+    return () => clearInterval(interval);
+  }, [sessionId, token, showArtifact, elapsedSeconds, endCondition.type]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -911,14 +1002,48 @@ export default function Simulation() {
                 <h2 className="text-lg font-semibold text-dark">{env.artifact_content.title}</h2>
                 <p className="text-xs text-muted capitalize">{env.artifact_content.type} Document</p>
               </div>
-              <button
-                onClick={() => setShowArtifact(false)}
-                className="w-8 h-8 rounded-full hover:bg-surface flex items-center justify-center text-muted hover:text-dark transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+
+              {/* Presence indicators - who's viewing */}
+              <div className="flex items-center gap-2">
+                {docPresence.length > 0 && (
+                  <div className="flex items-center gap-1 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-full">
+                    <div className="flex -space-x-2">
+                      {docPresence.slice(0, 3).map((p, idx) => {
+                        const presenceAgent = agents.find(a => a.agent_id === p.agent_id);
+                        return (
+                          <img
+                            key={p.agent_id}
+                            src={presenceAgent ? getAvatarUrl(presenceAgent, idx) : `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.agent_name}`}
+                            alt={p.agent_name}
+                            className="w-6 h-6 rounded-full border-2 border-white"
+                            title={`${p.agent_name} is ${p.action}${p.section_id ? ` in a section` : ''}`}
+                          />
+                        );
+                      })}
+                    </div>
+                    <span className="text-[10px] text-emerald-700 font-medium ml-1">
+                      {docPresence.length === 1
+                        ? `${docPresence[0].agent_name} is ${docPresence[0].action}`
+                        : `${docPresence.length} people viewing`}
+                    </span>
+                    {docPresence.some(p => p.action === 'typing') && (
+                      <div className="flex gap-0.5 ml-1">
+                        <span className="w-1 h-1 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                        <span className="w-1 h-1 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                        <span className="w-1 h-1 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                      </div>
+                    )}
+                  </div>
+                )}
+                <button
+                  onClick={() => setShowArtifact(false)}
+                  className="w-8 h-8 rounded-full hover:bg-surface flex items-center justify-center text-muted hover:text-dark transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
             </div>
 
             {/* Modal Content - Scrollable */}
@@ -971,6 +1096,22 @@ export default function Simulation() {
 
                     {/* Section Content */}
                     <div className="p-4">
+                      {/* Typing indicator for this section */}
+                      {docPresence.some(p => p.action === 'typing' && p.section_id === section.section_id) && (
+                        <div className="flex items-center gap-2 mb-2 text-emerald-600 text-[10px]">
+                          {docPresence.filter(p => p.action === 'typing' && p.section_id === section.section_id).map(p => (
+                            <span key={p.agent_id} className="flex items-center gap-1">
+                              <span>{p.agent_name} is typing</span>
+                              <div className="flex gap-0.5">
+                                <span className="w-1 h-1 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                <span className="w-1 h-1 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                <span className="w-1 h-1 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                              </div>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
                       {isEditing ? (
                         <textarea
                           value={section.content}
@@ -983,6 +1124,33 @@ export default function Simulation() {
                           className="prose prose-sm max-w-none text-mid leading-relaxed"
                           dangerouslySetInnerHTML={{ __html: (section.content || '').replace(/\n/g, '<br/>') }}
                         />
+                      )}
+
+                      {/* Comments on this section */}
+                      {docComments.filter(c => c.section_id === section.section_id).length > 0 && (
+                        <div className="mt-4 pt-3 border-t border-border/50 space-y-2">
+                          <div className="text-[10px] uppercase tracking-wider text-muted font-medium">Comments</div>
+                          {docComments.filter(c => c.section_id === section.section_id).map(comment => {
+                            const commentAgent = agents.find(a => a.agent_id === comment.agent_id);
+                            const agentIdx = agents.findIndex(a => a.agent_id === comment.agent_id);
+                            return (
+                              <div key={comment.comment_id} className="flex gap-2 p-2 bg-amber-50 rounded-lg border border-amber-200">
+                                <img
+                                  src={commentAgent ? getAvatarUrl(commentAgent, agentIdx >= 0 ? agentIdx : 0) : `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.agent_name}`}
+                                  alt={comment.agent_name}
+                                  className="w-6 h-6 rounded-full bg-white border border-amber-200 shrink-0"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs font-medium text-amber-900">{comment.agent_name}</span>
+                                    <span className="text-[10px] text-amber-600">{formatTime(comment.timestamp * 1000)}</span>
+                                  </div>
+                                  <p className="text-xs text-amber-800 mt-0.5">{comment.content}</p>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
                       )}
                     </div>
                   </div>
@@ -1070,7 +1238,16 @@ export default function Simulation() {
           <div className="p-3 border-b border-border">
             <h3 className="text-[9px] uppercase tracking-widest text-muted mb-2">Team</h3>
             <div className="space-y-1">
-              {agents.map((agent, idx) => (
+              {agents.map((agent, idx) => {
+                // Compute current availability from schedule
+                const availability = getCurrentAvailability(
+                  (env?.agents?.find(a => a.agent_id === agent.agent_id) as any)?.availability_schedule,
+                  elapsedSeconds
+                );
+                const availState = availability.state;
+                const availReason = availability.reason;
+
+                return (
                 <div key={agent.agent_id} className="relative">
                   <button
                     onClick={() => openNewThread(agent.agent_id)}
@@ -1085,12 +1262,19 @@ export default function Simulation() {
                         className="w-8 h-8 rounded-full bg-surface shadow-sm"
                       />
                       <div
-                        className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ${statusColors[agent.status] || 'bg-gray-400'} border-2 border-white`}
+                        className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ${statusColors[availState] || 'bg-gray-400'} border-2 border-white`}
+                        title={statusLabels[availState] || availState}
                       />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-medium text-dark truncate">{agent.name}</div>
-                      <div className="text-[10px] text-muted truncate">{agent.role}</div>
+                      <div className="text-[10px] text-muted truncate">
+                        {availState !== 'active' ? (
+                          <span className={availState === 'in_meeting' || availState === 'dnd' ? 'text-red-600' : 'text-amber-600'}>
+                            {availReason || statusLabels[availState]}
+                          </span>
+                        ) : agent.role}
+                      </div>
                     </div>
                     <div className="w-8 h-1 bg-gray-100 rounded-full overflow-hidden">
                       <div
@@ -1117,6 +1301,16 @@ export default function Simulation() {
                           <div className="text-[10px] text-muted">{agent.role}</div>
                         </div>
                       </div>
+                      {/* Availability status */}
+                      {availState !== 'active' && (
+                        <div className={`mb-2 px-2 py-1 rounded text-[10px] font-medium ${
+                          availState === 'in_meeting' || availState === 'dnd'
+                            ? 'bg-red-100 text-red-700'
+                            : 'bg-amber-100 text-amber-700'
+                        }`}>
+                          {availReason || statusLabels[availState]}
+                        </div>
+                      )}
                       <div className="space-y-1.5 text-[11px]">
                         <div className="flex items-center gap-2">
                           <span className={`px-1.5 py-0.5 rounded text-[9px] font-medium ${
@@ -1145,7 +1339,8 @@ export default function Simulation() {
                     </div>
                   )}
                 </div>
-              ))}
+              );
+              })}
             </div>
           </div>
 

@@ -50,6 +50,13 @@ class AutonomyTickRequest(BaseModel):
     elapsed_seconds: int
 
 
+class DocActivityRequest(BaseModel):
+    """Doc activity request - check for document collaboration activity."""
+    session_id: str
+    token: str
+    elapsed_seconds: int
+
+
 async def validate_candidate_token(session_id: str, token: str) -> tuple[bool, str]:
     """Validate candidate token for a session.
 
@@ -220,3 +227,31 @@ async def autonomy_tick(request: AutonomyTickRequest):
     except httpx.HTTPError as e:
         # Don't fail the simulation if autonomy check fails
         return {"should_act": False}
+
+
+@router.post("/autonomy/doc-activity")
+async def doc_activity_tick(request: DocActivityRequest):
+    """Check for document collaboration activity (proxied to engine).
+
+    Returns presence indicators, new comments, and edits from agents.
+    Called periodically when artifact modal is open.
+    """
+    is_valid, _ = await validate_candidate_token(request.session_id, request.token)
+    if not is_valid:
+        raise HTTPException(status_code=403, detail="Invalid or expired session")
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.post(
+                f"{ENGINE_URL}/autonomy/doc-activity",
+                json={
+                    "session_id": request.session_id,
+                    "token": request.token,
+                    "elapsed_seconds": request.elapsed_seconds
+                }
+            )
+            response.raise_for_status()
+            return response.json()
+    except httpx.HTTPError as e:
+        # Don't fail if doc activity check fails
+        return {"has_activity": False, "presence": [], "new_comments": [], "edits": []}

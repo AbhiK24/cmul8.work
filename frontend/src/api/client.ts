@@ -382,6 +382,29 @@ export interface AutonomyTickResponse {
   subject?: string;
 }
 
+export interface DocPresence {
+  agent_id: string;
+  agent_name: string;
+  action: 'viewing' | 'typing';
+  section_id?: string;
+}
+
+export interface DocComment {
+  comment_id: string;
+  agent_id: string;
+  agent_name: string;
+  section_id: string;
+  content: string;
+  timestamp: number;
+}
+
+export interface DocActivityResponse {
+  has_activity: boolean;
+  presence: DocPresence[];
+  new_comments: DocComment[];
+  edits: Record<string, unknown>[];
+}
+
 export const candidate = {
   sendMessage: (data: MessageRequest) =>
     apiRequest<{ reply: string; relationship_score: number; agent_id: string; escalated?: boolean; escalation_reason?: string }>('/candidate/message', {
@@ -392,6 +415,13 @@ export const candidate = {
   // Agent autonomy - check if any agent wants to initiate contact
   autonomyTick: (sessionId: string, token: string, elapsedSeconds: number) =>
     apiRequest<AutonomyTickResponse>('/candidate/autonomy/tick', {
+      method: 'POST',
+      body: { session_id: sessionId, token, elapsed_seconds: elapsedSeconds },
+    }),
+
+  // Document activity - check for agent presence, comments, typing
+  docActivity: (sessionId: string, token: string, elapsedSeconds: number) =>
+    apiRequest<DocActivityResponse>('/candidate/autonomy/doc-activity', {
       method: 'POST',
       body: { session_id: sessionId, token, elapsed_seconds: elapsedSeconds },
     }),

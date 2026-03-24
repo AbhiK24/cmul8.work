@@ -1,3 +1,18 @@
+export interface AgentAvailabilitySlot {
+  at_seconds: number;
+  state: 'active' | 'busy' | 'in_meeting' | 'away' | 'dnd';
+  duration_seconds?: number;
+  reason?: string;
+}
+
+export interface AgentHelpRequest {
+  trigger_seconds: number;
+  topic: string;
+  message: string;
+  context?: string;
+  priority: 'normal' | 'urgent';
+}
+
 export interface Agent {
   agent_id: string;
   name: string;
@@ -10,6 +25,14 @@ export interface Agent {
   relationship_score_baseline: number;
   escalation_threshold: number;
   avatar_url?: string;
+  // Autonomy
+  proactivity?: number;
+  current_concern?: string;
+  will_initiate_about?: string[];
+  // Availability
+  availability_schedule?: AgentAvailabilitySlot[];
+  // Help requests
+  help_requests?: AgentHelpRequest[];
 }
 
 export interface StressInject {

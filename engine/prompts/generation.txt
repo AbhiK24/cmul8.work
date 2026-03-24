@@ -168,6 +168,15 @@ Generate a complete simulation environment:
      - `proactivity`: 0.0-1.0, how likely to reach out unprompted (managers: 0.5-0.7, peers: 0.2-0.4)
      - `current_concern`: What's on their mind that they might bring up (e.g., "worried about the deadline")
      - `will_initiate_about`: List of topics they might message the candidate about first
+   - **Availability schedule** (agents have meetings/calls):
+     - `availability_schedule`: Array of {at_seconds, state, duration_seconds, reason}
+     - States: "active", "busy", "in_meeting", "away", "dnd"
+     - Example: Manager is in meetings at 5min and 20min marks
+     - Creates realistic "waiting for X to be free" situations
+   - **Help requests** (agents can ask candidate for help!):
+     - `help_requests`: Array of {trigger_seconds, topic, message, context, priority}
+     - Example: At 10 minutes, Sarah asks for help reviewing her client deck
+     - Flips the dynamic - candidate must decide whether to help or focus on own tasks
 
 5. **Background Chatter (2-3 conversations)**: Pre-existing conversations between agents that they may reference:
    - Agent A and B discussed topic X

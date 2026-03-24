@@ -9,7 +9,7 @@ from ..schemas.input_schema import GenerateRequest
 from ..schemas.env_schema import (
     EnvironmentResponse, Agent, Thread, Message, Task, StressInject,
     TaskKnowledge, TaskRequirement, AgentChatter, ArtifactContent, ArtifactSection,
-    EndCondition
+    EndCondition, AgentAvailabilitySlot, AgentHelpRequest
 )
 from ..engine.kimi_client import call_kimi
 from ..db.pool import get_pool
@@ -54,7 +54,34 @@ ENV_SCHEMA = {
                     "escalation_threshold": {"type": "number"},
                     "proactivity": {"type": "number", "description": "0-1, how likely to reach out unprompted"},
                     "current_concern": {"type": "string", "description": "What's on their mind right now"},
-                    "will_initiate_about": {"type": "array", "items": {"type": "string"}, "description": "Topics they might bring up"}
+                    "will_initiate_about": {"type": "array", "items": {"type": "string"}, "description": "Topics they might bring up"},
+                    "availability_schedule": {
+                        "type": "array",
+                        "description": "Scheduled availability changes throughout the simulation",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "at_seconds": {"type": "integer"},
+                                "state": {"type": "string", "enum": ["active", "busy", "in_meeting", "away", "dnd"]},
+                                "duration_seconds": {"type": "integer"},
+                                "reason": {"type": "string"}
+                            }
+                        }
+                    },
+                    "help_requests": {
+                        "type": "array",
+                        "description": "Things this agent might ask the candidate for help with",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "trigger_seconds": {"type": "integer"},
+                                "topic": {"type": "string"},
+                                "message": {"type": "string"},
+                                "context": {"type": "string"},
+                                "priority": {"type": "string", "enum": ["normal", "urgent"]}
+                            }
+                        }
+                    }
                 }
             }
         },
@@ -235,6 +262,15 @@ async def generate_environment(request: GenerateRequest) -> EnvironmentResponse:
             # Generate deterministic avatar URL using agent name as seed
             style = avatar_styles[idx % len(avatar_styles)]
             avatar_url = f"https://api.dicebear.com/7.x/{style}/svg?seed={agent_name.replace(' ', '')}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf"
+            # Parse availability schedule
+            availability_schedule = [
+                AgentAvailabilitySlot(**slot) for slot in a.get("availability_schedule", [])
+            ]
+            # Parse help requests
+            help_requests = [
+                AgentHelpRequest(**req) for req in a.get("help_requests", [])
+            ]
+
             agents.append(Agent(
                 agent_id=a.get("agent_id", str(uuid.uuid4())),
                 name=agent_name,
@@ -251,6 +287,8 @@ async def generate_environment(request: GenerateRequest) -> EnvironmentResponse:
                 proactivity=a.get("proactivity", 0.3),
                 current_concern=a.get("current_concern"),
                 will_initiate_about=a.get("will_initiate_about"),
+                availability_schedule=availability_schedule,
+                help_requests=help_requests,
             ))
 
         # Parse tasks with required_info

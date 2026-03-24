@@ -39,6 +39,35 @@ class AutonomyTickResponse(BaseModel):
     subject: Optional[str] = None  # For new threads
 
 
+class DocActivityRequest(BaseModel):
+    session_id: str
+    token: str
+    elapsed_seconds: int
+
+
+class DocComment(BaseModel):
+    comment_id: str
+    agent_id: str
+    agent_name: str
+    section_id: str
+    content: str
+    timestamp: float
+
+
+class DocPresence(BaseModel):
+    agent_id: str
+    agent_name: str
+    action: str  # viewing|typing
+    section_id: Optional[str] = None
+
+
+class DocActivityResponse(BaseModel):
+    has_activity: bool
+    presence: list[DocPresence] = []
+    new_comments: list[DocComment] = []
+    edits: list[dict] = []  # Section edits by agents
+
+
 async def get_session_data(conn, session_id: str):
     """Get session from either B2B or B2C table."""
     row = await conn.fetchrow("""
@@ -58,12 +87,29 @@ async def get_session_data(conn, session_id: str):
     return None, None
 
 
+def get_triggered_help_requests(agents: list, elapsed_seconds: int, fired_help_requests: list) -> tuple:
+    """Check if any agent has a help request that should trigger now.
+
+    Returns: (agent, help_request) or (None, None)
+    """
+    for agent in agents:
+        for help_req in agent.get("help_requests", []):
+            trigger_time = help_req.get("trigger_seconds", 0)
+            # Check if we're within 30 seconds of trigger time and haven't fired this yet
+            req_id = f"{agent['agent_id']}_{trigger_time}_{help_req.get('topic', '')}"
+            if (trigger_time <= elapsed_seconds <= trigger_time + 60
+                and req_id not in fired_help_requests):
+                return agent, help_req, req_id
+    return None, None, None
+
+
 @router.post("/tick", response_model=AutonomyTickResponse)
 async def autonomy_tick(request: AutonomyTickRequest) -> AutonomyTickResponse:
     """Check if any agent wants to initiate contact with the candidate.
 
     Called every 60-120 seconds by the frontend.
     Returns an agent message if one decides to reach out.
+    Prioritizes: 1) Help requests 2) Proactive messages
     """
     pool = await get_pool()
 
@@ -81,6 +127,75 @@ async def autonomy_tick(request: AutonomyTickRequest) -> AutonomyTickResponse:
         agents = env.get("agents", [])
         if not agents:
             return AutonomyTickResponse(should_act=False)
+
+        # Track which help requests have been fired
+        fired_help_requests = [
+            e.get("content", {}).get("help_request_id")
+            for e in trace
+            if e.get("event_type") == "help_request_sent"
+        ]
+
+        # Priority 1: Check for triggered help requests
+        help_agent, help_request, help_req_id = get_triggered_help_requests(
+            agents, request.elapsed_seconds, fired_help_requests
+        )
+
+        if help_agent and help_request:
+            agent_id = help_agent["agent_id"]
+            agent_name = help_agent["name"]
+            relationship = relationship_scores.get(agent_id, 0.5)
+
+            # Only ask for help if relationship is decent (they trust you)
+            if relationship >= 0.4:
+                message = help_request.get("message", "Hey, could you help me with something?")
+                context = help_request.get("context")
+
+                if context:
+                    message += f"\n\n{context}"
+
+                # Find or create thread
+                inbox = env.get("inbox", [])
+                existing_thread = None
+                for thread in inbox:
+                    if thread.get("from_agent_id") == agent_id:
+                        existing_thread = thread
+                        break
+
+                is_new_thread = existing_thread is None
+                thread_id = existing_thread["thread_id"] if existing_thread else str(uuid.uuid4())
+                subject = f"Quick favor?" if is_new_thread else None
+
+                # Record help request in trace
+                trace_event = {
+                    "event_id": str(uuid.uuid4()),
+                    "session_id": request.session_id,
+                    "timestamp": time.time(),
+                    "elapsed_seconds": request.elapsed_seconds,
+                    "event_type": "help_request_sent",
+                    "agent_id": agent_id,
+                    "content": {
+                        "help_request_id": help_req_id,
+                        "topic": help_request.get("topic"),
+                        "message": message,
+                        "thread_id": thread_id
+                    }
+                }
+
+                await conn.execute(f"""
+                    UPDATE {table_name}
+                    SET trace = trace || $1::jsonb
+                    WHERE session_id = $2
+                """, json.dumps([trace_event]), request.session_id)
+
+                return AutonomyTickResponse(
+                    should_act=True,
+                    agent_id=agent_id,
+                    agent_name=agent_name,
+                    message=message,
+                    thread_id=thread_id,
+                    is_new_thread=is_new_thread,
+                    subject=subject
+                )
 
         # Determine which agent (if any) should initiate
         selected_agent = None
@@ -242,4 +357,141 @@ Just write the message, nothing else."""
             thread_id=thread_id,
             is_new_thread=is_new_thread,
             subject=subject
+        )
+
+
+@router.post("/doc-activity", response_model=DocActivityResponse)
+async def doc_activity_tick(request: DocActivityRequest) -> DocActivityResponse:
+    """Check for document activity - agents viewing, typing, commenting.
+
+    Creates the illusion of a shared workspace where others are working.
+    """
+    pool = await get_pool()
+
+    async with pool.acquire() as conn:
+        row, table_name = await get_session_data(conn, request.session_id)
+
+        if not row:
+            raise HTTPException(status_code=404, detail="Session not found")
+
+        env = json.loads(row["env"]) if row["env"] else {}
+        trace = json.loads(row["trace"]) if row["trace"] else []
+
+        agents = env.get("agents", [])
+        artifact = env.get("artifact_content", {})
+        sections = artifact.get("sections", [])
+
+        if not agents or not sections:
+            return DocActivityResponse(has_activity=False)
+
+        # Get existing doc comments from trace
+        existing_comments = [
+            e.get("content", {}).get("comment_id")
+            for e in trace
+            if e.get("event_type") == "doc_comment"
+        ]
+
+        presence = []
+        new_comments = []
+        edits = []
+
+        # Simulate agent presence (random chance an agent is "viewing")
+        for agent in agents:
+            if random.random() < 0.25:  # 25% chance any agent is viewing
+                presence.append(DocPresence(
+                    agent_id=agent["agent_id"],
+                    agent_name=agent["name"],
+                    action="viewing",
+                    section_id=None
+                ))
+            elif random.random() < 0.1:  # 10% chance typing in a section
+                section = random.choice(sections)
+                presence.append(DocPresence(
+                    agent_id=agent["agent_id"],
+                    agent_name=agent["name"],
+                    action="typing",
+                    section_id=section["section_id"]
+                ))
+
+        # Chance to generate a new comment (more likely later in sim)
+        comment_chance = 0.1 + (request.elapsed_seconds / 2700) * 0.2  # 10-30%
+
+        if random.random() < comment_chance and agents:
+            # Pick an agent with artifact knowledge to comment
+            commenting_agents = [a for a in agents if a.get("artifact_knowledge")]
+            if not commenting_agents:
+                commenting_agents = agents
+
+            agent = random.choice(commenting_agents)
+            section = random.choice(sections)
+
+            # Generate comment using Kimi
+            artifact_knowledge = agent.get("artifact_knowledge", "")
+            section_content = section.get("content", "")[:200]
+
+            comment_prompt = f"""You are {agent["name"]}, {agent["role"]}.
+
+You're reviewing a shared document and want to leave a brief comment on a section.
+
+Section title: {section["title"]}
+Section content preview: {section_content}...
+
+{"Your knowledge about this artifact: " + artifact_knowledge if artifact_knowledge else ""}
+
+Write a SHORT comment (1 sentence) - something you'd leave in Google Docs.
+Could be a question, suggestion, concern, or note.
+Be natural and specific to the content.
+
+Just write the comment, nothing else."""
+
+            try:
+                comment_text = await call_kimi(
+                    messages=[{"role": "user", "content": comment_prompt}],
+                    temperature=0.8,
+                    max_tokens=100
+                )
+                comment_text = comment_text.strip().strip('"')
+
+                comment_id = str(uuid.uuid4())
+                new_comment = DocComment(
+                    comment_id=comment_id,
+                    agent_id=agent["agent_id"],
+                    agent_name=agent["name"],
+                    section_id=section["section_id"],
+                    content=comment_text,
+                    timestamp=time.time()
+                )
+                new_comments.append(new_comment)
+
+                # Record in trace
+                trace_event = {
+                    "event_id": str(uuid.uuid4()),
+                    "session_id": request.session_id,
+                    "timestamp": time.time(),
+                    "elapsed_seconds": request.elapsed_seconds,
+                    "event_type": "doc_comment",
+                    "agent_id": agent["agent_id"],
+                    "content": {
+                        "comment_id": comment_id,
+                        "section_id": section["section_id"],
+                        "comment_text": comment_text
+                    }
+                }
+
+                await conn.execute(f"""
+                    UPDATE {table_name}
+                    SET trace = trace || $1::jsonb
+                    WHERE session_id = $2
+                """, json.dumps([trace_event]), request.session_id)
+
+            except Exception:
+                pass  # Silently fail comment generation
+
+        has_activity = len(presence) > 0 or len(new_comments) > 0
+
+        return DocActivityResponse(
+            has_activity=has_activity,
+            presence=presence,
+            new_comments=new_comments,
+            edits=edits
         )
