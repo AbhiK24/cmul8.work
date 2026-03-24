@@ -14,7 +14,7 @@ ENV VITE_API_URL=$VITE_API_URL
 COPY package*.json ./
 RUN npm ci
 
-# Cache bust: 2026-03-24
+# Cache bust: 2026-03-24-v2
 COPY . ./
 RUN npm run build
 
